@@ -1,0 +1,7 @@
+name = "VPalm"
+uuid = "a7330139-cd8c-4ed3-8339-744bb7ed6d51"
+authors = ["Rémi Vezy <VEZY@users.noreply.github.com> and contributors"]
+version = "0.0.1"
+
+[compat]
+julia = "1.2"
