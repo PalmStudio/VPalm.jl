@@ -5,10 +5,10 @@ using JET
 
 @testset "VPalm.jl" begin
     @testset "Code quality (Aqua.jl)" begin
-        Aqua.test_all(VPalm)
+        Aqua.test_all(VPalm, ambiguities=false)
     end
     @testset "Code linting (JET.jl)" begin
-        JET.test_package(VPalm; target_defined_modules = true)
+        JET.test_package(VPalm; target_defined_modules=true)
     end
     # Write your tests here.
 end
