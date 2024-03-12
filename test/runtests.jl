@@ -2,6 +2,7 @@ using VPalm
 using Test
 using Aqua
 using JET
+using MultiScaleTreeGraph
 
 @testset "VPalm.jl" begin
     @testset "Code quality (Aqua.jl)" begin
