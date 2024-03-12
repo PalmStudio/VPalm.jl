@@ -16,6 +16,10 @@ using MultiScaleTreeGraph
         include("test-parameters_IO.jl")
     end
 
+    @testset "Stem allometries" begin
+        include("test-stem.jl")
+    end
+
     @testset "Static mockup" begin
         include("test-static_mockup.jl")
     end

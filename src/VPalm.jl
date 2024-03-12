@@ -1,5 +1,8 @@
 module VPalm
 
+# For the random number generator:
+import Random
+
 # For managing the MTG:
 import MultiScaleTreeGraph: Node, NodeMTG
 
@@ -12,6 +15,7 @@ import Meshes
 
 include("IO/parameters_IO.jl")
 include("architecture/mtg_skeleton.jl")
+include("allometries/stem.jl")
 include("static_mockup.jl")
 
 export read_parameters, write_parameters
