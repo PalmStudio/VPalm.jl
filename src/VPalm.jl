@@ -1,7 +1,7 @@
 module VPalm
 
 # For managing the MTG:
-import MultiScaleTreeGraph
+import MultiScaleTreeGraph: Node, NodeMTG
 
 # IO:
 import YAML, OrderedCollections
@@ -11,6 +11,9 @@ import PlantGeom
 import Meshes
 
 include("IO/parameters_IO.jl")
+include("architecture/mtg_skeleton.jl")
+include("static_mockup.jl")
 
 export read_parameters, write_parameters
+export static_mockup
 end
