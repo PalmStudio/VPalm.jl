@@ -10,7 +10,7 @@ import YAML, OrderedCollections
 import PlantGeom
 import Meshes
 
-include("IO/read_param_file.jl")
+include("IO/parameters_IO.jl")
 
-export read_param_file
+export read_parameters, write_parameters
 end
