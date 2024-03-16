@@ -13,7 +13,7 @@ YAML = "ddb6d928-2868-570f-bddf-ab3f9cf99eb6"
 
 [compat]
 Meshes = "0.40"
-MultiScaleTreeGraph = "0.12"
+MultiScaleTreeGraph = "0.12, 0.13"
 OrderedCollections = "1.6"
 PlantGeom = "0.6"
 Random = "<0.0.1, 1"
