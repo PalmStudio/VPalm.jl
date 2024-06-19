@@ -12,10 +12,10 @@ Random = "9a3f8284-a2c9-5f02-9a11-845980a1fd5c"
 YAML = "ddb6d928-2868-570f-bddf-ab3f9cf99eb6"
 
 [compat]
-Meshes = "0.40"
+Meshes = "0.44"
 MultiScaleTreeGraph = "0.14"
 OrderedCollections = "1.6"
-PlantGeom = "0.6"
+PlantGeom = "0.7"
 Random = "<0.0.1, 1"
 YAML = "0.4"
 julia = "1.9"
