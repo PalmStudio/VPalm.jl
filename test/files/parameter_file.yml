@@ -9,12 +9,20 @@ stem_growth_start: 120 # number of leaves emitted when the stem starts to grow i
 stem_height_variation: 0.498234584210195 # Variation in stem height (m, variation will never be > 30% of the stem height)
 stem_bending_mean: 0 # Average stem bending
 stem_bending_sd: 0 # Standard deviation around the mean stem bending
+stem_diameter_max: 0.774751951090419 # Maximum stem diameter (m)
+stem_diameter_slope: 0.00708232181440856 # Slope coefficient for the calculation of the stem diameter
+stem_diameter_inflection: 168.842663939184 # Inflection point for the calculation of the stem diameter
+stem_diameter_variation: 0.0626439084915359 # Variation in stem diameter (m)
+rachis_reference_length: 5.0335230597 # !!!!! Only for first implementation, will be removed in the future. Should be the first value of `rachis_length` vector
+stem_base_shrinking_coefficient: 0.1 # Coefficient used to shrink the stem base
+stem_top_shrinking_coefficient: 0.3 # Coefficient used to shrink the stem top
+nb_leaves_in_sheath: 8 # Number of leaves in the sheath
+max_rank_expansion: 9 # max rank for stem's internode expansion
+apical_internode_length: 0.01 # Length of the final internode, around the apical meristem (m)
+nb_internodes_at_planting: 20 # Estimated number of internodes emitted before planting
+nb_fronds: 5 # Number of fronds, i.e. number of leaves on tree left after pruning
 nbFronds_M: 5
 nbFronds_SD: 0
-stemDiamMax: 77.4751951090419
-stemDiamSlope: 0.00708232181440856
-stemDiamInfl: 168.842663939184
-residStemDiam: 6.26439084915359
 decliCintercept: 10.4704506500867
 decliCslope: 1.32703326824371
 cPointAngle_SDP: 5.32416574941836

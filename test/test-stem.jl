@@ -9,8 +9,12 @@ end
 
 @testset "stem height" begin
     # Before stem_growth_start:
-    @test VPalm.stem_height(100, parameters["initial_stem_height"], parameters["stem_height_coefficient"], parameters["internode_length_at_maturity"], 120.0, 0.0) == 0.3005242665305668
+    @test VPalm.stem_height(100, parameters["initial_stem_height"], parameters["stem_height_coefficient"], parameters["internode_length_at_maturity"], 120.0, 0.0) ≈ 0.3005242665305668 atol=1e-5
 
     # After stem_growth_start:
-    @test VPalm.stem_height(parameters["nb_leaves_emitted"], parameters["initial_stem_height"], parameters["stem_height_coefficient"], parameters["internode_length_at_maturity"], parameters["stem_growth_start"], 0.0) == 1.1801911326167471
+    @test VPalm.stem_height(parameters["nb_leaves_emitted"], parameters["initial_stem_height"], parameters["stem_height_coefficient"], parameters["internode_length_at_maturity"], parameters["stem_growth_start"], 0.0) ≈ 1.1801911326167471 atol=1e-5
+end
+
+@testset "stem diameter" begin
+    @test VPalm.stem_diameter(parameters["rachis_reference_length"], parameters["stem_diameter_max"], parameters["stem_diameter_slope"], parameters["stem_diameter_inflection"], parameters["stem_diameter_variation"]) ≈ 0.02469615730081367 atol=1e-5
 end

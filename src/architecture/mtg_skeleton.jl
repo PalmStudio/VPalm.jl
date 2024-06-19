@@ -1,7 +1,7 @@
 """
-    mtg_skeleton(nb_leaves_emitted)
+    mtg_skeleton(nb_internodes)
 
-Makes an MTG skeleton with `nb_leaves_emitted` leaves, including all intermediate organs: 
+Makes an MTG skeleton with `nb_internodes` leaves, including all intermediate organs:
 
 - Plant: the whole palm
 - Stem: the stem of the plant, *i.e.* the remaining part of the plant after the leaves have been removed
@@ -13,7 +13,7 @@ Note: this skeleton does not include reproductive organs (inflorescences, fruits
 
 # Arguments
 
-- `nb_leaves_emitted`: The number of leaves to emit.
+- `nb_internodes`: The number of leaves to emit.
 
 # Examples
 
@@ -21,7 +21,7 @@ Note: this skeleton does not include reproductive organs (inflorescences, fruits
 mtg_skeleton(3)
 ```
 """
-function mtg_skeleton(nb_leaves_emitted)
+function mtg_skeleton(nb_internodes)
     plant = Node(NodeMTG("/", "Plant", 1, 1))
     #roots = Node(plant, NodeMTG("+", "RootSystem", 1, 2))
     stem = Node(plant, NodeMTG("+", "Stem", 1, 2))
@@ -30,7 +30,7 @@ function mtg_skeleton(nb_leaves_emitted)
     internode = Node(phytomer, NodeMTG("/", "Internode", 1, 4))
     Node(internode, NodeMTG("+", "Leaf", 1, 4))
 
-    for i in 2:nb_leaves_emitted
+    for i in 2:nb_internodes
         phytomer = Node(phytomer, NodeMTG("<", "Phytomer", i, 3))
         internode = Node(phytomer, NodeMTG("/", "Internode", i, 4))
         Node(internode, NodeMTG("+", "Leaf", i, 4))
