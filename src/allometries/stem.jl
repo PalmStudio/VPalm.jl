@@ -28,7 +28,7 @@ Computes the stem height (m) at a given number of leaves emitted.
 - `initial_stem_height`: The initial stem height at planting (m).
 - `stem_height_coefficient`: The coefficient of the exponential function.
 - `internode_length_at_maturity`: The internode length when the plant is mature (m).
-- `stem_growth_start`: The number of leaves emitted at which the stem starts to grow (m). This is because the stem does not grow at the same rate at the beginning of the plant's life, 
+- `stem_growth_start`: The number of leaves emitted at which the stem starts to grow (m). This is because the stem does not grow at the same rate at the beginning of the plant's life,
 because it first grows more in diameter than in height.
 - `stem_height_variation`: The variation of the stem height (m) due to the random draw from a normal distribution.
 
@@ -40,7 +40,7 @@ because it first grows more in diameter than in height.
 
 The stem height is computed using an exponential function for the first `stem_growth_start` leaves emitted, and then a linear function for the remaining leaves emitted.
 
-Note that the stem height can also be subject to some variability using `stem_height_variation`, simulating natural variations that might occur in real-world scenarios, but 
+Note that the stem height can also be subject to some variability using `stem_height_variation`, simulating natural variations that might occur in real-world scenarios, but
 this variability will never make the stem height go below 30% of the intial computed height.
 """
 function stem_height(nb_leaves_emitted, initial_stem_height, stem_height_coefficient, internode_length_at_maturity, stem_growth_start, stem_height_variation; rng=Random.MersenneTwister(1234))
@@ -55,4 +55,42 @@ function stem_height(nb_leaves_emitted, initial_stem_height, stem_height_coeffic
     # Note that we use max(0.3 * stem_height,...) to ensure that the stem height is always at least 30% of the maximum height.
 
     return stem_height
+end
+
+"""
+    stem_diameter(rachis_length_reference, stem_diameter_max, stem_diameter_slope, stem_diameter_inflection, stem_diameter_residual)
+
+Computes the stem diameter (m) at a given rachis length reference (m).
+
+# Arguments
+
+- `rachis_length_reference`: The rachis length reference (m). Taken as the rachis length of the first leaf.
+- `stem_diameter_max`: The maximum stem diameter (m).
+- `stem_diameter_slope`: The slope of the logistic function.
+- `stem_diameter_inflection`: The inflection point of the logistic function.
+- `stem_diameter_residual`: The residual of the stem diameter (m).
+- `stem_diameter_snag`: The diameter estimation due to snags (m).
+
+# Optional arguments
+
+- `rng`: The random number generator.
+
+# Details
+
+The stem diameter is computed using a logistic function, and then some variability is added to simulate natural variations that might occur in real-world scenarios.
+"""
+function stem_diameter(rachis_length_reference, stem_diameter_max, stem_diameter_slope, stem_diameter_inflection, stem_diameter_residual, stem_diameter_snag; rng=Random.MersenneTwister(1234))
+    # Logistic function for stem diameter
+    # !!!!!!!
+    # The rachis length reference is supposed to be the first value of the rachisLengths vector.
+    # Not present yet in the parameters yaml file.
+    # !!!!!!!
+    stem_diameter = stem_diameter_max / (1.0 + exp(-4 * stem_diameter_slope * (rachis_length_reference - stem_diameter_inflection)))
+    # Add some variability to the stem_diameter, simulating natural variations that might occur in real-world scenarios:
+    # Note that we use max(0.3 * stem_diameter,...) to ensure that the stem diamter is always at least 30% of the maximum diameter.
+    stem_diameter = max(0.3 * stem_diameter, stem_diameter + stem_diameter_residual * randn(rng))
+    # Remove extra diameter estimation due to snags
+    stem_diameter = stem_diameter - min(stem_diameter_snag, 0.6 * stem_diameter)
+
+    return stem_diameter
 end

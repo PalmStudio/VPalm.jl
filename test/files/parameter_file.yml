@@ -11,10 +11,11 @@ stem_bending_mean: 0 # Average stem bending
 stem_bending_sd: 0 # Standard deviation around the mean stem bending
 nbFronds_M: 5
 nbFronds_SD: 0
-stemDiamMax: 77.4751951090419
-stemDiamSlope: 0.00708232181440856
-stemDiamInfl: 168.842663939184
-residStemDiam: 6.26439084915359
+stem_diameter_max: 0.774751951090419
+stem_diameter_slope: 0.00708232181440856
+stem_diameter_inflection: 1.68842663939184
+stem_diameter_residual: 0.0626439084915359
+stem_diameter_snag: 0.3
 decliCintercept: 10.4704506500867
 decliCslope: 1.32703326824371
 cPointAngle_SDP: 5.32416574941836
