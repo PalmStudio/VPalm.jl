@@ -1,7 +1,9 @@
 seed: 0 # Seed for the random number generation
 nb_leaves_emitted: 145 # number of leaves emitted since planting
-frondPhyllo_M: 136.666666666667
-frondPhyllo_SD: 0.480071609241788
+nb_internodes_before_planting: 20 # number of internodes before planting (estimation)
+fronds_in_sheath: 8 # number of fronds in the sheath
+phyllotactic_angle_mean: 136.666666666667 # frond phyllotactic angle mean (°)
+phyllotactic_angle_sd: 0.480071609241788 # frond phyllotactic angle standard deviation (°)
 initial_stem_height: 0.05 # stem height at planting (m)
 stem_height_coefficient: 0.0179350549913218 # Coefficient used in the computation of the stem height
 internode_length_at_maturity: 0.03 # Growth in stem height per leaf (~internode length) at adult stage (m)
@@ -11,11 +13,15 @@ stem_bending_mean: 0 # Average stem bending
 stem_bending_sd: 0 # Standard deviation around the mean stem bending
 nbFronds_M: 5
 nbFronds_SD: 0
-stem_diameter_max: 0.774751951090419
-stem_diameter_slope: 0.00708232181440856
-stem_diameter_inflection: 1.68842663939184
-stem_diameter_residual: 0.0626439084915359
-stem_diameter_snag: 0.3
+stem_diameter_max: 0.774751951090419 # Maximum stem diameter (m)
+stem_diameter_slope: 0.00708232181440856 # Slope of the logit function for the stem diameter
+stem_diameter_inflection: 1.68842663939184 # Inflection point of the logit function for the stem diameter
+stem_diameter_residual: 0.0626439084915359 # Residual of the stem diameter
+stem_diameter_snag: 0.3 # Diameter of the stem at which it is considered as a snag (m)
+stem_base_shrinkage: 0.1 # Shrinkage at the stem base. Smaller means sharper.
+stem_top_shrinkage: 0.3 # Shrinkage at the stem top. Smaller means sharper.
+internode_rank_no_expansion: 9 # Rank of the internode at which the expansion stops
+internode_final_length: 0.01 # Length of the internode around the apical meristem (m)
 decliCintercept: 10.4704506500867
 decliCslope: 1.32703326824371
 cPointAngle_SDP: 5.32416574941836
@@ -26,7 +32,8 @@ petioleRachisRatio_SD: 0.0335377038720107
 leafLengthIntercept: 351.197778086018
 leafLengthSlope: 0.058350292901005
 rachisLength_SDP: 15.2515779099962
-rachisBiomass: [2607.60521189879, 2582.76405648725, 2557.92290107571, 2533.08174566417, 2508.24059025263]
+rachis_biomass: [2607.60521189879, 2582.76405648725, 2557.92290107571, 2533.08174566417, 2508.24059025263]
+rachis_length_reference: 5.0335230597
 laminaAngle: 140
 nbMax: 171.716496884477
 nbSlope: 0.00252868691666823
