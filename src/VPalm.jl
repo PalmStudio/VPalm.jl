@@ -21,6 +21,10 @@ include("allometries/internode.jl")
 include("allometries/leaf.jl")
 include("static_mockup.jl")
 
+include("architecture/compute_properties_stem.jl")
+include("architecture/compute_properties_internode.jl")
+include("architecture/compute_properties_leaf.jl")
+
 export read_parameters, write_parameters
 export static_mockup
 end

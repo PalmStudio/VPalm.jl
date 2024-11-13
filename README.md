@@ -10,3 +10,8 @@
 VPalm is an automaton that builds 3d mockups of palm plants from architectural parameters and allometric equations.
 
 The model also integrates a biomechanical model to compute the leaf bending and torsion using the biomass of each leaf.
+
+
+To do:
+
+- [ ] Change the way we compute the height of the internodes, atm it needs to know the total number of internodes to compute the height of each internode, but this changes every time there is a new internode, which is false because we don't have secondary growth for palm trees.
