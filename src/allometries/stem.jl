@@ -14,7 +14,7 @@ Computes the stem bending (°) using an average bending and a standard deviation
 - `rng`: The random number generator.
 """
 function stem_bending(stem_bending_mean, stem_bending_sd; rng=Random.MersenneTwister(1234))
-    return stem_bending_mean + randn(rng) * stem_bending_sd
+    return mean_and_sd(stem_bending_mean, stem_bending_sd; rng=rng)
 end
 
 """
@@ -51,7 +51,7 @@ function stem_height(nb_leaves_emitted, initial_stem_height, stem_height_coeffic
     end
 
     # Add some variability to the stem_height, simulating natural variations that might occur in real-world scenarios:
-    stem_height = max(0.3 * stem_height, stem_height + stem_height_variation * randn(rng))
+    stem_height = max(0.3 * stem_height, mean_and_sd(stem_height, stem_height_variation; rng=rng))
     # Note that we use max(0.3 * stem_height,...) to ensure that the stem height is always at least 30% of the maximum height.
 
     return stem_height
@@ -85,10 +85,10 @@ function stem_diameter(rachis_length_reference, stem_diameter_max, stem_diameter
     # The rachis length reference is supposed to be the first value of the rachisLengths vector.
     # Not present yet in the parameters yaml file.
     # !!!!!!!
-    stem_diameter = stem_diameter_max / (1.0 + exp(-4 * stem_diameter_slope * (rachis_length_reference - stem_diameter_inflection)))
+    stem_diameter = logistic(rachis_length_reference, stem_diameter_max, stem_diameter_slope, stem_diameter_inflection)
     # Add some variability to the stem_diameter, simulating natural variations that might occur in real-world scenarios:
     # Note that we use max(0.3 * stem_diameter,...) to ensure that the stem diamter is always at least 30% of the maximum diameter.
-    stem_diameter = max(0.3 * stem_diameter, stem_diameter + stem_diameter_residual * randn(rng))
+    stem_diameter = max(0.3 * stem_diameter, mean_and_sd(stem_diameter, stem_diameter_residual; rng=rng))
     # Remove extra diameter estimation due to snags
     stem_diameter = stem_diameter - min(stem_diameter_snag, 0.6 * stem_diameter)
 

@@ -13,6 +13,7 @@ import YAML, OrderedCollections
 import PlantGeom
 import Meshes
 
+include("utils.jl")
 include("IO/parameters_IO.jl")
 include("architecture/mtg_skeleton.jl")
 include("allometries/stem.jl")

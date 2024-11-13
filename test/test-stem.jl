@@ -23,3 +23,4 @@ end
     parameters["stem_diameter_residual"],
     parameters["stem_diameter_snag"],
     0.0) == 0.16228677550579518
+end
