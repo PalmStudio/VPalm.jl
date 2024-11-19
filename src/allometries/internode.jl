@@ -5,18 +5,18 @@ Computes the diameter of an internode at a given rank.
 
 # Arguments
 
-- `internode_number`: The number of the internode.
+- `internode_index`: The number of the internode.
 - `nb_internodes`: The total number of internodes.
 - `stem_diameter`: The diameter of the stem at the base.
 - `stem_base_shrinkage`: The shrinkage coefficient at the stem base.
 - `stem_top_shrinkage`: The shrinkage coefficient at the stem top.
 - `leaves_in_sheath`: The number of leaves in the sheath.
 """
-function internode_diameter(internode_number, nb_internodes, stem_diameter, stem_base_shrinkage, stem_top_shrinkage, leaves_in_sheath)
+function internode_diameter(internode_index, nb_internodes, stem_diameter, stem_base_shrinkage, stem_top_shrinkage, leaves_in_sheath)
     # Shrink trunk base
-    diameter = stem_diameter * (1 - exp(-stem_base_shrinkage * internode_number))
+    diameter = stem_diameter * (1 - exp(-stem_base_shrinkage * internode_index))
     # Shrink trunk top
-    frond_rank = nb_internodes - internode_number - leaves_in_sheath
+    frond_rank = nb_internodes - internode_index - leaves_in_sheath
     reduction_factor = max(0, min(1, 1 - exp(-stem_top_shrinkage * frond_rank)))
     return diameter * reduction_factor
 end
@@ -30,16 +30,16 @@ The internode length is computed using a quadratic function.
 
 # Arguments
 
-- `internode_number`: The number of the internode.
-- `stem_height`: The height of the stem.
-- `nb_leaves`: The number of leaves.
+- `internode_index`: The index of the internode.
 - `nb_internodes`: The total number of internodes.
+- `nb_leaves`: The number of leaves (alive).
+- `stem_height`: The height of the stem.
 - `internode_rank_no_expansion`: The rank of the internode that will not expand.
 - `nb_internodes_before_planting`: The number of internodes before planting.
 - `internode_final_length`: The final length of the internode.
 """
 
-function internode_length(internode_number, stem_height, nb_leaves, nb_internodes, internode_rank_no_expansion, nb_internodes_before_planting, internode_final_length)
+function internode_length(internode_index, nb_internodes, nb_leaves, stem_height, internode_rank_no_expansion, nb_internodes_before_planting, internode_final_length)
     rank = nb_leaves - internode_rank_no_expansion # Number of leaves not in expansion
     S = Int(nb_internodes - nb_leaves) # Number of internodes without leaves. Should be equal to 0 at adult stage
     nb_noexp = nb_internodes_before_planting + S + rank # Total number of internodes not in expansion
@@ -54,12 +54,12 @@ function internode_length(internode_number, stem_height, nb_leaves, nb_internode
         )
     b = -2 * c * nb_noexp
     a = l - b * nb_noexp - c * nb_noexp^2
-    if internode_number < nb_internodes_before_planting
-        return coeff * internode_number
-    elseif (internode_number >= nb_internodes_before_planting) & (internode_number < nb_noexp)
+    if internode_index < nb_internodes_before_planting
+        return coeff * internode_index
+    elseif (internode_index >= nb_internodes_before_planting) & (internode_index < nb_noexp)
         return l
     else
-        return a + b * internode_number + c * internode_number^2
+        return a + b * internode_index + c * internode_index^2
     end
 end
 
