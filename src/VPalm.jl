@@ -19,7 +19,6 @@ include("architecture/mtg_skeleton.jl")
 include("allometries/stem.jl")
 include("allometries/internode.jl")
 include("allometries/leaf.jl")
-include("static_mockup.jl")
 
 include("architecture/compute_properties_stem.jl")
 include("architecture/compute_properties_internode.jl")
