@@ -25,13 +25,15 @@ internode_final_length: 0.01 # Length of the internode around the apical meriste
 leaf_max_angle: 90 # Maximum angle of the leaf (°)
 leaf_slope_angle: 0.05 # Slope of the leaf angle for logistic function
 leaf_inflection_angle: 40 # Inflection point of the leaf angle for logistic function
-decliCintercept: 10.4704506500867
-decliCslope: 1.32703326824371
-cPointAngle_SDP: 5.32416574941836
+c_point_decli_intercept: 10.4704506500867 # Intercept of the linear regression of the c-point declination
+c_point_decli_slope: 1.32703326824371 # Slope of the linear regression of the c-point declination
+c_point_angle_SDP: 5.32416574941836 # Standard deviation of the c-point angle
 rachisTwistIniAngle_M: 4
 rachisTwistIniAngle_SDP: 0
-petioleRachisRatio_M: 0.248589010224887
-petioleRachisRatio_SD: 0.0335377038720107
+petiole_rachis_ratio_mean: 0.248589010224887 # Mean ratio of the petiole length to the rachis length
+petiole_rachis_ratio_sd: 0.0335377038720107 # Standard deviation of the ratio of the petiole length to the rachis length
+petiole_nb_segments: 15 # Number of segments in the petiole
+rachis_nb_segments: 100 # Number of segments in the rachis
 leafLengthIntercept: 351.197778086018
 leafLengthSlope: 0.058350292901005
 rachisLength_SDP: 15.2515779099962
@@ -69,11 +71,11 @@ leafletStiffness_SD: 7000
 leafletFrequencyHigh: [0.219712525667351, 0.388663967611336, 0.333333333333333, 0.333333333333333, 0.367647058823529, 0.369158878504673, 0.313084112149533, 0.43801652892562, 0.341176470588235, 0.0688405797101449]
 leafletFrequencyLow: [0.0184804928131417, 0.165991902834008, 0.28310502283105, 0.318627450980392, 0.357843137254902, 0.41588785046729, 0.378504672897196, 0.227272727272727, 0.2, 0.036231884057971]
 nbInflorescences: 0
-frondBaseWidth: 30
-frondCpointWidthIntercept: 0.978257818097089
-frondCpointWidthSlope: 0.0119703143572554
+leaf_base_width: 0.3 # Width of the leaf base (m)
+c_point_width_intercept: 0.978257818097089 # Rachis width at the c-point intercept for linear interpolation
+c_point_width_slope: 0.0119703143572554 # Rachis width at the c-point slope for linear interpolation
 frondtipWidth: 0.3
-frondBaseHeight: 10
+leaf_base_height: 0.1 # Height of the leaf base (m)
 frondTipHeight: 0.5
 heightWidthCRatio: 0.567956652697377
 rachisHeightTappering: -0.934263209088339
