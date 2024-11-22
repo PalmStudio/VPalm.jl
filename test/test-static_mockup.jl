@@ -1,7 +1,7 @@
 file = joinpath(dirname(dirname(pathof(VPalm))), "test", "files", "parameter_file.yml")
+parameters = read_parameters(file)
 
 @testset "static mockup" begin
-    parameters = read_parameters(file)
     mtg = VPalm.mtg_skeleton(parameters["nb_leaves_emitted"])
     mtg[1]
     mockup = static_mockup(parameters)

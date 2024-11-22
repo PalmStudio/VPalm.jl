@@ -1,7 +1,7 @@
 """
     mtg_skeleton(nb_internodes)
 
-Makes an MTG skeleton with `nb_internodes` leaves, including all intermediate organs:
+Makes an MTG skeleton with `nb_leaves_emitted` leaves, including all intermediate organs:
 
 - Plant: the whole palm
 - Stem: the stem of the plant, *i.e.* the remaining part of the plant after the leaves have been removed
@@ -13,7 +13,7 @@ Note: this skeleton does not include reproductive organs (inflorescences, fruits
 
 # Arguments
 
-- `nb_internodes`: The number of leaves to emit.
+- `nb_internodes`: The number of internodes to emit.
 
 # Examples
 
@@ -21,19 +21,33 @@ Note: this skeleton does not include reproductive organs (inflorescences, fruits
 mtg_skeleton(3)
 ```
 """
-function mtg_skeleton(nb_internodes)
+function mtg_skeleton(nb_internodes, parameters; rng=Random.MersenneTwister(parameters["seed"]))
+    nb_internodes = parameters["nb_leaves_emitted"]
+    nb_leaves_alive = mean_and_sd(parameters["nb_leaves_mean"], parameters["nb_leaves_sd"]; rng=rng)
+    nb_leaves_alive = min(nb_leaves_alive, nb_internodes)
+
     plant = Node(NodeMTG("/", "Plant", 1, 1))
     #roots = Node(plant, NodeMTG("+", "RootSystem", 1, 2))
     stem = Node(plant, NodeMTG("+", "Stem", 1, 2))
+    compute_properties_stem!(stem, parameters, rng)
+
+    stem_height = stem[:stem_height]
+    stem_diameter = stem[:stem_diameter]
 
     phytomer = Node(stem, NodeMTG("/", "Phytomer", 1, 3))
     internode = Node(phytomer, NodeMTG("/", "Internode", 1, 4))
-    Node(internode, NodeMTG("+", "Leaf", 1, 4))
+    compute_properties_internode!(internode, 1, nb_internodes, nb_leaves_alive, stem_height, stem_diameter, parameters, rng)
+    leaf = Node(internode, NodeMTG("+", "Leaf", 1, 4))
+    compute_properties_leaf!(leaf, 1, nb_internodes, nb_leaves_alive, parameters, rng)
 
     for i in 2:nb_internodes
         phytomer = Node(phytomer, NodeMTG("<", "Phytomer", i, 3))
         internode = Node(phytomer, NodeMTG("/", "Internode", i, 4))
+        compute_properties_internode!(internode, i, nb_internodes, nb_leaves_alive, stem_height, stem_diameter, parameters, rng)
         Node(internode, NodeMTG("+", "Leaf", i, 4))
+        compute_properties_leaf!(leaf, i, nb_internodes, nb_leaves_alive, parameters, rng)
+
+        # add petiole, rachis, leaflets, ls
     end
 
     return plant
