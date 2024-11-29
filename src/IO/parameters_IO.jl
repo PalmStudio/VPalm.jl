@@ -29,6 +29,8 @@ function read_parameters(file)
     p["internode_rank_no_expansion"] = p["internode_rank_no_expansion"] |> Int
     p["nbInflorescences"] = p["nbInflorescences"] |> Int
 
+    @assert p["nb_leaves_emitted"] > 0
+    @assert p["nb_leaves_mean"] > 0
     return p
 end
 

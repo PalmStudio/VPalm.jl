@@ -39,19 +39,19 @@ The internode length is computed using a quadratic function.
 - `internode_final_length`: The final length of the internode.
 """
 
-function internode_length(internode_number, stem_height, nb_leaves, nb_internodes, internode_rank_no_expansion, nb_internodes_before_planting, internode_final_length)
+function internode_length(internode_number, nb_internodes, nb_leaves, stem_height, internode_rank_no_expansion, nb_internodes_before_planting, internode_final_length)
     rank = nb_leaves - internode_rank_no_expansion # Number of leaves not in expansion
-    S = Int(nb_internodes - nb_leaves) # Number of internodes without leaves. Should be equal to 0 at adult stage
+    S = nb_internodes - nb_leaves # Number of internodes without leaves. Should be equal to 0 at adult stage
     nb_noexp = nb_internodes_before_planting + S + rank # Total number of internodes not in expansion
     nb_total = nb_internodes_before_planting + S + nb_leaves # Total number of internodes
     coeff = 2 * stem_height / (nb_internodes_before_planting * (2 * S + nb_internodes_before_planting + 1))
     l = coeff * nb_internodes_before_planting
     c = (l - internode_final_length) /
         (
-            nb_noexp^2 -
-            nb_total^2 -
-            2* nb_noexp * (rank - nb_leaves)
-        )
+        nb_noexp^2 -
+        nb_total^2 -
+        2 * nb_noexp * (rank - nb_leaves)
+    )
     b = -2 * c * nb_noexp
     a = l - b * nb_noexp - c * nb_noexp^2
     if internode_number < nb_internodes_before_planting
