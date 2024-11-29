@@ -12,6 +12,7 @@ import YAML, OrderedCollections
 # For the 3D:
 import PlantGeom
 import Meshes
+import PlyIO
 
 include("utils.jl")
 include("IO/parameters_IO.jl")
@@ -19,12 +20,14 @@ include("architecture/mtg_skeleton.jl")
 include("allometries/stem.jl")
 include("allometries/internode.jl")
 include("allometries/leaf.jl")
-include("static_mockup.jl")
 
 include("architecture/compute_properties_stem.jl")
 include("architecture/compute_properties_internode.jl")
 include("architecture/compute_properties_leaf.jl")
 
+include("geometry/read_ply.jl")
+include("geometry/snag.jl")
+include("geometry/cylinder.jl")
+
 export read_parameters, write_parameters
-export static_mockup
 end
