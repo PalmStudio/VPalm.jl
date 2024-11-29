@@ -14,10 +14,10 @@ Rotations = "6038ab10-8711-5258-84ad-4b1120ba62dc"
 YAML = "ddb6d928-2868-570f-bddf-ab3f9cf99eb6"
 
 [compat]
-Meshes = "0.44, 0.51, 0.52"
+Meshes = "0.52"
 MultiScaleTreeGraph = "0.14"
 OrderedCollections = "1.6"
-PlantGeom = "0.7"
+PlantGeom = "0.8"
 Random = "<0.0.1, 1"
 Rotations = "1"
 YAML = "0.4"
