@@ -2,11 +2,9 @@ file = joinpath(dirname(dirname(pathof(VPalm))), "test", "files", "parameter_fil
 parameters = read_parameters(file)
 
 @testset "static mockup" begin
-    mtg = VPalm.mtg_skeleton(parameters["nb_leaves_emitted"])
-    mtg[1]
-    mockup = static_mockup(parameters)
+    mtg = VPalm.mtg_skeleton(parameters)
+    @test length(mtg) == parameters["nb_leaves_emitted"] * 3 + 2 # nb leaves emitted * 3 (phytomer + internode + leaf) + 2 (stem + plant)
     # Check the length of the mockup: nb leaves emitted * 3 (phytomer + internode + leaf) + 2 (stem + plant)
-    @test typeof(mockup) == MultiScaleTreeGraph.Node{MultiScaleTreeGraph.NodeMTG,Dict{Symbol,Any}}
-    @test length(mockup) == (parameters["nb_leaves_emitted"]) * 3 + 2
-    @test mockup[1][:stem_bending] == 0.0
+    @test typeof(mtg) == MultiScaleTreeGraph.Node{MultiScaleTreeGraph.NodeMTG,Dict{Symbol,Any}}
+    @test mtg[1][:stem_bending] == 0.0
 end
