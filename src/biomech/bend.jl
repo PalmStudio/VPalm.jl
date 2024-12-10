@@ -47,6 +47,7 @@ function bend(data, elastic_modulus, shear_modulus, step=0.02, points=100, itera
 
     # (Re-)computing the deformation:
     df_bend = bend(df, elastic_modulus=2000, shear_modulus=400, step=0.02, points=100, iterations=15, verbose=true)
+    ```
     """
 
     vecRotFlex = zeros(3, 1)

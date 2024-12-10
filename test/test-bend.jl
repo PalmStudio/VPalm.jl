@@ -1,5 +1,5 @@
 file = joinpath(dirname(dirname(pathof(VPalm))), "test", "files", "6_EW01.22_17_kanan.txt")
-df = read_mat(filepath)
+df = read_mat(file)
 dfu = unbend(df)
 
 pas= 0.02 # in meter. -> Length of the segments that discretize the object.

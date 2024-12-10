@@ -26,7 +26,7 @@ Read the matrix from field measurements.
 ```julia
 filepath = joinpath(dirname(@__FILE__), "extdata", "6_EW01.22_17_kanan.txt")
 df = read_mat(filepath)
-
+```
 """
 
 function read_mat(path::String)::DataFrame
