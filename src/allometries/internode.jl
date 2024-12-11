@@ -26,39 +26,72 @@ end
     Internode length model
 
 Computes the length of an internode at a given rank. The internode length is computed using a quadratic function.
-The objective is to have a internodes that are short and growing for the first emitted leaves (before `nb_internodes_before_planting`), 
+The objective is to have a internodes that are short and growing for the first emitted leaves (before `nb_internodes_before_planting`),
 and then getting to a stable "constant" height, and at the end for the youngest leaves, having nodes currently growing (smaller).
+
+The internode length is computed as follows :
+  Internode length
+    ^
+l   |      _____________________
+    |    /|                     |\
+    |   / |                     | \
+l_0 |  /  |                     |  \
+    |-|---|---------------------|---|----> Internode number
+      1   N                   N +   N + Nbl
+       						  Nbl -
+                              R
+where :
+    - l_0 is `internode_min_height` (m), the minimum height of the internode.
+    - l is `internode_heigth_final` (m), the maximum height of the internode.`
+    - N is `nb_internodes_before_planting`, the number of internodes before planting.
+    - R is `internode_rank_no_expansion`, the number of internodes not in expansion.
+    - Nbl is the number of leaves emitted since planting.
+with the conditions that :
+    - the sum of the areas of the first triangle, the rectangle and the last triangle is equal to `stem_height`.
+    - if the equation of the first line is `a * x + b`:
+        - `a = (l - l_0) / (N - 1)`
+        - `b = l_0 - a`
+        - the area of the first triangle is `a * N * (N + 1) / 2 + b * N`
+                and after development : `l * N/2 + l_0 * N/2`
+    - the area of the rectangle (between N + 1 and N + Nbl - R - 1) is `(Nbl - R - 1) * l`
+    - if the equation of the last line is `c * x + d`, then:
+        - `c = (l_0 - l) / R`
+        - `d = l_0 - c * (Nbl + N)`
+        - the area of the last triangle is `(R + 1) * (c * (2*N + 2*Nbl - R) / 2 + d)`
+                and after development : `l * ((R + 1)/ 2) + l_0 * (-(R + 1) / 2 + R + 1)`
+reminder:
+    - the sum of integers from m to n is `n * (n + 1) / 2 - m * (m - 1) / 2`
+    - the sum of cx + d from m to n is `c * (n * (n + 1) / 2 - m * (m - 1) / 2) + d * (n - m + 1)`
+                                    or `(n - m + 1) * (c * (n + m) / 2 + d)`
 
 # Arguments
 
-- `internode_number`: The number of the internode.
-- `stem_height`: The height of the stem.
-- `nb_leaves`: The number of leaves.
-- `nb_internodes`: The total number of internodes.
-- `internode_rank_no_expansion`: The rank of the internode that will not expand.
-- `nb_internodes_before_planting`: The number of internodes before planting.
-- `internode_final_length`: The final length of the internode.
+- `i`/ `internode_number`: The number of the internode.
+- `Nbl` / `nb_internodes`: The total number of internodes == number of leaves emitted since planting.
+- `sh` / `stem_height`: The height of the stem.
+- `R` / `internode_rank_no_expansion`: The rank of the internode that will not expand.
+- `N` / `nb_internodes_before_planting`: The number of internodes before planting.
+- `l_0` / `internode_min_height`: The minimal length of the internode.
 """
-function internode_length(internode_number, nb_internodes, stem_height, internode_rank_no_expansion, nb_internodes_before_planting, internode_min_height)
+function internode_length(i, Nbl, sh, R, N, l_0)
 
-    # Computing the height of the internode considering all heights possible (between the first and the nb_internodes_before_planting internodes that are more and more tall, then constant, and then decreasing again from internode_rank_no_expansion until the youngest leaves)
-    internode_heigth_final = (stem_height - internode_min_height * ((nb_internodes_before_planting * (nb_internodes_before_planting + 1)) / (2 * (1 - nb_internodes_before_planting)) + nb_internodes_before_planting - nb_internodes_before_planting / (1 - nb_internodes_before_planting) + (internode_rank_no_expansion + 1) / 2 + internode_rank_no_expansion - (nb_internodes + nb_internodes_before_planting) / internode_rank_no_expansion)) /
-                             ((nb_internodes_before_planting * (nb_internodes_before_planting + 1)) / ((nb_internodes_before_planting - 1) * 2) + nb_internodes_before_planting / (1 - nb_internodes_before_planting) + nb_internodes - internode_rank_no_expansion - 2 - (internode_rank_no_expansion + 1) / 2 - (nb_internodes + nb_internodes_before_planting) / internode_rank_no_expansion)
+    # Computation of the internode final / max length so that the sum of all the internodes length is equal to the stem height
+    l = (sh - l_0 * (N/2 - (R + 1) / 2 + R + 1)) / (N/2 + Nbl - R - 1 + (R + 1)/ 2)
 
-    a = (internode_min_height - internode_heigth_final) / (1 - nb_internodes_before_planting)
-    b = internode_min_height - a
+    # Coefficients for the computation of internode length for the first N internodes
+    a = (l - l_0) / (N - 1)
+    b = l_0 - a
 
-    c = (internode_min_height - internode_heigth_final) / internode_rank_no_expansion
-    # d = internode_min_height - c * (nb_internodes + nb_internodes_before_planting)
-    # d = internode_heigth_final - (nb_internodes + nb_internodes_before_planting - internode_rank_no_expansion) * c
-    d = internode_heigth_final - (nb_internodes - internode_rank_no_expansion) * c
+    # Coefficients for the computation of internode length for the last R internodes
+    c = (l_0 - l) / R
+    d = l_0 - (Nbl + N) * c
 
-    if internode_number < nb_internodes_before_planting
-        length = a * internode_number + b
-    elseif internode_number < (nb_internodes - internode_rank_no_expansion)
-        length = internode_heigth_final
+    if i <= N
+        length = a * i + b
+    elseif i < (N + Nbl - R)
+        length = l
     else
-        length = c * internode_number + d
+        length = c * i + d
     end
 
     return length
