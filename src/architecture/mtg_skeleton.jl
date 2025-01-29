@@ -24,7 +24,7 @@ mtg_skeleton(parameters)
 ```
 """
 function mtg_skeleton(parameters; rng=Random.MersenneTwister(parameters["seed"]))
-    nb_internodes = parameters["nb_leaves_emitted"]
+    nb_internodes = parameters["nb_leaves_emitted"] + parameters["nb_internodes_before_planting"] # The number of internodes emitted since the seed
     nb_leaves_alive = floor(Int, mean_and_sd(parameters["nb_leaves_mean"], parameters["nb_leaves_sd"]; rng=rng))
     nb_leaves_alive = min(nb_leaves_alive, nb_internodes)
 
@@ -53,6 +53,14 @@ function mtg_skeleton(parameters; rng=Random.MersenneTwister(parameters["seed"])
 
         # add petiole, rachis, leaflets, ls
     end
+
+    # Compute the geometry of the plant
+    # Note: we could do this at the same time than the architecture, but it is separated here for clarity. The downside is that we traverse the mtg twice, but it is pretty cheap.
+    #! update this to latest PlantGeom version (I think?)
+    refmesh_internode = PlantGeom.RefMesh("Internode", VPalm.cylinder())
+    refmesh_snag = PlantGeom.RefMesh("Snag", VPalm.snag(0.05, 1.0, 1.0))
+
+    add_geometry!(plant, refmesh_internode, refmesh_snag)
 
     return plant
 end
