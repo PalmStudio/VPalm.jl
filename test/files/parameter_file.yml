@@ -1,5 +1,5 @@
 seed: 0 # Seed for the random number generation
-nb_leaves_emitted: 120 # number of leaves emitted since planting
+nb_leaves_emitted: 145 # number of leaves emitted since planting
 nb_leaves_mean : 45 # mean number of living leaves on tree
 nb_leaves_sd : 0 # standard deviation of the number of leaves on tree
 nb_internodes_before_planting: 20 # number of internodes before planting (estimation)
@@ -9,7 +9,7 @@ phyllotactic_angle_sd: 0.480071609241788 # frond phyllotactic angle standard dev
 initial_stem_height: 0.05 # stem height at planting (m)
 stem_height_coefficient: 0.0179350549913218 # Coefficient used in the computation of the stem height
 internode_length_at_maturity: 0.03 # Growth in stem height per leaf (~internode length) at adult stage (m)
-stem_growth_start: 20 # number of leaves emitted when the stem starts to grow in height (n leaves)
+stem_growth_start: 120 # number of leaves emitted when the stem starts to grow in height (n leaves)
 stem_height_variation: 0.498234584210195 # Variation in stem height (m, variation will never be > 30% of the stem height)
 stem_bending_mean: 0 # Average stem bending
 stem_bending_sd: 0 # Standard deviation around the mean stem bending
