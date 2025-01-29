@@ -21,6 +21,6 @@ end
         parameters["stem_diameter_slope"],
         parameters["stem_diameter_inflection"],
         parameters["stem_diameter_residual"],
-        parameters["stem_diameter_snag"],
-        0.0) == 0.16228677550579518
+        parameters["stem_diameter_snag"]
+    ) == 0.14194127580255483
 end
