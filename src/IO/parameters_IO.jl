@@ -19,7 +19,19 @@ read_parameters(file)
 ```
 """
 function read_parameters(file)
-    YAML.load_file(file; dicttype=OrderedCollections.OrderedDict{String,Any})
+    p = YAML.load_file(file; dicttype=OrderedCollections.OrderedDict{String,Any})
+    p["seed"] = p["seed"] |> Int
+    p["nb_leaves_emitted"] = p["nb_leaves_emitted"] |> Int
+    p["nb_leaves_mean"] = p["nb_leaves_mean"] |> Int
+    p["nb_leaves_sd"] = p["nb_leaves_sd"] |> Int
+    p["stem_growth_start"] = p["stem_growth_start"] |> Int
+    p["nb_leaves_in_sheath"] = p["nb_leaves_in_sheath"] |> Int
+    p["internode_rank_no_expansion"] = p["internode_rank_no_expansion"] |> Int
+    p["nbInflorescences"] = p["nbInflorescences"] |> Int
+
+    @assert p["nb_leaves_emitted"] > 0
+    @assert p["nb_leaves_mean"] > 0
+    return p
 end
 
 

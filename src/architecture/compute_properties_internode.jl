@@ -7,16 +7,18 @@ function compute_properties_internode!(node, index, nb_internodes, nb_leaves_ali
         parameters["stem_top_shrinkage"],
         parameters["nb_leaves_in_sheath"]
     )
-    node[:Length] = VPalm.internode_length(
+
+    node[:Length] = internode_length(
         index,
         nb_internodes,
-        nb_leaves_alive,
         stem_height,
         parameters["internode_rank_no_expansion"],
         parameters["nb_internodes_before_planting"],
-        parameters["internode_final_length"]
+        0.001
+        # internode_min_height
     )
-    node[:rank] = nb_internodes - index
+
+    node[:rank] = nb_internodes - index + 1
     node[:Orthotropy] = 0.05
     node[:XEuler] = VPalm.phyllotactic_angle(
         parameters["phyllotactic_angle_mean"],

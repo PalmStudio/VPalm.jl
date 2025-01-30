@@ -1,5 +1,5 @@
 """
-    mtg_skeleton(nb_leaves_emitted)
+    mtg_skeleton(nb_internodes)
 
 Makes an MTG skeleton with `nb_leaves_emitted` leaves, including all intermediate organs:
 
@@ -18,15 +18,19 @@ Note: this skeleton does not include reproductive organs (inflorescences, fruits
 # Examples
 
 ```julia
-mtg_skeleton(3)
+file = joinpath(dirname(dirname(pathof(VPalm))), "test", "files", "parameter_file.yml")
+parameters = read_parameters(file)
+mtg_skeleton(parameters)
 ```
 """
-function mtg_skeleton(nb_internodes, parameters; rng=Random.MersenneTwister(parameters["seed"]))
-    nb_internodes = parameters["nb_leaves_emitted"]
-    nb_leaves_alive = mean_and_sd(parameters["nb_leaves_mean"], parameters["nb_leaves_sd"]; rng=rng)
+function mtg_skeleton(parameters; rng=Random.MersenneTwister(parameters["seed"]))
+    nb_internodes = parameters["nb_leaves_emitted"] + parameters["nb_internodes_before_planting"] # The number of internodes emitted since the seed
+    nb_leaves_alive = floor(Int, mean_and_sd(parameters["nb_leaves_mean"], parameters["nb_leaves_sd"]; rng=rng))
     nb_leaves_alive = min(nb_leaves_alive, nb_internodes)
     nb_petiole_segments = parameters["petiole_nb_segments"]
     nb_rachis_segments = parameters["rachis_nb_segments"]
+
+    @assert length(parameters["rachis_biomass"]) >= nb_leaves_alive "The number of rachis biomass values should be greater than or equal to the number of leaves alive ($nb_leaves_alive)."
 
     # Plant / Scale 1
     plant = Node(NodeMTG("/", "Plant", 1, 1))
@@ -69,6 +73,14 @@ function mtg_skeleton(nb_internodes, parameters; rng=Random.MersenneTwister(para
 
         # add petiole, rachis, leaflets, ls
     end
+
+    # Compute the geometry of the plant
+    # Note: we could do this at the same time than the architecture, but it is separated here for clarity. The downside is that we traverse the mtg twice, but it is pretty cheap.
+    #! update this to latest PlantGeom version (I think?)
+    refmesh_internode = PlantGeom.RefMesh("Internode", VPalm.cylinder())
+    refmesh_snag = PlantGeom.RefMesh("Snag", VPalm.snag(0.05, 1.0, 1.0))
+
+    add_geometry!(plant, refmesh_internode, refmesh_snag)
 
     return plant
 end
