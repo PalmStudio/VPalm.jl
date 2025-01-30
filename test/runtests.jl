@@ -8,8 +8,12 @@ using MultiScaleTreeGraph
     @testset "Code quality (Aqua.jl)" begin
         Aqua.test_all(VPalm, ambiguities=false)
     end
-    @testset "Code linting (JET.jl)" begin
-        JET.test_package(VPalm; target_defined_modules=true)
+
+    if VERSION >= v"1.10"
+        # See this issue: https://github.com/aviatesk/JET.jl/issues/665
+        @testset "Code linting (JET.jl)" begin
+            JET.test_package(VPalm; target_defined_modules=true)
+        end
     end
 
     @testset "Parameters IO" begin
