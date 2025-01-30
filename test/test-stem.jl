@@ -17,10 +17,10 @@ end
 
 @testset "stem diameter" begin
     @test VPalm.stem_diameter(5.0335230597,
-    parameters["stem_diameter_max"],
-    parameters["stem_diameter_slope"],
-    parameters["stem_diameter_inflection"],
-    parameters["stem_diameter_residual"],
-    parameters["stem_diameter_snag"],
-    0.0) == 0.16228677550579518
+        parameters["stem_diameter_max"],
+        parameters["stem_diameter_slope"],
+        parameters["stem_diameter_inflection"],
+        0.0, # To avoid randomness
+        parameters["stem_diameter_snag"]
+    ) == 0.16228677550579518
 end
