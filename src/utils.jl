@@ -38,35 +38,6 @@ end
 
 """
 
-    normal_random_draw(rng=Random.MersenneTwister(1234))
-
-Draw a random value from a normal distribution with a mean of 0 and a standard deviation of 1.
-
-# Optional arguments
-
-- `rng`: The random number generator.
-"""
-
-function normal_random_draw(rng=Random.MersenneTwister(1234))
-    x = 0.
-    y = 0.
-    z = 0.
-    while true
-        x = (randn(rng) * 2) - 1
-        y = (randn(rng) * 2) - 1
-        z = x^2 + y^2
-        if z < 1
-            break
-        end
-    end
-
-    return x * sqrt(-2 * log(z) / z)
-
-end
-
-
-"""
-
     normal_deviation_draw(sd, rng=Random.MersenneTwister(1234))
 
 Draw a random value from a normal distribution with a given standard deviation.
