@@ -13,9 +13,8 @@ Compute a logistic function.
 """
 
 function logistic(x, max, slope, inflection)
-    return max / (1. + exp(-4*slope * (x - inflection)))
+    return max / (1. + exp(-4 * slope * (x - inflection)))
 end
-
 
 """
 
@@ -87,7 +86,6 @@ end
 
 
 """
-
     linear(x, intercept, slope)
 
 Compute a linear function at given `x` value.
@@ -101,4 +99,24 @@ Compute a linear function at given `x` value.
 
 function linear(x, intercept, slope)
     return intercept + slope * x
+end
+
+
+"""
+    exponetial(x, a, b)
+
+Compute an exponential function at given `x` value.
+
+# Arguments
+
+- `x`: The input value.
+- `a`: The coefficient `a` of the exponential function.
+- `b`: The coefficient `b` of the exponential function.
+
+# Note
+
+The exponential function is defined as `a * exp(b * x)`.
+"""
+function exponetial(x, a, b)
+    return a * exp(b * x)
 end
