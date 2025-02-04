@@ -52,7 +52,7 @@ Draw a random value from a normal distribution with a given standard deviation.
 """
 
 function normal_deviation_draw(sd, rng=Random.MersenneTwister(1234))
-    return sd * normal_random_draw(rng)
+    return sd * rand(rng)
 end
 
 
