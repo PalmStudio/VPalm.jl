@@ -28,7 +28,6 @@ function mtg_skeleton(parameters; rng=Random.MersenneTwister(parameters["seed"])
     nb_leaves_alive = floor(Int, mean_and_sd(parameters["nb_leaves_mean"], parameters["nb_leaves_sd"]; rng=rng))
     nb_leaves_alive = min(nb_leaves_alive, nb_internodes)
     nb_petiole_segments = parameters["petiole_nb_segments"]
-    nb_rachis_segments = parameters["rachis_nb_segments"]
 
     @assert length(parameters["rachis_biomass"]) >= nb_leaves_alive "The number of rachis biomass values should be greater than or equal to the number of leaves alive ($nb_leaves_alive)."
 
@@ -62,13 +61,10 @@ function mtg_skeleton(parameters; rng=Random.MersenneTwister(parameters["seed"])
         # Loop on present leaves
         if leaf[:is_alive]
             # Petiole / Scale 5
-            petiole = Node(leaf, NodeMTG("/", "Petiole", i, 5))
-            compute_properties_petiole!(leaf, petiole, i, parameters["petiole_rachis_ratio_mean"], parameters["petiole_rachis_ratio_sd"], rng)
-            for p in 2:nb_petiole_segments
-                petiole = Node(petiole, NodeMTG("<", "Petiole", p, 5))
-                compute_properties_petiole!(leaf, petiole, i, parameters["petiole_rachis_ratio_mean"], parameters["petiole_rachis_ratio_sd"], rng)
-            end
-            rachis = Node(petiole, NodeMTG("<", "Rachis", i, 5))
+
+            petiole_node = petiole(leaf, i, 5, leaf.rachis_length, leaf.zenithal_insertion_angle, leaf.zenithal_cpoint_angle, parameters; rng=rng)
+
+            rachis = Node(petiole_node, NodeMTG("<", "Rachis", i, 5))
         end
 
         # add petiole, rachis, leaflets, ls
@@ -76,7 +72,6 @@ function mtg_skeleton(parameters; rng=Random.MersenneTwister(parameters["seed"])
 
     # Compute the geometry of the plant
     # Note: we could do this at the same time than the architecture, but it is separated here for clarity. The downside is that we traverse the mtg twice, but it is pretty cheap.
-    #! update this to latest PlantGeom version (I think?)
     refmesh_internode = PlantGeom.RefMesh("Internode", VPalm.cylinder())
     refmesh_snag = PlantGeom.RefMesh("Snag", VPalm.snag(0.05, 1.0, 1.0))
 

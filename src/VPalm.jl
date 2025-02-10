@@ -31,12 +31,14 @@ include("allometries/leaf.jl")
 include("architecture/compute_properties_stem.jl")
 include("architecture/compute_properties_internode.jl")
 include("architecture/compute_properties_leaf.jl")
+include("architecture/compute_properties_petiole.jl")
 
 # Geometry:
 include("geometry/read_ply.jl")
 include("geometry/snag.jl")
 include("geometry/cylinder.jl")
 include("geometry/add_geometry.jl")
+include("geometry/petiole.jl")
 
 export read_parameters, write_parameters
 end

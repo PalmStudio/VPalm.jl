@@ -1,49 +1,132 @@
+"""
+    compute_properties_petiole!(
+        leaf_node,
+        petiole_node,
+        index,
+        petiole_rachis_ratio_mean,
+        petiole_rachis_ratio_sd,
+        petiole_nb_sections;
+        rng
+    )
+
+"""
 function compute_properties_petiole!(
-    leaf_node,
     petiole_node,
-    index,
+    insertion_angle, rachis_length, zenithal_cpoint_angle,
+    width_base, height_base, cpoint_width_intercept,
+    cpoint_width_slope, cpoint_height_width_ratio,
     petiole_rachis_ratio_mean,
-    petiole_rachis_ratio_sd,
-    petiole_nb_sections,
-    rng)
+    petiole_rachis_ratio_sd, nb_sections;
+    rng=Random.MersenneTwister(1)
+)
 
-    leaf_node[:petioleLength] = mean_and_sd(petiole_rachis_ratio_mean, petiole_rachis_ratio_sd; rng=rng)
-    petiole_node[:DeviationAngle] = normalDeviationDraw(5, rng)
+    petiole = petiole_allometries(petiole_rachis_ratio_mean, petiole_rachis_ratio_sd, rachis_length, width_base, height_base, cpoint_width_intercept, cpoint_width_slope, cpoint_height_width_ratio, rng)
 
-    width_c_point = width_c_point(leaf_node[:rachis_length], c_point_width_intercept, c_point_width_slope)
-    leaf_node[:c_point_angle] = c_point_angle(leaf_rank, c_point_decli_intercept, c_point_decli_slope, c_point_angle_SDP)
+    petiole_node[:length] = petiole.length
+    petiole_node[:azimuthal_angle] = petiole.azimuthal_angle
+    petiole_node[:width_base] = petiole.width_base
+    petiole_node[:height_base] = petiole.height_base
+    petiole_node[:width_cpoint] = petiole.width_cpoint
+    petiole_node[:height_cpoint] = petiole.height_cpoint
+    petiole_node[:insertion_angle] = insertion_angle
+    petiole_node[:zenithal_cpoint_angle] = zenithal_cpoint_angle
+    petiole_node[:azimuthal_angle] = petiole.azimuthal_angle
 
-    petiole_segment_length = leaf_node[:petioleLength] / petiole_nb_sections
-    petiole_node[:width] = petiole_width(width_c_point, petiole_section, petiole_nb_sections, leaf_base_width)
-    petiole_node[:height] = petiole_height(height_c_point, petiole_section, petiole_nb_sections, leaf_base_height)
-    petiole_node[:length] = petiole_segment_length
+    petiole_node[:section_length] = petiole.length / nb_sections
+    petiole_node[:section_insertion_angle] = (zenithal_cpoint_angle - insertion_angle) / nb_sections
 
     return nothing
 end
 
 
+"""
+    compute_properties_petiole_section(petiole_node, section_node, index, nb_sections)
 
 
+"""
+function compute_properties_petiole_section(petiole_node, section_node, index, nb_sections)
+    petiole_section = properties_petiole_section(
+        index, nb_sections, petiole_node.width_base, petiole_node.height_base,
+        petiole_node.width_cpoint, petiole_node.height_cpoint, petiole_node.section_length,
+        petiole_node.insertion_angle, petiole_node.section_insertion_angle,
+        petiole_node.azimuthal_angle
+    )
 
+    section_node.width = petiole_section.width
+    section_node.height = petiole_section.height
+    section_node.length = petiole_section.length
+    section_node.zenithal_angle = petiole_section.zenithal_angle
+    section_node.azimuthal_angle = petiole_section.width
+end
 
-function width_c_point(rachis_length, c_point_width_intercept, c_point_width_slope)
-    return linear(rachis_length, c_point_width_intercept, c_point_width_slope)
+"""
+    properties_petiole_section(
+        index, nb_sections, width_base, height_base,
+        width_cpoint, height_cpoint, petiole_section_length,
+        petiole_insertion_angle, petiole_section_insertion_angle,
+        azimuthal_angle
+    )
+
+Compute the properties of each section of the petiole.
+
+# Arguments
+
+- `index`: The index of the section within all sections (1-nb_sections)
+- `nb_sections`: The number of sections discretizing the petiole
+- `width_base`: Width of the petiole at its base
+- `heigth_base`: Height of the petiole at its base
+- `width_cpoint`: Width of the petiole at the C point (tip of the petiole, *i.e.* transition point to rachis)
+- `height_cpoint`: Height at the C point
+- `petiole_section_length`: The length of the petiole sections
+- `petiole_insertion_angle`: Zenithal angle of insertion between the petiole and the stipe (local angle, relative to the stipe)
+- `petiole_section_insertion_angle`: The zenithal angle of insertion between the petioles sections
+- `azimuthal_angle`: Azimuthal angle at the insertion
+
+# Returns 
+
+A vector of dimensions for each section, given as a named tuple:
+
+- width: width of the section
+- height: height of the section
+- length: length of the section
+- zenithal_angle_local: zenithal angle of the section
+- azimuthal_angle_local: azimuthal angle of the section
+"""
+function properties_petiole_section(
+    index, nb_sections, width_base, height_base,
+    width_cpoint, height_cpoint, petiole_section_length,
+    petiole_insertion_angle, petiole_section_insertion_angle,
+    azimuthal_angle
+)
+    relative_position = (index - 1) / nb_sections #! Check that we still need the -1 here
+
+    if index == 1
+        zenithal_angle = petiole_insertion_angle
+    else
+        zenithal_angle = petiole_section_insertion_angle
+    end
+
+    if index == 2
+        deviation_angle = azimuthal_angle
+    else
+        deviation_angle = 0.0
+    end
+
+    section_width = petiole_width(relative_position, width_cpoint, width_base)
+    section_height = petiole_height(relative_position, height_cpoint, height_base)
+
+    return (; width=section_width, height=section_height, length=petiole_section_length, zenithal_angle=zenithal_angle, azimuthal_angle=deviation_angle)
 end
 
 
-function c_point_angle(leaf_rank, c_point_decli_intercept, c_point_decli_slope, c_point_angle_sdp)
-    angle = linear(leaf_rank, c_point_decli_intercept, c_point_decli_slope)
-    angle += normal_deviation_draw(c_point_angle_sdp)
-    angle = abs(angle)
-    return leaf_rank < 3 ? 0.5 * angle : angle
-end
-
-
-function petiole_width(width_c_point, petiole_section, nb_petiole_sections, leaf_base_width)
-    return leaf_base_width - (leaf_base_width - width_c_point) * (petiole_section / nb_petiole_sections)^0.17
-end
-
-
-function petiole_height(height_c_point, petiole_section, nb_petiole_sections, leaf_base_height)
-    return leaf_base_height - (leaf_base_height - height_c_point) * (petiole_section / nb_petiole_sections)^0.5
+function petiole_allometries(petiole_rachis_ratio_mean, petiole_rachis_ratio_sd, rachis_length, width_base, height_base, cpoint_width_intercept, cpoint_width_slope, cpoint_height_width_ratio, rng)
+    petiole_rachis_length_ratio = mean_and_sd(petiole_rachis_ratio_mean, petiole_rachis_ratio_sd; rng=rng)
+    petiole_length = petiole_rachis_length_ratio * rachis_length
+    insertion_deviation_angle = normal_deviation_draw(5.0, rng)
+    width_cpoint = width_at_cpoint(rachis_length, cpoint_width_intercept, cpoint_width_slope)
+    height_cpoint = cpoint_height_width_ratio * width_cpoint
+    #! These should be allometries relative to leaf length, because tiny leaves don't have big bases:
+    # width_base = width_base 
+    # height_base = height_base
+    return (length=petiole_length, azimuthal_angle=insertion_deviation_angle, width_base=width_base, height_base=height_base, width_cpoint=width_cpoint, height_cpoint=height_cpoint)
 end

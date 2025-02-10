@@ -8,13 +8,36 @@ function compute_properties_leaf!(node, index, nb_internodes, nb_leaves_alive, p
 
     if is_alive
         node[:rachis_freshweight] = parameters["rachis_biomass"][leaf_rank]
-        node[:YInsertionAngle] = VPalm.leaf_insertion_angle(
+        node[:zenithal_insertion_angle] = VPalm.leaf_insertion_angle(
             leaf_rank,
             parameters["leaf_max_angle"],
             parameters["leaf_slope_angle"],
             parameters["leaf_inflection_angle"]
         )
+
+        #! we miss the allometry converting biomass to length here ! Note that we need that for the rachis only, excluding the petiole (is it right though?)
+        node[:rachis_length] = rachis_expansion(leaf_rank, node[:rachis_final_length])
+        node[:petiole_deviation_angle] = normal_deviation_draw(5, rng) #! make this a parameter!!!
+        node[:zenithal_cpoint_angle] = c_point_angle(leaf_rank, parameters["c_point_decli_intercept"], parameters["c_point_decli_slope"], parameters["c_point_angle_SDP"])
+
     end
 
     return nothing
+end
+
+
+"""
+    rachis_expansion(leaf_rank, rachis_final_length)
+
+    Simple function to compute the rachis expansion (using an expansion factor)
+        based on the leaf rank.
+
+    # Arguments
+
+    - `leaf_rank`: The rank of the leaf.
+    - `rachis_final_length`: The final length of the rachis.
+"""
+function rachis_expansion(leaf_rank, rachis_final_length)
+    expansion_factor = leaf_rank < 2 ? 0.7 : 1.0
+    return rachis_final_length * expansion_factor
 end

@@ -77,7 +77,7 @@ c_point_width_slope: 0.0119703143572554 # Rachis width at the c-point slope for 
 frondtipWidth: 0.3
 leaf_base_height: 0.1 # Height of the leaf base (m)
 frondTipHeight: 0.5
-heightWidthCRatio: 0.567956652697377
+cpoint_height_width_ratio: 0.567956652697377 # Height to width ratio at the C point
 rachisHeightTappering: -0.934263209088339
 leafletRadialHighA0Sup: 26.2985456005134
 leafletRadialHighAmaxSup: 60.4946916164452
