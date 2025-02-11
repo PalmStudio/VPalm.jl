@@ -1,12 +1,12 @@
 """
     compute_properties_petiole!(
-        leaf_node,
         petiole_node,
-        index,
+        insertion_angle, rachis_length, zenithal_cpoint_angle,
+        width_base, height_base, cpoint_width_intercept,
+        cpoint_width_slope, cpoint_height_width_ratio,
         petiole_rachis_ratio_mean,
-        petiole_rachis_ratio_sd,
-        petiole_nb_sections;
-        rng
+        petiole_rachis_ratio_sd, nb_sections;
+        rng=Random.MersenneTwister(1)
     )
 
 """
@@ -40,11 +40,11 @@ end
 
 
 """
-    compute_properties_petiole_section(petiole_node, section_node, index, nb_sections)
+    compute_properties_petiole_section!(petiole_node, section_node, index, nb_sections)
 
 
 """
-function compute_properties_petiole_section(petiole_node, section_node, index, nb_sections)
+function compute_properties_petiole_section!(petiole_node, section_node, index, nb_sections)
     petiole_section = properties_petiole_section(
         index, nb_sections, petiole_node.width_base, petiole_node.height_base,
         petiole_node.width_cpoint, petiole_node.height_cpoint, petiole_node.section_length,
@@ -116,17 +116,4 @@ function properties_petiole_section(
     section_height = petiole_height(relative_position, height_cpoint, height_base)
 
     return (; width=section_width, height=section_height, length=petiole_section_length, zenithal_angle=zenithal_angle, azimuthal_angle=deviation_angle)
-end
-
-
-function petiole_allometries(petiole_rachis_ratio_mean, petiole_rachis_ratio_sd, rachis_length, width_base, height_base, cpoint_width_intercept, cpoint_width_slope, cpoint_height_width_ratio, rng)
-    petiole_rachis_length_ratio = mean_and_sd(petiole_rachis_ratio_mean, petiole_rachis_ratio_sd; rng=rng)
-    petiole_length = petiole_rachis_length_ratio * rachis_length
-    insertion_deviation_angle = normal_deviation_draw(5.0, rng)
-    width_cpoint = width_at_cpoint(rachis_length, cpoint_width_intercept, cpoint_width_slope)
-    height_cpoint = cpoint_height_width_ratio * width_cpoint
-    #! These should be allometries relative to leaf length, because tiny leaves don't have big bases:
-    # width_base = width_base 
-    # height_base = height_base
-    return (length=petiole_length, azimuthal_angle=insertion_deviation_angle, width_base=width_base, height_base=height_base, width_cpoint=width_cpoint, height_cpoint=height_cpoint)
 end

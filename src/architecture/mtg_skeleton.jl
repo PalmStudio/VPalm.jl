@@ -61,7 +61,6 @@ function mtg_skeleton(parameters; rng=Random.MersenneTwister(parameters["seed"])
         # Loop on present leaves
         if leaf[:is_alive]
             # Petiole / Scale 5
-
             petiole_node = petiole(leaf, i, 5, leaf.rachis_length, leaf.zenithal_insertion_angle, leaf.zenithal_cpoint_angle, parameters; rng=rng)
 
             rachis = Node(petiole_node, NodeMTG("<", "Rachis", i, 5))

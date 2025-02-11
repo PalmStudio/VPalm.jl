@@ -16,9 +16,9 @@ function compute_properties_leaf!(node, index, nb_internodes, nb_leaves_alive, p
         )
 
         #! we miss the allometry converting biomass to length here ! Note that we need that for the rachis only, excluding the petiole (is it right though?)
-        node[:rachis_length] = rachis_expansion(leaf_rank, node[:rachis_final_length])
+        node[:rachis_length] = rachis_expansion(leaf_rank, parameters["rachis_final_length"][index])
         node[:petiole_deviation_angle] = normal_deviation_draw(5, rng) #! make this a parameter!!!
-        node[:zenithal_cpoint_angle] = c_point_angle(leaf_rank, parameters["c_point_decli_intercept"], parameters["c_point_decli_slope"], parameters["c_point_angle_SDP"])
+        node[:zenithal_cpoint_angle] = c_point_angle(leaf_rank, parameters["cpoint_decli_intercept"], parameters["cpoint_decli_slope"], parameters["cpoint_angle_SDP"])
 
     end
 

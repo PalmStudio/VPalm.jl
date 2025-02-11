@@ -4,7 +4,7 @@ module VPalm
 import Random
 
 # For managing the MTG:
-import MultiScaleTreeGraph: Node, NodeMTG, traverse!, symbol
+import MultiScaleTreeGraph: Node, NodeMTG, traverse!, symbol, reparent!
 
 # IO:
 import YAML, OrderedCollections
@@ -26,6 +26,7 @@ include("architecture/mtg_skeleton.jl")
 include("allometries/stem.jl")
 include("allometries/internode.jl")
 include("allometries/leaf.jl")
+include("allometries/petiole.jl")
 
 # Architecture:
 include("architecture/compute_properties_stem.jl")
@@ -39,6 +40,9 @@ include("geometry/snag.jl")
 include("geometry/cylinder.jl")
 include("geometry/add_geometry.jl")
 include("geometry/petiole.jl")
+
+# Instance (create an organ with architecture + geometry)
+include("instance/petiole.jl")
 
 export read_parameters, write_parameters
 end
