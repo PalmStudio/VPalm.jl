@@ -42,6 +42,27 @@ end
 """
     compute_properties_petiole_section!(petiole_node, section_node, index, nb_sections)
 
+Compute the dimension of a petiole section based on the dimensions of the petiole.
+
+# Arguments
+
+- `petiole_node`: the MTG Node of the petiole
+- `section_node`: the MTG Node of the section to be computed
+- `index`: the index of the section on the petiole, from 1 at the base to `nb_sections`.
+- `nb_sections`: the number of sections discretizing the petiole
+
+# Details
+
+The `petiole_node` should have the following attributes:
+
+- `width_base`
+- `height_base`
+- `width_cpoint`
+- `height_cpoint`
+- `section_length`
+- `insertion_angle`
+- `section_insertion_angle`
+- `azimuthal_angle`
 
 """
 function compute_properties_petiole_section!(petiole_node, section_node, index, nb_sections)
@@ -98,7 +119,7 @@ function properties_petiole_section(
     petiole_insertion_angle, petiole_section_insertion_angle,
     azimuthal_angle
 )
-    relative_position = (index - 1) / nb_sections #! Check that we still need the -1 here
+    relative_position = index / nb_sections
 
     if index == 1
         zenithal_angle = petiole_insertion_angle
