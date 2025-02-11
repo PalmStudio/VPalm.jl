@@ -59,4 +59,7 @@ rng = Random.MersenneTwister(1)
     # The sum of all angles of the sections of the petiole is equal to the angle at C point, which is the 
     # angle at the tip of the petiole
     @test sum(df_petiole_sections.zenithal_angle) ≈ petiole_node.zenithal_cpoint_angle
+
+    # The length of all segments in the petiole is equal to the petiole length:
+    @test sum(df_petiole_sections.length) ≈ petiole_node.length
 end
