@@ -71,7 +71,7 @@ function mtg_skeleton(parameters; rng=Random.MersenneTwister(parameters["seed"])
 
     # Compute the geometry of the plant
     # Note: we could do this at the same time than the architecture, but it is separated here for clarity. The downside is that we traverse the mtg twice, but it is pretty cheap.
-    refmesh_internode = PlantGeom.RefMesh("Internode", VPalm.cylinder())
+    refmesh_internode = PlantGeom.RefMesh("cylinder", VPalm.cylinder())
     refmesh_snag = PlantGeom.RefMesh("Snag", VPalm.snag(0.05, 1.0, 1.0))
 
     add_geometry!(plant, refmesh_internode, refmesh_snag)

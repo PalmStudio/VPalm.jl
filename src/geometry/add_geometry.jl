@@ -10,7 +10,7 @@ function add_geometry!(mtg, refmesh_internode, refmesh_snag)
     snag_height = 0.15
     snag_length = 3.0
 
-    traverse!(mtg) do node
+    traverse!(mtg, symbol=["Internode", "Leaf", "Petiole"]) do node
         if symbol(node) == "Internode"
             snag_rotation += deg2rad(node.XEuler)
             stem_bending += deg2rad(node.Orthotropy)

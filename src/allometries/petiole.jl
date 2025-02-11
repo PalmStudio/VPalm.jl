@@ -21,8 +21,8 @@ Compute width at C point based on rachis length.
 
 # Arguments
 
-- `rachis_length`: Length of rachis (cm)
-- `cpoint_width_intercept`: Intercept of linear function
+- `rachis_length`: Length of rachis (m)
+- `cpoint_width_intercept`: Intercept of linear function (m)
 - `cpoint_width_slope`: Slope of linear function
 """
 function width_at_cpoint(rachis_length, cpoint_width_intercept, cpoint_width_slope)

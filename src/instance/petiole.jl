@@ -12,9 +12,9 @@ Make a leaf petiole.
 - `zenithal_insertion_angle`: petiole insertion angle
 - `zenithal_cpoint_angle`: angle at the C point (tip of the petiole, starting point of the rachis)
 - `parameters`: a list of parameters as a `Dict{String}`:
-    - "leaf_base_width": the base width of the petiole
-    - "leaf_base_height": the base heigth of the petiole
-    - "cpoint_width_intercept": petiole width at the c-point intercept for linear interpolation
+    - "leaf_base_width": the base width of the petiole (m)
+    - "leaf_base_height": the base heigth of the petiole (m)
+    - "cpoint_width_intercept": petiole width at the c-point intercept for linear interpolation (m)
     - "cpoint_width_slope": petiole width at the c-point slope for linear interpolation
     - "cpoint_height_width_ratio": height to width ratio at the C point
     - "petiole_rachis_ratio_mean": the average value of the ratio between rachis length and petiole length

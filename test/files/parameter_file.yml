@@ -73,7 +73,7 @@ leafletFrequencyHigh: [0.219712525667351, 0.388663967611336, 0.333333333333333, 
 leafletFrequencyLow: [0.0184804928131417, 0.165991902834008, 0.28310502283105, 0.318627450980392, 0.357843137254902, 0.41588785046729, 0.378504672897196, 0.227272727272727, 0.2, 0.036231884057971]
 nbInflorescences: 0
 leaf_base_width: 0.3 # Width of the leaf base (m)
-cpoint_width_intercept: 0.978257818097089 # Rachis width at the c-point intercept for linear interpolation
+cpoint_width_intercept: 0.00978257818097089 # Rachis width at the c-point intercept for linear interpolation (m)
 cpoint_width_slope: 0.0119703143572554 # Rachis width at the c-point slope for linear interpolation
 frondtipWidthx: 0.3
 leaf_base_height: 0.1 # Height of the leaf base (m)
