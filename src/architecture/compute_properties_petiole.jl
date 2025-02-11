@@ -33,8 +33,8 @@ function compute_properties_petiole!(
     petiole_node[:azimuthal_angle] = petiole.azimuthal_angle
 
     petiole_node[:section_length] = petiole.length / nb_sections
-    petiole_node[:section_insertion_angle] = (zenithal_cpoint_angle - insertion_angle) / nb_sections
-
+    petiole_node[:section_insertion_angle] = (zenithal_cpoint_angle - insertion_angle) / (nb_sections - 1)
+    # Note: We use nb_sections - 1 because the first section already has an angle, the insertion_angle
     return nothing
 end
 
