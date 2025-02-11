@@ -24,6 +24,10 @@ using MultiScaleTreeGraph
         include("test-stem.jl")
     end
 
+    @testset "Petiole" begin
+        include("test-petiole.jl")
+    end
+
     @testset "Static mockup" begin
         include("test-static_mockup.jl")
     end
