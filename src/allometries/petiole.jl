@@ -38,31 +38,31 @@ function c_point_angle(leaf_rank, cpoint_decli_intercept, cpoint_decli_slope, cp
 end
 
 """
-    petiole_height(relative_position, cpoint_height, leaf_base_height)
+    petiole_height(relative_position, height_cpoint, height_base)
 
 Compute height profile along the petiole.
 
 # Arguments
 
 - `relative_position`: Position along the petiole (0-1)
-- `cpoint_height`: Height of the leaf section at C point
-- `leaf_base_height`: Height at the base of the leaf
+- `height_base`: Height at the base of the leaf
+- `height_cpoint`: Height of the leaf section at C point
 """
-function petiole_height(relative_position, cpoint_height, leaf_base_height)
-    return leaf_base_height - (leaf_base_height - cpoint_height) * sqrt(relative_position)
+function petiole_height(relative_position, height_base, height_cpoint)
+    return height_base - (height_base - height_cpoint) * sqrt(relative_position)
 end
 
 """
-    petiole_width(cpoint_width, relative_position, leaf_base_width)
+    petiole_width(relative_position, width_cpoint, width_base)
 
 Compute width profile along the petiole.
 
 # Arguments
 
 - `relative_position`: Position along the petiole (0-1) 
-- `cpoint_width`: Width of the leaf at C point
-- `leaf_base_width`: Width at base of leaf
+- `width_base`: Width at base of leaf
+- `width_cpoint`: Width of the leaf at C point
 """
-function petiole_width(relative_position, cpoint_width, leaf_base_width)
-    return leaf_base_width - (leaf_base_width - cpoint_width) * relative_position^0.17
+function petiole_width(relative_position, width_base, width_cpoint)
+    return width_base - (width_base - width_cpoint) * relative_position^0.17
 end

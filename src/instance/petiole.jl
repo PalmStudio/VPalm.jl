@@ -33,9 +33,11 @@ function petiole(parent_node::Node, index, scale, rachis_length, zenithal_insert
         rng=rng
     )
 
+    last_parent = petiole
     for p in 1:parameters["petiole_nb_segments"]
-        petiole_segment_node = Node(petiole, NodeMTG(p == 1 ? "/" : "<", "PetioleSegment", p, 6))
+        petiole_segment_node = Node(last_parent, NodeMTG(p == 1 ? "/" : "<", "PetioleSegment", p, 6))
         compute_properties_petiole_section!(petiole, petiole_segment_node, p, parameters["petiole_nb_segments"])
+        last_parent = petiole_segment_node
     end
 
     return petiole

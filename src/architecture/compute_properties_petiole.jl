@@ -28,7 +28,7 @@ function compute_properties_petiole!(
     petiole_node[:height_base] = petiole.height_base
     petiole_node[:width_cpoint] = petiole.width_cpoint
     petiole_node[:height_cpoint] = petiole.height_cpoint
-    petiole_node[:insertion_angle] = insertion_angle
+    petiole_node[:zenithal_insertion_angle] = insertion_angle
     petiole_node[:zenithal_cpoint_angle] = zenithal_cpoint_angle
     petiole_node[:azimuthal_angle] = petiole.azimuthal_angle
 
@@ -69,7 +69,7 @@ function compute_properties_petiole_section!(petiole_node, section_node, index, 
     petiole_section = properties_petiole_section(
         index, nb_sections, petiole_node.width_base, petiole_node.height_base,
         petiole_node.width_cpoint, petiole_node.height_cpoint, petiole_node.section_length,
-        petiole_node.insertion_angle, petiole_node.section_insertion_angle,
+        petiole_node.zenithal_insertion_angle, petiole_node.section_insertion_angle,
         petiole_node.azimuthal_angle
     )
 
@@ -77,7 +77,7 @@ function compute_properties_petiole_section!(petiole_node, section_node, index, 
     section_node.height = petiole_section.height
     section_node.length = petiole_section.length
     section_node.zenithal_angle = petiole_section.zenithal_angle
-    section_node.azimuthal_angle = petiole_section.width
+    section_node.azimuthal_angle = petiole_section.azimuthal_angle
 end
 
 """
@@ -123,8 +123,12 @@ function properties_petiole_section(
 
     if index == 1
         zenithal_angle = petiole_insertion_angle
+        section_width = width_base
+        section_height = height_base
     else
         zenithal_angle = petiole_section_insertion_angle
+        section_width = petiole_width(relative_position, width_base, width_cpoint)
+        section_height = petiole_height(relative_position, height_base, height_cpoint)
     end
 
     if index == 2
@@ -133,8 +137,6 @@ function properties_petiole_section(
         deviation_angle = 0.0
     end
 
-    section_width = petiole_width(relative_position, width_cpoint, width_base)
-    section_height = petiole_height(relative_position, height_cpoint, height_base)
 
     return (; width=section_width, height=section_height, length=petiole_section_length, zenithal_angle=zenithal_angle, azimuthal_angle=deviation_angle)
 end
