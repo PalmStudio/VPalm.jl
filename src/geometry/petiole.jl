@@ -22,12 +22,14 @@ function add_petiole_section_geometry!(petiole_node, internode_width, internode_
 
         mesh_transformation =
             Meshes.Scale(section_dimensions...) →
-            # Meshes.Rotate(RotXY(-deg2rad(section_insertion_angle), deg2rad(section_azimuthal_angle))) →
-            Meshes.Rotate(RotX(-deg2rad(section_insertion_angle), deg2rad(section_azimuthal_angle))) →
+            Meshes.Rotate(RotXY(-deg2rad(section_insertion_angle), deg2rad(section_azimuthal_angle))) →
             Meshes.Translate(Meshes.to(position_section[])...) →
+            Meshes.Rotate(RotZ(-π / 2)) →
             # Positioning along the stem:
             Meshes.Translate(internode_width, 0.0, internode_height) →
-            Meshes.Rotate(RotZ(internode_phyllotaxy)) → Meshes.Rotate(RotY(stem_bending))
+            Meshes.Rotate(RotZ(internode_phyllotaxy)) →
+            Meshes.Rotate(RotY(stem_bending))
+
         # Meshes.Rotate(RotZ(snag_rotation)) → Meshes.Rotate(RotY(stem_bending))
         node_section.geometry = PlantGeom.Geometry(ref_mesh=refmesh_cylinder, transformation=mesh_transformation)
 
