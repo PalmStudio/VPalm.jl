@@ -1,4 +1,4 @@
-function add_geometry!(mtg, refmesh_internode, refmesh_snag)
+function add_geometry!(mtg, refmesh_cylinder, refmesh_snag)
     stem_diameter = mtg[1].stem_diameter
     stem_bending = mtg[1].stem_bending
     internode_width = stem_diameter
@@ -16,7 +16,7 @@ function add_geometry!(mtg, refmesh_internode, refmesh_snag)
             stem_bending += deg2rad(node.Orthotropy)
             internode_width = node.Width > 0.0 ? node.Width : 0.01
             mesh_transformation = Meshes.Scale(internode_width, internode_width, node.Length) → Meshes.Translate(0.0, 0.0, internode_height) → Meshes.Rotate(RotZ(snag_rotation)) → Meshes.Rotate(RotY(stem_bending))
-            node.geometry = PlantGeom.Geometry(ref_mesh=refmesh_internode, transformation=mesh_transformation)
+            node.geometry = PlantGeom.Geometry(ref_mesh=refmesh_cylinder, transformation=mesh_transformation)
             internode_height += node.Length
         elseif symbol(node) == "Leaf"
             if !node.is_alive
@@ -27,6 +27,7 @@ function add_geometry!(mtg, refmesh_internode, refmesh_snag)
                 nothing
             end
         elseif symbol(node) == "Petiole"
+            add_petiole_section_geometry!(node, internode_width, internode_height, snag_rotation, stem_bending, refmesh_cylinder)
             # petiole_width = node.petiole_width
             # petiole_height = node.petiole_height
             # petiole_length = node.petiole_length

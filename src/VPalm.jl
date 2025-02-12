@@ -13,7 +13,7 @@ import YAML, OrderedCollections
 import PlantGeom
 import Meshes
 import TransformsBase: →
-import Rotations: RotX, RotY, RotZ, RotYX
+import Rotations: RotX, RotY, RotZ, RotXY
 import Rotations
 import PlyIO
 
