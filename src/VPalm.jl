@@ -13,7 +13,8 @@ import YAML, OrderedCollections
 import PlantGeom
 import Meshes
 import TransformsBase: →
-import Rotations: RotX, RotY, RotZ, RotYX, RotXY
+import Rotations: RotX, RotY, RotZ, RotYX
+import Rotations
 import PlyIO
 
 include("utils.jl")
