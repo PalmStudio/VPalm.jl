@@ -30,7 +30,6 @@ function compute_properties_petiole!(
     petiole_node[:height_cpoint] = petiole.height_cpoint
     petiole_node[:zenithal_insertion_angle] = insertion_angle
     petiole_node[:zenithal_cpoint_angle] = zenithal_cpoint_angle
-    petiole_node[:azimuthal_angle] = petiole.azimuthal_angle
 
     petiole_node[:section_length] = petiole.length / nb_sections
     petiole_node[:section_insertion_angle] = (zenithal_cpoint_angle - insertion_angle) / (nb_sections - 1)
