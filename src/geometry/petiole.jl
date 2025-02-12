@@ -22,7 +22,7 @@ function add_petiole_section_geometry!(petiole_node, internode_width, internode_
 
         mesh_transformation =
             Meshes.Scale(section_dimensions...) →
-            Meshes.Rotate(RotXY(deg2rad(section_insertion_angle), deg2rad(section_azimuthal_angle))) →
+            Meshes.Rotate(RotXY(-deg2rad(section_insertion_angle), deg2rad(section_azimuthal_angle))) →
             Meshes.Translate(Meshes.to(position_section[])...)# →
         # Meshes.Rotate(RotX(π / 2))
         # Meshes.Rotate(RotZ(snag_rotation)) → Meshes.Rotate(RotY(stem_bending))
