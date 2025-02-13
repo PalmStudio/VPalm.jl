@@ -9,6 +9,23 @@
         rng=Random.MersenneTwister(1)
     )
 
+Compute the dimensional properties of a petiole.
+
+# Arguments
+
+- `petiole_node`: the MTG Node of the petiole
+- `insertion_angle`: the angle of insertion of the petiole on the stem (°)
+- `rachis_length`: the length of the rachis (m)
+- `zenithal_cpoint_angle`: the zenithal angle of the C point of the petiole, *i.e.* the tip (°)
+- `width_base`: the width of the petiole at its base (m)
+- `height_base`: the height of the petiole at its base (m)
+- `cpoint_width_intercept`: the intercept of the linear function for the width at the C point (m)
+- `cpoint_width_slope`: the slope of the linear function for the width at the C point
+- `cpoint_height_width_ratio`: the ratio of the height to width at the C point
+- `petiole_rachis_ratio_mean`: the mean ratio of the petiole to rachis length
+- `petiole_rachis_ratio_sd`: the standard deviation of the ratio of the petiole to rachis length
+- `nb_sections`: the number of sections discretizing the petiole
+- `rng=Random.MersenneTwister(1)`: the random number generator
 """
 function compute_properties_petiole!(
     petiole_node,
@@ -54,15 +71,14 @@ Compute the dimension of a petiole section based on the dimensions of the petiol
 
 The `petiole_node` should have the following attributes:
 
-- `width_base`
-- `height_base`
-- `width_cpoint`
-- `height_cpoint`
-- `section_length`
-- `insertion_angle`
-- `section_insertion_angle`
-- `azimuthal_angle`
-
+- `width_base`: the width of the petiole at its base (m)
+- `height_base`: the height of the petiole at its base (m)
+- `width_cpoint`: the width of the petiole at the C point (m)
+- `height_cpoint`: the height of the petiole at the C point (m)
+- `section_length`: the length of the petiole sections (m)
+- `insertion_angle`: the angle of insertion of the petiole on the stem (°)
+- `section_insertion_angle`: the zenithal angle of insertion between the petioles sections (°)
+- `azimuthal_angle`: the azimuthal angle at the insertion (°)
 """
 function compute_properties_petiole_section!(petiole_node, section_node, index, nb_sections)
     petiole_section = properties_petiole_section(
@@ -93,24 +109,24 @@ Compute the properties of each section of the petiole.
 
 - `index`: The index of the section within all sections (1-nb_sections)
 - `nb_sections`: The number of sections discretizing the petiole
-- `width_base`: Width of the petiole at its base
-- `heigth_base`: Height of the petiole at its base
-- `width_cpoint`: Width of the petiole at the C point (tip of the petiole, *i.e.* transition point to rachis)
-- `height_cpoint`: Height at the C point
-- `petiole_section_length`: The length of the petiole sections
-- `petiole_insertion_angle`: Zenithal angle of insertion between the petiole and the stipe (local angle, relative to the stipe)
-- `petiole_section_insertion_angle`: The zenithal angle of insertion between the petioles sections
-- `azimuthal_angle`: Azimuthal angle at the insertion
+- `width_base`: Width of the petiole at its base (m)
+- `heigth_base`: Height of the petiole at its base (m)
+- `width_cpoint`: Width of the petiole at the C point (tip of the petiole, *i.e.* transition point to rachis, m)
+- `height_cpoint`: Height at the C point (m)
+- `petiole_section_length`: The length of the petiole sections (m)
+- `petiole_insertion_angle`: Zenithal angle of insertion between the petiole and the stipe (local angle, relative to the stipe, °)
+- `petiole_section_insertion_angle`: The zenithal angle of insertion between the petioles sections (°)
+- `azimuthal_angle`: Azimuthal angle at the insertion (°)
 
 # Returns 
 
 A vector of dimensions for each section, given as a named tuple:
 
-- width: width of the section
-- height: height of the section
-- length: length of the section
-- zenithal_angle_local: zenithal angle of the section
-- azimuthal_angle_local: azimuthal angle of the section
+- width: width of the section (m)
+- height: height of the section (m)
+- length: length of the section (m)
+- zenithal_angle_local: zenithal angle of the section (local angle, relative to the previous, °)
+- azimuthal_angle_local: azimuthal angle of the section (local angle, relative to the previous, °)
 """
 function properties_petiole_section(
     index, nb_sections, width_base, height_base,
@@ -135,7 +151,6 @@ function properties_petiole_section(
     else
         deviation_angle = 0.0
     end
-
 
     return (; width=section_width, height=section_height, length=petiole_section_length, zenithal_angle=zenithal_angle, azimuthal_angle=deviation_angle)
 end

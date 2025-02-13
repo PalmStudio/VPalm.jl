@@ -1,14 +1,16 @@
 """
-    add_petiole_section_geometry!(petiole_node, internode_width, internode_height, refmesh_cylinder)
+    add_petiole_section_geometry!(petiole_node, internode_width, internode_height, internode_phyllotaxy, stem_bending, refmesh_cylinder)
 
 Create the petiole sections geometry based on their dimensions.
 
 # Arguments
 
 - `petiole_node`: the MTG node of the petiole
-- `internode_width`: the width of the internode on the stipe
-- `internode_height`: the heigth of the internode on the stipe
-- `refmesh_cylinder`: the reference mesh used for a cylinder
+- `internode_width`: the width of the internode on the stipe (m)
+- `internode_height`: the heigth of the internode on the stipe (m)
+- `internode_phyllotaxy`: the phyllotaxy of the internode on the stipe (°)
+- `stem_bending`: the bending of the stipe (°)
+- `refmesh_cylinder`: the reference mesh used for a cylinder (`PlantGeom.RefMesh`)
 """
 function add_petiole_section_geometry!(petiole_node, internode_width, internode_height, internode_phyllotaxy, stem_bending, refmesh_cylinder)
     section_insertion_angle = 0.0

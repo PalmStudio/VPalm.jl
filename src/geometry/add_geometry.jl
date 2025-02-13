@@ -28,12 +28,6 @@ function add_geometry!(mtg, refmesh_cylinder, refmesh_snag)
             end
         elseif symbol(node) == "Petiole"
             add_petiole_section_geometry!(node, internode_width, internode_height, snag_rotation, stem_bending, refmesh_cylinder)
-            # petiole_width = node.petiole_width
-            # petiole_height = node.petiole_height
-            # petiole_length = node.petiole_length
-            # petiole_insertion_angle = deg2rad(node.petiole_insertion_angle)
-            # petiole_rotation = deg2rad(node.petiole_rotation)
-
         end
     end
 end

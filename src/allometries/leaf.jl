@@ -1,10 +1,3 @@
-
-
-function compute_leaf_structure(rank)
-
-end
-
-
 """
     leaf_insertion_angle(rank, leaf_max_angle=90, leaf_slope_angle=0.05, leaf_inflection_angle=40)
 
