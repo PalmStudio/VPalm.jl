@@ -22,9 +22,9 @@ Make a leaf petiole.
     - "petiole_nb_segments": the number of segments used to discretize the petiole
 """
 function petiole(parent_node::Node, index, scale, rachis_length, zenithal_insertion_angle, zenithal_cpoint_angle, parameters; rng=Random.MersenneTwister(1))
-    petiole = Node(parent_node, NodeMTG("/", "Petiole", index, scale))
+    petiole_node = Node(parent_node, NodeMTG("/", "Petiole", index, scale))
     compute_properties_petiole!(
-        petiole,
+        petiole_node,
         zenithal_insertion_angle, rachis_length, zenithal_cpoint_angle,
         parameters["leaf_base_width"], parameters["leaf_base_height"], parameters["cpoint_width_intercept"],
         parameters["cpoint_width_slope"], parameters["cpoint_height_width_ratio"],
@@ -33,12 +33,12 @@ function petiole(parent_node::Node, index, scale, rachis_length, zenithal_insert
         rng=rng
     )
 
-    last_parent = petiole
+    last_parent = petiole_node
     for p in 1:parameters["petiole_nb_segments"]
         petiole_segment_node = Node(last_parent, NodeMTG(p == 1 ? "/" : "<", "PetioleSegment", p, 6))
-        compute_properties_petiole_section!(petiole, petiole_segment_node, p, parameters["petiole_nb_segments"])
+        compute_properties_petiole_section!(petiole_node, petiole_segment_node, p, parameters["petiole_nb_segments"])
         last_parent = petiole_segment_node
     end
 
-    return petiole
+    return petiole_node
 end
