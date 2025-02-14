@@ -97,31 +97,6 @@ function internode_length(i, Nbl, sh, R, N, l_0)
     return length
 end
 
-function internode_length_old(internode_number, nb_internodes, nb_leaves, stem_height, internode_rank_no_expansion, nb_internodes_before_planting, internode_final_length)
-    rank = nb_leaves - internode_rank_no_expansion # Number of leaves not in expansion
-    S = nb_internodes - nb_leaves # Number of internodes without leaves. Should be equal to 0 at adult stage
-    nb_noexp = nb_internodes_before_planting + S + rank # Total number of internodes not in expansion
-    nb_total = nb_internodes_before_planting + S + nb_leaves # Total number of internodes
-    coeff = 2 * stem_height / (nb_internodes_before_planting * (2 * S + nb_internodes_before_planting + 1))
-    l = coeff * nb_internodes_before_planting
-    c = (l - internode_final_length) /
-        (
-        nb_noexp^2 -
-        nb_total^2 -
-        2 * nb_noexp * (rank - nb_leaves)
-    )
-    b = -2 * c * nb_noexp
-    a = l - b * nb_noexp - c * nb_noexp^2
-    if internode_index < nb_internodes_before_planting
-        return coeff * internode_index
-    elseif (internode_index >= nb_internodes_before_planting) & (internode_index < nb_noexp)
-        return l
-    else
-        return a + b * internode_index + c * internode_index^2
-    end
-end
-
-
 """
     phyllotactic_angle(phyllotactic_angle_mean, phyllotactic_angle_sd; rng=Random.MersenneTwister(1234))
 
