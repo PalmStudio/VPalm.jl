@@ -13,6 +13,7 @@ function compute_properties_leaf!(node, index, nb_internodes, nb_leaves_alive, p
             parameters["leaf_slope_angle"],
             parameters["leaf_inflection_angle"]
         )
+        #! important: we use leaf rank to index into the vector of leaf lengths but we should use another index here
         node[:rachis_length] = rachis_expansion(leaf_rank, parameters["rachis_final_lengths"][leaf_rank])
         node[:petiole_deviation_angle] = normal_deviation_draw(5.0, rng) #! make this a parameter!!!
         node[:zenithal_cpoint_angle] = c_point_angle(leaf_rank, parameters["cpoint_decli_intercept"], parameters["cpoint_decli_slope"], parameters["cpoint_angle_SDP"])
