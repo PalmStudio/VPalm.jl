@@ -29,7 +29,7 @@ function mtg_skeleton(parameters; rng=Random.MersenneTwister(parameters["seed"])
     nb_leaves_alive = min(nb_leaves_alive, nb_internodes)
     nb_petiole_segments = parameters["petiole_nb_segments"]
 
-    @assert length(parameters["rachis_biomass"]) >= nb_leaves_alive "The number of rachis biomass values should be greater than or equal to the number of leaves alive ($nb_leaves_alive)."
+    @assert length(parameters["rachis_fresh_weigth"]) >= nb_leaves_alive "The number of rachis biomass values should be greater than or equal to the number of leaves alive ($nb_leaves_alive)."
 
     # Plant / Scale 1
     plant = Node(NodeMTG("/", "Plant", 1, 1))
@@ -62,8 +62,7 @@ function mtg_skeleton(parameters; rng=Random.MersenneTwister(parameters["seed"])
         if leaf[:is_alive]
             # Petiole / Scale 5
             petiole_node = petiole(leaf, i, 5, leaf.rachis_length, leaf.zenithal_insertion_angle, leaf.zenithal_cpoint_angle, parameters; rng=rng)
-
-            rachis = Node(petiole_node, NodeMTG("<", "Rachis", i, 5))
+            rachis_node = rachis(petiole_node, i, 5, leaf.leaf_rank, leaf.rachis_length, leaf.zenithal_cpoint_angle, parameters; rng=rng)
         end
 
         # add petiole, rachis, leaflets, ls

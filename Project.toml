@@ -4,6 +4,7 @@ authors = ["Rémi Vezy <VEZY@users.noreply.github.com> and contributors"]
 version = "0.0.1"
 
 [deps]
+Interpolations = "a98d9a8b-a2ab-59e6-89dd-64a1c18fca59"
 Meshes = "eacbb407-ea5a-433e-ab97-5258b1ca43fa"
 MultiScaleTreeGraph = "dd4a991b-8a45-4075-bede-262ee62d5583"
 OrderedCollections = "bac558e1-5e72-5ebc-8fee-abe8a469f55d"
@@ -15,6 +16,7 @@ TransformsBase = "28dd2a49-a57a-4bfb-84ca-1a49db9b96b8"
 YAML = "ddb6d928-2868-570f-bddf-ab3f9cf99eb6"
 
 [compat]
+Interpolations = "0.15.1"
 Meshes = "0.52"
 MultiScaleTreeGraph = "0.14"
 OrderedCollections = "1.6"

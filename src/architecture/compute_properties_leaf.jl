@@ -7,19 +7,15 @@ function compute_properties_leaf!(node, index, nb_internodes, nb_leaves_alive, p
     node[:is_alive] = is_alive
 
     if is_alive
-        node[:rachis_freshweight] = parameters["rachis_biomass"][leaf_rank]
         node[:zenithal_insertion_angle] = VPalm.leaf_insertion_angle(
             leaf_rank,
             parameters["leaf_max_angle"],
             parameters["leaf_slope_angle"],
             parameters["leaf_inflection_angle"]
         )
-
-        #! we miss the allometry converting biomass to length here ! Note that we need that for the rachis only, excluding the petiole (is it right though?)
         node[:rachis_length] = rachis_expansion(leaf_rank, parameters["rachis_final_lengths"][leaf_rank])
-        node[:petiole_deviation_angle] = normal_deviation_draw(5, rng) #! make this a parameter!!!
+        node[:petiole_deviation_angle] = normal_deviation_draw(5.0, rng) #! make this a parameter!!!
         node[:zenithal_cpoint_angle] = c_point_angle(leaf_rank, parameters["cpoint_decli_intercept"], parameters["cpoint_decli_slope"], parameters["cpoint_angle_SDP"])
-
     end
 
     return nothing
