@@ -1,5 +1,5 @@
 """
-    bend(type, width_bend, height_bend, init_torsion, x, y, z, mass, mass_right, mass_left,
+    bend(type, width_bend, height_bend, init_torsion, x, y, z, mass_rachis, mass_leaflets_right, mass_leaflets_left,
          distance_application, elastic_modulus, shear_modulus, step, points, iterations)
 
 Compute the deformation by applying both bending and torsion.
@@ -12,9 +12,9 @@ Compute the deformation by applying both bending and torsion.
 - `x`: Vector of x coordinates of the segments.
 - `y`: Vector of y coordinates of the segments.
 - `z`: Vector of z coordinates of the segments.
-- `mass`: Vector of segment masses (kg).
-- `mass_right`: Vector of masses carried by the segment, on the right side (kg).
-- `mass_left`: Vector of masses carried by the segment, on the left side (kg).
+- `mass_rachis`: Vector of rachis segment masses (kg).
+- `mass_leaflets_right`: Vector of leaflet masses carried by the segment, on the right side (kg).
+- `mass_leaflets_left`: Vector of leaflet masses carried by the segment, on the left side (kg).
 - `distance_application`: Vector of application distances for the left and right weights (m).
 - `elastic_modulus`: Vector of elasticity moduli (bending, MPa).
 - `shear_modulus`: Vector of shear moduli (torsion, MPa).
@@ -24,12 +24,14 @@ Compute the deformation by applying both bending and torsion.
 - `all_points`: return all points used in the computation (`true`), or only the input points corresponding to x, y and z coordinates (`false`, default).
 - `angle_max`: Maximum angle for testing the small displacement hypothesis (radians).
 """
-function bend(type, width_bend, height_bend, init_torsion, x, y, z, mass, mass_right, mass_left,
+function bend(type, width_bend, height_bend, init_torsion, x, y, z, mass_rachis, mass_leaflets_right, mass_leaflets_left,
     distance_application, elastic_modulus, shear_modulus, step, points, iterations;
     all_points=false,
     angle_max=deg2rad(21),  # 21 degrees is the limitGöttingen
     verbose=true
 )
+
+    gravity = 9.8
 
     vec_rot_flex = zeros(3) # Originally a 3x1 matrix in R
 
@@ -37,35 +39,22 @@ function bend(type, width_bend, height_bend, init_torsion, x, y, z, mass, mass_r
     npoints_exp = length(x)  # Assuming x, y, z have the same length
 
     # Distances and angles of each segment P2P1
-    XYZangles = VPalm.xyz_vers_agl(x, y, z)
-
-    vdist_p2p1 = XYZangles.dist_p2p1
+    vdist_p2p1, = xyz_vers_agl(x, y, z)
 
     dist_lineique = [0; cumsum(vdist_p2p1)] # For interpolation 
     dist_totale = last(dist_lineique)
 
-    # The distances of the segments cannot be zero
-    # The origin point (0,0,0) cannot be in data
+    # The distances of the segments cannot be zero. The origin point (0,0,0) cannot be in the data
     if any(vdist_p2p1 .== 0)
         error("Found distances between segments equal to 0.")
     end
 
-    # Linear weight of segments
-    poids_tige = mass
-    poids_feuille_d = mass_right
-    poids_feuille_g = mass_left
+    poids_lin_tige = mass_rachis ./ vdist_p2p1 ./ iterations
+    v_poids_feuilles_d = mass_leaflets_right ./ vdist_p2p1 ./ iterations
+    v_poids_feuilles_g = mass_leaflets_left ./ vdist_p2p1 ./ iterations
+    v_poids_flexion = poids_lin_tige .+ v_poids_feuilles_d .+ v_poids_feuilles_g
 
-    poids_lin_tige = poids_tige ./ vdist_p2p1
-    poids_lin_feuille_d = poids_feuille_d ./ vdist_p2p1
-    poids_lin_feuille_g = poids_feuille_g ./ vdist_p2p1
-
-    v_poids_flexion = poids_lin_tige .+ poids_lin_feuille_d .+ poids_lin_feuille_g
-    v_poids_feuilles_d = poids_lin_feuille_d
-    v_poids_feuilles_g = poids_lin_feuille_g
-
-    # Linear interpolations
-    # Linear discretization
-    # Segment length = step
+    # Linear interpolations, segment length = step
     nlin = round(Int, dist_totale / step + 1)
     step = dist_totale / (nlin - 1)
     vec_dist = collect((0:(nlin-1)) .* step)
@@ -74,7 +63,7 @@ function bend(type, width_bend, height_bend, init_torsion, x, y, z, mass, mass_r
         if length(elastic_modulus) == 1
             elastic_modulus = fill(elastic_modulus, npoints_exp)
         else
-            error("elastic_modulus argument should be of length 1 or equal to `npoints_exp`")
+            error("`elastic_modulus` argument should be of length 1 or equal to `npoints_exp`")
         end
     end
 
@@ -82,69 +71,45 @@ function bend(type, width_bend, height_bend, init_torsion, x, y, z, mass, mass_r
         if length(shear_modulus) == 1
             shear_modulus = fill(shear_modulus, npoints_exp)
         else
-            error("shear_modulus argument should be of length 1 or equal to `npoints_exp`")
+            error("`shear_modulus` argument should be of length 1 or equal to `npoints_exp`")
         end
     end
 
-    vec_moe = linear_interpolation(dist_lineique, [elastic_modulus[1]; elastic_modulus])(vec_dist)
-    vec_g = linear_interpolation(dist_lineique, [shear_modulus[1]; shear_modulus])(vec_dist)
+    vec_moe = linear_interpolation(dist_lineique, [elastic_modulus[1]; elastic_modulus])(vec_dist) .* 1e6
+    vec_g = linear_interpolation(dist_lineique, [shear_modulus[1]; shear_modulus])(vec_dist) .* 1e6
     vangle_tor = deg2rad.(init_torsion)
     vec_agl_tor = linear_interpolation(dist_lineique, [vangle_tor[1]; vangle_tor])(vec_dist)
     vec_d_appli_poids_feuille = linear_interpolation(dist_lineique, [distance_application[1]; distance_application])(vec_dist)
 
     # Interpolation of coordinates in the origin frame
     # Identification of experimental points in the linear discretization
-    interp_list = VPalm.interp_points(x, y, z, step)
-
-    vec_x = interp_list.vec_x
-    vec_y = interp_list.vec_y
-    vec_z = interp_list.vec_z
-    i_discret_pts_exp = interp_list.i_discret_pts_exp
-    vec_dist_p2p1 = interp_list.vec_dist_p2p1
-    vec_angle_xy = interp_list.vec_angle_xy
-    vec_angle_xz = interp_list.vec_angle_xz
+    vec_x, vec_y, vec_z, i_discret_pts_exp, vec_dist_p2p1, vec_angle_xy, vec_angle_xz = interp_points(x, y, z, step)
 
     val_epsilon = 1e-6
     if (vec_dist_p2p1[2] > (step + val_epsilon)) || (vec_dist_p2p1[2] < (step - val_epsilon))
         error("Point distance too narrow")
     end
     if (length(vec_x) != nlin)
-        error("length(vecX) != nlin")
+        error("length(vec_x) != nlin")
     end
 
-    # Increment of weight for the iterative calculation ===
-    vec_moe = vec_moe .* 1e6
-    vec_g = vec_g .* 1e6
-
+    # Increment of weight for the iterative calculation
     mat_dist_pts_exp = zeros(iterations, npoints_exp)
 
-    v_poids_flexion = v_poids_flexion ./ iterations
-    v_poids_feuilles_d = v_poids_feuilles_d ./ iterations
-    v_poids_feuilles_g = v_poids_feuilles_g ./ iterations
-
-    som_cum_vec_agl_tor = vec_agl_tor  # geometric rotation and section
+    som_cum_vec_agl_tor = copy(vec_agl_tor)  # geometric rotation and section
 
     for iter_poids in 1:iterations
-
         # Inertias and surfaces of the experimental points
         v_ig_flex = zeros(npoints_exp)
         v_ig_tor = zeros(npoints_exp)
         v_sr = zeros(npoints_exp)
 
         for iter in 1:npoints_exp
-            b = width_bend[iter]
-            h = height_bend[iter]
-            sct = type[iter]
             ag_deg = rad2deg(som_cum_vec_agl_tor[i_discret_pts_exp[iter]])  # orientation section (degrees)
-
-            inertia_flex_rot = VPalm.inertia_flex_rota(b, h, ag_deg, sct, points) # Assuming this function is defined elsewhere
-            ig_flex = inertia_flex_rot.ig_flex
-            ig_tor = inertia_flex_rot.ig_tor
-            sr = inertia_flex_rot.sr
-
-            v_ig_flex[iter] = ig_flex
-            v_ig_tor[iter] = ig_tor
-            v_sr[iter] = sr
+            inertia_flex_rot = inertia_flex_rota(width_bend[iter], height_bend[iter], ag_deg, type[iter], points) # Assuming this function is defined elsewhere
+            v_ig_flex[iter] = inertia_flex_rot.ig_flex
+            v_ig_tor[iter] = inertia_flex_rot.ig_tor
+            v_sr[iter] = inertia_flex_rot.sr
         end
 
         # Linear interpolation of inertias
@@ -153,32 +118,22 @@ function bend(type, width_bend, height_bend, init_torsion, x, y, z, mass, mass_r
 
         # Write angles from the new coordinates
         # Distance and angles of each segment P2P1
-        XYZangles = VPalm.xyz_vers_agl(vec_x, vec_y, vec_z) # Assuming this function is defined elsewhere
-
-        vec_dist_p2p1 = XYZangles.dist_p2p1
-        vec_angle_xy = XYZangles.vangle_xy
-        vec_angle_xz = XYZangles.vangle_xz
+        vec_dist_p2p1, vec_angle_xy, vec_angle_xz = xyz_vers_agl(vec_x, vec_y, vec_z) # Assuming this function is defined elsewhere
 
         vec_dist_p2p1[1] = 0
         vec_angle_xy[1] = vec_angle_xy[2]
         vec_angle_xz[1] = vec_angle_xz[2]
 
-        # Flexion
-        # Linear bending forces
-        # and Linear interpolation
-        pesanteur = 9.8
-
-        # Linear force
-        # Code with invariance by 'iterations'
-        v_force = v_poids_flexion .* cos.(vec_angle_xy[i_discret_pts_exp]) .* pesanteur
+        # Flexion: linear bending forces and linear interpolation
+        v_force = v_poids_flexion .* cos.(vec_angle_xy[i_discret_pts_exp]) .* gravity
 
         vec_force = linear_interpolation(dist_lineique, [v_force[1]; v_force])(vec_dist)
 
         # Shear forces and bending moments
-        vec_tranchant = cumsum(vec_force[nlin:-1:1] .* step)
-        vec_tranchant = vec_tranchant[nlin:-1:1]
+        vec_shear = cumsum(vec_force[nlin:-1:1] .* step)
+        vec_shear = vec_shear[nlin:-1:1]
 
-        vec_moment = -cumsum(vec_tranchant[nlin:-1:1] .* step)
+        vec_moment = -cumsum(vec_shear[nlin:-1:1] .* step)
         vec_moment = vec_moment[nlin:-1:1]
 
         # Classic calculation of the deflection (distance delta)
@@ -199,25 +154,25 @@ function bend(type, width_bend, height_bend, init_torsion, x, y, z, mass, mass_r
         v_m_tor = zeros(npoints_exp)
 
         for iter in 1:npoints_exp
-            fdr = [0, 0, -v_poids_feuilles_d[iter] * vdist_p2p1[iter] * pesanteur]
+            fdr = [0, 0, -v_poids_feuilles_d[iter] * vdist_p2p1[iter] * gravity]
             # Code with invariance by 'iterations'
-            force_feuille_dr = VPalm.rota_inverse_yz(fdr, vec_angle_xy[iter], vec_angle_xz[iter]) # Assuming this function is defined elsewhere
+            force_feuille_dr = rota_inverse_yz(fdr, vec_angle_xy[iter], vec_angle_xz[iter]) # Assuming this function is defined elsewhere
 
-            fga = [0, 0, -v_poids_feuilles_g[iter] * vdist_p2p1[iter] * pesanteur]
+            fga = [0, 0, -v_poids_feuilles_g[iter] * vdist_p2p1[iter] * gravity]
             # Code with invariance by 'iterations'
-            force_feuille_ga = VPalm.rota_inverse_yz(fga, vec_angle_xy[iter], vec_angle_xz[iter]) # Assuming this function is defined elsewhere
+            force_feuille_ga = rota_inverse_yz(fga, vec_angle_xy[iter], vec_angle_xz[iter]) # Assuming this function is defined elsewhere
 
             dist_point = vec_d_appli_poids_feuille[i_discret_pts_exp[iter]]
             angle_point = som_cum_vec_agl_tor[i_discret_pts_exp[iter]]
 
-            # Hypothesis of contribution part D or G
+            # Hypothesis of contribution part right or left
             if angle_point > 0
                 kd = 0
                 kg = 1
             elseif angle_point < 0
                 kd = 1
                 kg = 0
-            elseif angle_point == 0
+            else # angle_point == 0
                 kd = 0
                 kg = 0
             end
@@ -263,7 +218,7 @@ function bend(type, width_bend, height_bend, init_torsion, x, y, z, mass, mass_r
 
             # Change of basis
             # Segment becomes collinear to the OX axis
-            vec_rot_inv = VPalm.rota_inverse_yz(p2p1, vec_angle_xy[iter], vec_angle_xz[iter]) # Assuming this function is defined elsewhere
+            vec_rot_inv = rota_inverse_yz(p2p1, vec_angle_xy[iter], vec_angle_xz[iter]) # Assuming this function is defined elsewhere
 
             # Flexion
             # Equivalent to a rotation around OY
@@ -287,7 +242,7 @@ function bend(type, width_bend, height_bend, init_torsion, x, y, z, mass, mass_r
             vec_rot_tor = mat_rot_x * vec_rot_flex
 
             # Original base
-            vec_rot = VPalm.rota_yz(vec_rot_tor, vec_angle_xy[iter], vec_angle_xz[iter]) # Assuming this function is defined elsewhere
+            vec_rot = rota_yz(vec_rot_tor, vec_angle_xy[iter], vec_angle_xz[iter]) # Assuming this function is defined elsewhere
 
             # Point in the origin base
             if iter == 1
@@ -313,9 +268,9 @@ function bend(type, width_bend, height_bend, init_torsion, x, y, z, mass, mass_r
 
         # Conservation of distances
         # step = distance between points
-        XYZangles = VPalm.xyz_vers_agl(vec_x, vec_y, vec_z) # Assuming this function is defined elsewhere
+        XYZangles = xyz_vers_agl(vec_x, vec_y, vec_z) # Assuming this function is defined elsewhere
 
-        coords = VPalm.agl_vers_xyz([0; fill(step, nlin - 1)], XYZangles.vangle_xy, XYZangles.vangle_xz) # Assuming this function is defined elsewhere
+        coords = agl_vers_xyz([0; fill(step, nlin - 1)], XYZangles.vangle_xy, XYZangles.vangle_xz) # Assuming this function is defined elsewhere
 
         vec_x = coords.vec_x
         vec_y = coords.vec_y
@@ -339,7 +294,7 @@ function bend(type, width_bend, height_bend, init_torsion, x, y, z, mass, mass_r
     pts_y = vec_y[i_discret_pts_exp]
     pts_z = vec_z[i_discret_pts_exp]
 
-    Points = VPalm.xyz_vers_agl(pts_x, pts_y, pts_z) # Assuming this function is defined elsewhere
+    Points = xyz_vers_agl(pts_x, pts_y, pts_z) # Assuming this function is defined elsewhere
 
     pts_dist = Points.dist_p2p1
     pts_agl_xy = Points.vangle_xy
