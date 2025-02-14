@@ -1,6 +1,5 @@
 function rachis(petiole_node, index, scale, leaf_rank, rachis_length, zenithal_cpoint_angle, parameters; rng)
     rachis_node = Node(petiole_node, NodeMTG("<", "Rachis", index, scale))
-
     compute_properties_rachis!(
         rachis_node,
         index,

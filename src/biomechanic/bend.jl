@@ -21,12 +21,15 @@ Compute the deformation by applying both bending and torsion.
 - `step`: Length of the segments that discretize the object (m).
 - `points`: Number of points used in the grid discretizing the section.
 - `iterations`: Number of iterations to compute the torsion and bending.
-
-# Returns
-- A tuple of vectors: `(PtsX, PtsY, PtsZ, PtsDist, PtsAglXY, PtsAglXZ, PtsAglTor)`.
+- `all_points`: return all points used in the computation (`true`), or only the input points corresponding to x, y and z coordinates (`false`, default).
+- `angle_max`: Maximum angle for testing the small displacement hypothesis (radians).
 """
 function bend(type, width_bend, height_bend, init_torsion, x, y, z, mass, mass_right, mass_left,
-    distance_application, elastic_modulus, shear_modulus, step, points, iterations; all_points=false)
+    distance_application, elastic_modulus, shear_modulus, step, points, iterations;
+    all_points=false,
+    angle_max=deg2rad(21),  # 21 degrees is the limitGöttingen
+    verbose=true
+)
 
     vec_rot_flex = zeros(3) # Originally a 3x1 matrix in R
 
@@ -63,7 +66,7 @@ function bend(type, width_bend, height_bend, init_torsion, x, y, z, mass, mass_r
     # Linear interpolations
     # Linear discretization
     # Segment length = step
-    nlin = round(dist_totale / step + 1) |> Int
+    nlin = round(Int, dist_totale / step + 1)
     step = dist_totale / (nlin - 1)
     vec_dist = collect((0:(nlin-1)) .* step)
 
@@ -83,11 +86,11 @@ function bend(type, width_bend, height_bend, init_torsion, x, y, z, mass, mass_r
         end
     end
 
-    vec_moe = LinearInterpolation(dist_lineique, [elastic_modulus[1]; elastic_modulus])(vec_dist)
-    vec_g = LinearInterpolation(dist_lineique, [shear_modulus[1]; shear_modulus])(vec_dist)
+    vec_moe = linear_interpolation(dist_lineique, [elastic_modulus[1]; elastic_modulus])(vec_dist)
+    vec_g = linear_interpolation(dist_lineique, [shear_modulus[1]; shear_modulus])(vec_dist)
     vangle_tor = deg2rad.(init_torsion)
-    vec_agl_tor = LinearInterpolation(dist_lineique, [vangle_tor[1]; vangle_tor])(vec_dist)
-    vec_d_appli_poids_feuille = LinearInterpolation(dist_lineique, [distance_application[1]; distance_application])(vec_dist)
+    vec_agl_tor = linear_interpolation(dist_lineique, [vangle_tor[1]; vangle_tor])(vec_dist)
+    vec_d_appli_poids_feuille = linear_interpolation(dist_lineique, [distance_application[1]; distance_application])(vec_dist)
 
     # Interpolation of coordinates in the origin frame
     # Identification of experimental points in the linear discretization
@@ -145,8 +148,8 @@ function bend(type, width_bend, height_bend, init_torsion, x, y, z, mass, mass_r
         end
 
         # Linear interpolation of inertias
-        vec_inertie_flex = LinearInterpolation(dist_lineique, [v_ig_flex[1]; v_ig_flex])(vec_dist)
-        vec_inertie_tor = LinearInterpolation(dist_lineique, [v_ig_tor[1]; v_ig_tor])(vec_dist)
+        vec_inertie_flex = linear_interpolation(dist_lineique, [v_ig_flex[1]; v_ig_flex])(vec_dist)
+        vec_inertie_tor = linear_interpolation(dist_lineique, [v_ig_tor[1]; v_ig_tor])(vec_dist)
 
         # Write angles from the new coordinates
         # Distance and angles of each segment P2P1
@@ -169,7 +172,7 @@ function bend(type, width_bend, height_bend, init_torsion, x, y, z, mass, mass_r
         # Code with invariance by 'iterations'
         v_force = v_poids_flexion .* cos.(vec_angle_xy[i_discret_pts_exp]) .* pesanteur
 
-        vec_force = LinearInterpolation(dist_lineique, [v_force[1]; v_force])(vec_dist)
+        vec_force = linear_interpolation(dist_lineique, [v_force[1]; v_force])(vec_dist)
 
         # Shear forces and bending moments
         vec_tranchant = cumsum(vec_force[nlin:-1:1] .* step)
@@ -188,11 +191,8 @@ function bend(type, width_bend, height_bend, init_torsion, x, y, z, mass, mass_r
         vec_angle_flexion = vec_angle_flexion[1] .- vec_angle_flexion
 
         # Test of the small displacement hypothesis
-        angle_max = deg2rad(21)  # 21 degrees is the limit
-
-        if maximum(abs.(vec_angle_flexion)) > angle_max
-            println("Maximum bending angle (degree) = ", rad2deg(maximum(abs.(vec_angle_flexion))))
-            println("(!) Hypothesis of small displacements not verified for BENDING (!)")
+        if verbose && maximum(abs.(vec_angle_flexion)) > angle_max
+            @warn string("Maximum bending angle: ", rad2deg(maximum(abs.(vec_angle_flexion))), "°. Hypothesis of small displacements not verified for bending.")
         end
 
         # Torsion
@@ -228,21 +228,20 @@ function bend(type, width_bend, height_bend, init_torsion, x, y, z, mass, mass_r
             v_m_tor[iter] = md + mg
         end
 
-        vec_m_tor = LinearInterpolation(dist_lineique, [v_m_tor[1]; v_m_tor])(vec_dist)
+        vec_m_tor = linear_interpolation(dist_lineique, [v_m_tor[1]; v_m_tor])(vec_dist)
 
         vec_deriv_agl_tor = vec_m_tor ./ (vec_g .* vec_inertie_tor)
 
         vec_angle_torsion = cumsum(vec_deriv_agl_tor .* step)  # integration along the stem
 
-        if maximum(abs.(vec_angle_torsion)) > angle_max
-            println("Maximum torsion angle (degree) = ", rad2deg(maximum(abs.(vec_angle_torsion))))
-            println("(!) Hypothesis of small displacements not verified for TORSION(!)")
+        if verbose && maximum(abs.(vec_angle_torsion)) > angle_max
+            @warn string("Maximum torsion angle: ", rad2deg(maximum(abs.(vec_angle_torsion))), "°. Hypothesis of small displacements not verified for torsion.")
         end
 
         som_cum_vec_agl_tor = som_cum_vec_agl_tor .+ vec_angle_torsion  # cumulative by weight increment
 
-        if (iter_poids == iterations)
-            println("Final torsion angle at the tip (degree) = ", rad2deg(som_cum_vec_agl_tor[length(som_cum_vec_agl_tor)]))
+        if verbose && iter_poids == iterations
+            @info string("Final torsion angle at the tip: ", rad2deg(som_cum_vec_agl_tor[length(som_cum_vec_agl_tor)]), "°")
         end
 
         # New coordinates of the points

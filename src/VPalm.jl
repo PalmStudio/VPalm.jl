@@ -18,7 +18,7 @@ import Rotations
 import PlyIO
 
 # For the biomechanical model
-import Interpolations: LinearInterpolation
+import Interpolations: linear_interpolation
 
 include("utils.jl")
 include("IO/parameters_IO.jl")

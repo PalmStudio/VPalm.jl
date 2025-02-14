@@ -115,19 +115,19 @@ function biomechanical_properties_rachis(
 
     # Call the bend function, which returns a vector of arrays:
     # bending -> { PtsX, PtsY, PtsZ, PtsDist, PtsAglXY, PtsAglXZ, PtsAglTor }
-    bending = bend(type, width_bend, height_bend, initial_torsion_vec, x, y, z, mass, mass_right, mass_left,
-        distance_application, elastic_modulus, shear_modulus, step, points, iterations)
+    bending = bend(
+        type, width_bend, height_bend, initial_torsion_vec, x, y, z, mass, mass_right, mass_left,
+        distance_application, elastic_modulus, shear_modulus, step, points, iterations;
+        verbose=false
+    )
 
-    # In Java, bending[3] (PtsDist) is used as rachLength,
-    # bending[4] (PtsAglXY) is assigned to 'bend' and its first element is set to cPointAngle,
-    # bending[5] (PtsAglXZ) -> dev, bending[6] (PtsAglTor) -> tors.
-    rachLength = bending[4]       # Julia index 4 corresponds to PtsDist (since Julia arrays are 1-indexed)
-    bend = bending[5]
-    bend[1] = cPointAngle         # Initialize the first angle as the angle at C point
+    rachLength = bending[4]
+    bent = bending[5]
+    bent[1] = zenithal_cpoint_angle         # Initialize the first angle as the angle at C point
     dev = bending[6]
     tors = bending[7]
 
-    return biomechanical_properties
+    return (rachis_length=rachLength, bending=bent, deviation=dev, torsion=tors)
 end
 
 

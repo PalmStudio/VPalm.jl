@@ -4,6 +4,7 @@ using Aqua
 using JET
 using MultiScaleTreeGraph
 using CSV, DataFrames
+using Random
 
 @testset "VPalm.jl" begin
     @testset "Code quality (Aqua.jl)" begin
