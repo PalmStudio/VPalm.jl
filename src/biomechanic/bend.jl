@@ -270,11 +270,7 @@ function bend(type, width_bend, height_bend, init_torsion, x, y, z, mass_rachis,
         # step = distance between points
         XYZangles = xyz_vers_agl(vec_x, vec_y, vec_z) # Assuming this function is defined elsewhere
 
-        coords = agl_vers_xyz([0; fill(step, nlin - 1)], XYZangles.vangle_xy, XYZangles.vangle_xz) # Assuming this function is defined elsewhere
-
-        vec_x = coords.vec_x
-        vec_y = coords.vec_y
-        vec_z = coords.vec_z
+        vec_x, vec_y, vec_z = agl_vers_xyz([0; fill(step, nlin - 1)], XYZangles.vangle_xy, XYZangles.vangle_xz) # Assuming this function is defined elsewhere
 
         # Calculation of the distances of the experimental points
         # Between before and after deformation
@@ -290,19 +286,13 @@ function bend(type, width_bend, height_bend, init_torsion, x, y, z, mass_rachis,
     if all_points
         i_discret_pts_exp = eachindex(vec_x)
     end
+
     pts_x = vec_x[i_discret_pts_exp]
     pts_y = vec_y[i_discret_pts_exp]
     pts_z = vec_z[i_discret_pts_exp]
-
-    Points = xyz_vers_agl(pts_x, pts_y, pts_z) # Assuming this function is defined elsewhere
-
-    pts_dist = Points.dist_p2p1
-    pts_agl_xy = Points.vangle_xy
-    pts_agl_xz = Points.vangle_xz
-
-    pts_agl_xy = rad2deg.(pts_agl_xy)
-    pts_agl_xz = rad2deg.(pts_agl_xz)
     pts_agl_tor = rad2deg.(som_cum_vec_agl_tor[i_discret_pts_exp])
 
-    return (x=pts_x, y=pts_y, z=pts_z, length=pts_dist, angle_xy=pts_agl_xy, angle_xz=pts_agl_xz, torsion=pts_agl_tor)
+    pts_dist, pts_agl_xy, pts_agl_xz = xyz_vers_agl(pts_x, pts_y, pts_z) # Assuming this function is defined elsewhere
+
+    return (x=pts_x, y=pts_y, z=pts_z, length=pts_dist, angle_xy=rad2deg.(pts_agl_xy), angle_xz=rad2deg.(pts_agl_xz), torsion=pts_agl_tor)
 end
