@@ -93,6 +93,7 @@ function compute_properties_petiole_section!(petiole_node, section_node, index, 
     section_node.length = petiole_section.length
     section_node.zenithal_angle = petiole_section.zenithal_angle
     section_node.azimuthal_angle = petiole_section.azimuthal_angle
+    section_node.torsion_angle = petiole_section.torsion_angle
 end
 
 """
@@ -152,5 +153,5 @@ function properties_petiole_section(
         deviation_angle = 0.0
     end
 
-    return (; width=section_width, height=section_height, length=petiole_section_length, zenithal_angle=zenithal_angle, azimuthal_angle=deviation_angle)
+    return (; width=section_width, height=section_height, length=petiole_section_length, zenithal_angle=zenithal_angle, azimuthal_angle=deviation_angle, torsion_angle=0.0)
 end

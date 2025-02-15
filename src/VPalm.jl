@@ -13,7 +13,7 @@ import YAML, OrderedCollections
 import PlantGeom
 import Meshes
 import TransformsBase: →
-import Rotations: RotX, RotY, RotZ, RotXY
+import Rotations: RotX, RotY, RotZ, RotXYZ
 import Rotations
 import PlyIO
 
@@ -40,7 +40,6 @@ include("allometries/stem.jl")
 include("allometries/internode.jl")
 include("allometries/leaf.jl")
 include("allometries/petiole.jl")
-include("allometries/rachis.jl")
 
 # Architecture:
 include("architecture/compute_properties_stem.jl")
@@ -54,7 +53,7 @@ include("geometry/read_ply.jl")
 include("geometry/snag.jl")
 include("geometry/cylinder.jl")
 include("geometry/add_geometry.jl")
-include("geometry/petiole.jl")
+include("geometry/sections.jl")
 
 # Instance (create an organ with architecture + geometry)
 include("instance/petiole.jl")

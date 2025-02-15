@@ -1,27 +1,3 @@
-function compute_properties_rachis!(
-    rachis_node, index,
-    rachis_twist_initial_angle, rachis_twist_initial_angle_sdp,
-    elastic_modulus, shear_modulus, rachis_length,
-    lenflet_length_at_b_intercept, lenflet_length_at_b_slope, relative_position_bpoint,
-    relative_position_bpoint_sd, relative_length_first_leaflet, relative_length_last_leaflet, relative_position_leaflet_max_length,
-    rachis_fresh_weigth, rank, height_cpoint, zenithal_cpoint_angle, nb_sections, height_rachis_tappering;
-    rng
-)
-
-    biomechanical_properties = biomechanical_properties_rachis(
-        rachis_twist_initial_angle, rachis_twist_initial_angle_sdp,
-        elastic_modulus, shear_modulus, rachis_length,
-        lenflet_length_at_b_intercept, lenflet_length_at_b_slope, relative_position_bpoint,
-        relative_position_bpoint_sd, relative_length_first_leaflet, relative_length_last_leaflet, relative_position_leaflet_max_length,
-        rachis_fresh_weigth, rank, height_cpoint, zenithal_cpoint_angle, nb_sections,
-        height_rachis_tappering,
-        rng
-    )
-    rachis = rachis_allometries()
-
-    return nothing
-end
-
 function biomechanical_properties_rachis(
     rachis_twist_initial_angle, rachis_twist_initial_angle_sdp,
     elastic_modulus, shear_modulus, rachis_length,
@@ -39,9 +15,6 @@ function biomechanical_properties_rachis(
     initial_torsion_sdp = rachis_twist_initial_angle + normal_deviation_draw(rachis_twist_initial_angle_sdp, rng)
 
     initial_torsion_vec = fill(initial_torsion_sdp, npoints)
-    elastic_modulus_vec = fill(elastic_modulus, npoints)
-    shear_modulus_vec = fill(shear_modulus, npoints)
-
     # Relative position of the remarkable points (C, C-B, B, B-A, A) on the rachis:
     relative_position_remarkable_points = [0.0000001, 0.336231351023383, 0.672462702046766, 0.836231351023383, 1.0]
     # Note: we use those positions as remarkable points along the rachis, and each segment (or section) is defined by two consecutive points.
@@ -118,16 +91,13 @@ function biomechanical_properties_rachis(
     bending = bend(
         type, width_bend, height_bend, initial_torsion_vec, x, y, z, mass, mass_right, mass_left,
         distance_application, elastic_modulus, shear_modulus, step, points, iterations;
-        verbose=false
+        verbose=false, all_points=true
     )
 
-    rachLength = bending[4]
-    bent = bending[5]
-    bent[1] = zenithal_cpoint_angle         # Initialize the first angle as the angle at C point
-    dev = bending[6]
-    tors = bending[7]
+    points_bending = bending[5]
+    points_bending[1] = zenithal_cpoint_angle         # Initialize the first angle as the angle at C point
 
-    return (rachis_length=rachLength, bending=bent, deviation=dev, torsion=tors)
+    return (length=fill(step, length(bending[4])), points_positions=bending[4], bending=points_bending, deviation=bending[6], torsion=bending[7])
 end
 
 
@@ -163,18 +133,23 @@ end
 
 
 """
-    rachis_height(relative_position, c_point_height)
+    rachis_height(relative_position, cpoint_height, rachis_height_tappering)
 
 Computes the rachis height (m) at a given relative position using a the height at C Point and rachis tappering.
 
 # Arguments
 
 - `relative_position`: The relative position along the rachis (0: base to 1: tip).
-- `c_point_height`: The height of the rachis at the C point, *i.e.* rachis base (m).
+- `cpoint_height`: The height of the rachis at the C point, *i.e.* rachis base (m).
 - `rachis_height_tappering`: The tappering factor for the rachis height.
 """
-function rachis_height(relative_position, c_point_height, rachis_height_tappering)
-    return (1.0 + rachis_height_tappering * (relative_position^3)) * c_point_height
+function rachis_height(relative_position, cpoint_height, rachis_height_tappering)
+    return (1.0 + rachis_height_tappering * (relative_position^3)) * cpoint_height
+end
+
+
+function rachis_width(relative_position, cpoint_width, rachis_width_tip)
+    return cpoint_width * (1.0 - relative_position) + rachis_width_tip * relative_position
 end
 
 """

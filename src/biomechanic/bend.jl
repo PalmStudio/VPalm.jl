@@ -1,6 +1,11 @@
 """
-    bend(type, width_bend, height_bend, init_torsion, x, y, z, mass_rachis, mass_leaflets_right, mass_leaflets_left,
-         distance_application, elastic_modulus, shear_modulus, step, points, iterations)
+    bend(
+        type, width_bend, height_bend, init_torsion, x, y, z, mass_rachis, mass_leaflets_right, mass_leaflets_left,
+        distance_application, elastic_modulus, shear_modulus, step, points, iterations;
+        all_points=false,
+        angle_max=deg2rad(21),
+        verbose=true
+    )
 
 Compute the deformation by applying both bending and torsion.
 
@@ -28,7 +33,7 @@ Compute the deformation by applying both bending and torsion.
 function bend(type, width_bend, height_bend, init_torsion, x, y, z, mass_rachis, mass_leaflets_right, mass_leaflets_left,
     distance_application, elastic_modulus, shear_modulus, step, points, iterations;
     all_points=false,
-    angle_max=deg2rad(21),  # 21 degrees is the limitGöttingen
+    angle_max=deg2rad(21),
     verbose=true
 )
 

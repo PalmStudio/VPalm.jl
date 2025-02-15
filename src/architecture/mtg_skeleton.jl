@@ -62,10 +62,10 @@ function mtg_skeleton(parameters; rng=Random.MersenneTwister(parameters["seed"])
         if leaf[:is_alive]
             # Petiole / Scale 5
             petiole_node = petiole(leaf, i, 5, leaf.rachis_length, leaf.zenithal_insertion_angle, leaf.zenithal_cpoint_angle, parameters; rng=rng)
-            rachis_node = rachis(petiole_node, i, 5, leaf.rank, leaf.rachis_length, leaf.zenithal_cpoint_angle, parameters; rng=rng)
+            rachis_node = rachis(petiole_node, i, 5, leaf.rank, leaf.rachis_length, petiole_node.height_cpoint, petiole_node.width_cpoint, leaf.zenithal_cpoint_angle, parameters; rng=rng)
         end
 
-        # add petiole, rachis, leaflets, ls
+        # add leaflets, ls
     end
 
     # Compute the geometry of the plant

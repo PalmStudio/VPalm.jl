@@ -27,7 +27,10 @@ function add_geometry!(mtg, refmesh_cylinder, refmesh_snag)
                 nothing
             end
         elseif symbol(node) == "Petiole"
-            add_petiole_section_geometry!(node, internode_width, internode_height, snag_rotation, stem_bending, refmesh_cylinder)
+            position_section = Ref(Meshes.Point(0.0, 0.0, 0.0))
+            add_section_geometry!(node, internode_width, internode_height, snag_rotation, stem_bending, refmesh_cylinder, position_section)
+        elseif symbol(node) == "Rachis"
+            add_section_geometry!(node, internode_width, internode_height, snag_rotation, stem_bending, refmesh_cylinder, position_section)
         end
     end
 end
