@@ -23,6 +23,7 @@ Compute the deformation by applying both bending and torsion.
 - `iterations`: Number of iterations to compute the torsion and bending.
 - `all_points`: return all points used in the computation (`true`), or only the input points corresponding to x, y and z coordinates (`false`, default).
 - `angle_max`: Maximum angle for testing the small displacement hypothesis (radians).
+- `verbose`: Provide information during computation.
 """
 function bend(type, width_bend, height_bend, init_torsion, x, y, z, mass_rachis, mass_leaflets_right, mass_leaflets_left,
     distance_application, elastic_modulus, shear_modulus, step, points, iterations;
@@ -58,6 +59,8 @@ function bend(type, width_bend, height_bend, init_torsion, x, y, z, mass_rachis,
     nlin = round(Int, dist_totale / step + 1)
     step = dist_totale / (nlin - 1)
     vec_dist = collect((0:(nlin-1)) .* step)
+    vec_dist[end] = dist_lineique[end]
+    # Note: we force vec_dist[end] to dist_lineique[end] to avoid any rounding error
 
     if length(elastic_modulus) != npoints_exp
         if length(elastic_modulus) == 1

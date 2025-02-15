@@ -13,9 +13,11 @@ ref = CSV.read(joinpath(@__DIR__, "files/6_EW01.22_17_kanan_unbent_bend.csv"), D
 @testset "bend works" begin
     # Dummy input data for bend function
     # Call the function
-    out = VPalm.bend(df.type, df.width, df.height, df.torsion, df.x, df.y, df.z, df.mass, df.mass_right, df.mass_left,
-        df.distance_application, elastic_modulus, shear_modulus, pas, Ncalc, Nboucle)
+    out = VPalm.bend(
+        df.type, df.width, df.height, df.torsion, df.x, df.y, df.z, df.mass, df.mass_right, df.mass_left,
+        df.distance_application, elastic_modulus, shear_modulus, pas, Ncalc, Nboucle;
+        verbose=false
+    )
     # CSV.write(joinpath(@__DIR__, "files/6_EW01.22_17_kanan_unbent_bend.csv"), DataFrame(out))
     @test isapprox(ref, DataFrame(out); atol=10)
 end
-
