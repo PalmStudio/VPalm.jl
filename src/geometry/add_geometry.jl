@@ -9,8 +9,9 @@ function add_geometry!(mtg, refmesh_cylinder, refmesh_snag)
     snag_width = 0.20 # see defaultOrthotropyAttribute in the trunk in the java implementation
     snag_height = 0.15
     snag_length = 3.0
+    position_section = Ref(Meshes.Point(0.0, 0.0, 0.0))
 
-    traverse!(mtg, symbol=["Internode", "Leaf", "Petiole"]) do node
+    traverse!(mtg, symbol=["Internode", "Leaf", "Petiole", "Rachis"]) do node
         if symbol(node) == "Internode"
             snag_rotation += deg2rad(node.XEuler)
             stem_bending += deg2rad(node.Orthotropy)
@@ -27,7 +28,7 @@ function add_geometry!(mtg, refmesh_cylinder, refmesh_snag)
                 nothing
             end
         elseif symbol(node) == "Petiole"
-            position_section = Ref(Meshes.Point(0.0, 0.0, 0.0))
+            position_section[] = Meshes.Point(0.0, 0.0, 0.0)
             add_section_geometry!(node, internode_width, internode_height, snag_rotation, stem_bending, refmesh_cylinder, position_section)
         elseif symbol(node) == "Rachis"
             add_section_geometry!(node, internode_width, internode_height, snag_rotation, stem_bending, refmesh_cylinder, position_section)

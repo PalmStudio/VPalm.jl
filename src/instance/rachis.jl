@@ -25,11 +25,11 @@ function rachis(petiole_node, index, scale, leaf_rank, rachis_length, height_cpo
         rachis_segment_node.length = points_length[p]
         rachis_segment_node.zenithal_angle = points_bending[p] - zenithal_angle
         rachis_segment_node.azimuthal_angle = points_deviation[p] - azimuthal_angle
-        rachis_segment_node.torsion = points_torsion[p] - torsion_angle
+        rachis_segment_node.torsion_angle = points_torsion[p] - torsion_angle
 
         zenithal_angle = rachis_segment_node.zenithal_angle
         azimuthal_angle = rachis_segment_node.azimuthal_angle
-        torsion_angle = rachis_segment_node.torsion
+        torsion_angle = rachis_segment_node.torsion_angle
     end
 end
 
