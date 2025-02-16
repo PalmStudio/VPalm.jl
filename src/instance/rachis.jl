@@ -37,5 +37,12 @@ function rachis(petiole_node, index, scale, leaf_rank, rachis_length, height_cpo
 
         last_parent = rachis_segment_node
     end
+
+    # We force the last node to take the angles values of its parent node, because the biomechanical model can give
+    # weird values at the boundaries:
+    last_parent.zenithal_angle = parent(last_parent).zenithal_angle
+    last_parent.azimuthal_angle = parent(last_parent).azimuthal_angle
+    last_parent.torsion_angle = parent(last_parent).torsion_angle
+
 end
 
