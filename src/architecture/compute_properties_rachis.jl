@@ -98,7 +98,7 @@ function biomechanical_properties_rachis(
     )
 
     points_bending = .-bending.angle_xy
-    # points_bending[1] = zenithal_cpoint_angle         # Initialize the first angle as the angle at C point
+    points_bending[1] = -zenithal_cpoint_angle         # Initialize the first angle as the angle at C point
 
     return (
         length=fill(step, length(bending.x)), points_positions=bending.length, bending=points_bending, deviation=bending.angle_xz, torsion=bending.torsion,
