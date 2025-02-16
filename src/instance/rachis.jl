@@ -44,5 +44,6 @@ function rachis(petiole_node, index, scale, leaf_rank, rachis_length, height_cpo
     last_parent.azimuthal_angle = parent(last_parent).azimuthal_angle
     last_parent.torsion_angle = parent(last_parent).torsion_angle
 
+    return rachis_node
 end
 
