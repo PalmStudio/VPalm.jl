@@ -10,8 +10,9 @@ parameters = read_parameters(file)
     nb_petioles = nb_leaves_alive
     nb_petiole_sections = parameters["petiole_nb_segments"] * nb_petioles
     nb_rachis = nb_leaves_alive
+    nb_rachis_sections = parameters["rachis_nb_segments"] * nb_rachis
 
-    @test length(mtg) == nb_phytomers + nb_internodes + nb_leaves + nb_petioles + nb_petiole_sections + 2 + nb_rachis # 2 for stem and plant
+    @test length(mtg) == nb_phytomers + nb_internodes + nb_leaves + nb_petioles + nb_petiole_sections + nb_rachis + nb_rachis_sections + 2 # 2 for stem and plant
     # Check the length of the mockup: nb leaves emitted * 3 (phytomer + internode + leaf) + 2 (stem + plant)
     @test typeof(mtg) == MultiScaleTreeGraph.Node{MultiScaleTreeGraph.NodeMTG,Dict{Symbol,Any}}
     @test mtg[1][:stem_bending] == 0.0
