@@ -5,18 +5,18 @@ Computes the diameter of an internode at a given rank.
 
 # Arguments
 
-- `internode_number`: The number of the internode.
+- `internode_index`: The number of the internode.
 - `nb_internodes`: The total number of internodes.
 - `stem_diameter`: The diameter of the stem at the base.
 - `stem_base_shrinkage`: The shrinkage coefficient at the stem base.
 - `stem_top_shrinkage`: The shrinkage coefficient at the stem top.
 - `leaves_in_sheath`: The number of leaves in the sheath.
 """
-function internode_diameter(internode_number, nb_internodes, stem_diameter, stem_base_shrinkage, stem_top_shrinkage, leaves_in_sheath)
+function internode_diameter(internode_index, nb_internodes, stem_diameter, stem_base_shrinkage, stem_top_shrinkage, leaves_in_sheath)
     # Shrink trunk base
-    diameter = stem_diameter * (1 - exp(-stem_base_shrinkage * internode_number))
+    diameter = stem_diameter * (1 - exp(-stem_base_shrinkage * internode_index))
     # Shrink trunk top
-    frond_rank = nb_internodes - internode_number - leaves_in_sheath
+    frond_rank = nb_internodes - internode_index - leaves_in_sheath
     reduction_factor = max(0, min(1, 1 - exp(-stem_top_shrinkage * frond_rank)))
     return diameter * reduction_factor
 end
@@ -76,7 +76,7 @@ reminder:
 function internode_length(i, Nbl, sh, R, N, l_0)
 
     # Computation of the internode final / max length so that the sum of all the internodes length is equal to the stem height
-    l = (sh - l_0 * (N/2 - (R + 1) / 2 + R + 1)) / (N/2 + Nbl - R - 1 + (R + 1)/ 2)
+    l = (sh - l_0 * (N / 2 - (R + 1) / 2 + R + 1)) / (N / 2 + Nbl - R - 1 + (R + 1) / 2)
 
     # Coefficients for the computation of internode length for the first N internodes
     a = (l - l_0) / (N - 1)
@@ -96,31 +96,6 @@ function internode_length(i, Nbl, sh, R, N, l_0)
 
     return length
 end
-
-function internode_length_old(internode_number, nb_internodes, nb_leaves, stem_height, internode_rank_no_expansion, nb_internodes_before_planting, internode_final_length)
-    rank = nb_leaves - internode_rank_no_expansion # Number of leaves not in expansion
-    S = nb_internodes - nb_leaves # Number of internodes without leaves. Should be equal to 0 at adult stage
-    nb_noexp = nb_internodes_before_planting + S + rank # Total number of internodes not in expansion
-    nb_total = nb_internodes_before_planting + S + nb_leaves # Total number of internodes
-    coeff = 2 * stem_height / (nb_internodes_before_planting * (2 * S + nb_internodes_before_planting + 1))
-    l = coeff * nb_internodes_before_planting
-    c = (l - internode_final_length) /
-        (
-        nb_noexp^2 -
-        nb_total^2 -
-        2 * nb_noexp * (rank - nb_leaves)
-    )
-    b = -2 * c * nb_noexp
-    a = l - b * nb_noexp - c * nb_noexp^2
-    if internode_number < nb_internodes_before_planting
-        return coeff * internode_number
-    elseif (internode_number >= nb_internodes_before_planting) & (internode_number < nb_noexp)
-        return l
-    else
-        return a + b * internode_number + c * internode_number^2
-    end
-end
-
 
 """
     phyllotactic_angle(phyllotactic_angle_mean, phyllotactic_angle_sd; rng=Random.MersenneTwister(1234))

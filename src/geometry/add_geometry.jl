@@ -1,4 +1,4 @@
-function add_geometry!(mtg, refmesh_internode, refmesh_snag)
+function add_geometry!(mtg, refmesh_cylinder, refmesh_snag)
     stem_diameter = mtg[1].stem_diameter
     stem_bending = mtg[1].stem_bending
     internode_width = stem_diameter
@@ -9,14 +9,16 @@ function add_geometry!(mtg, refmesh_internode, refmesh_snag)
     snag_width = 0.20 # see defaultOrthotropyAttribute in the trunk in the java implementation
     snag_height = 0.15
     snag_length = 3.0
+    position_section = Ref(Meshes.Point(0.0, 0.0, 0.0))
+    angles = [0.0, 0.0, 0.0]
 
-    traverse!(mtg) do node
+    traverse!(mtg, symbol=["Internode", "Leaf", "Petiole", "Rachis"]) do node
         if symbol(node) == "Internode"
             snag_rotation += deg2rad(node.XEuler)
             stem_bending += deg2rad(node.Orthotropy)
             internode_width = node.Width > 0.0 ? node.Width : 0.01
             mesh_transformation = Meshes.Scale(internode_width, internode_width, node.Length) → Meshes.Translate(0.0, 0.0, internode_height) → Meshes.Rotate(RotZ(snag_rotation)) → Meshes.Rotate(RotY(stem_bending))
-            node.geometry = PlantGeom.Geometry(ref_mesh=refmesh_internode, transformation=mesh_transformation)
+            node.geometry = PlantGeom.Geometry(ref_mesh=refmesh_cylinder, transformation=mesh_transformation)
             internode_height += node.Length
         elseif symbol(node) == "Leaf"
             if !node.is_alive
@@ -26,6 +28,14 @@ function add_geometry!(mtg, refmesh_internode, refmesh_snag)
             else
                 nothing
             end
+        elseif symbol(node) == "Petiole"
+            # Initialise the position and angles for the petiole to 0.0
+            position_section[] = Meshes.Point(0.0, 0.0, 0.0)
+            angles .= 0.0
+            add_section_geometry!(node, internode_width, internode_height, snag_rotation, stem_bending, refmesh_cylinder, position_section, angles)
+        elseif symbol(node) == "Rachis"
+            add_section_geometry!(node, internode_width, internode_height, snag_rotation, stem_bending, refmesh_cylinder, position_section, angles)
+            # Note: we use the position and angles of the last petiole section to initialize the rachis
         end
     end
 end

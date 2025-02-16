@@ -3,6 +3,8 @@ using Test
 using Aqua
 using JET
 using MultiScaleTreeGraph
+using CSV, DataFrames
+using Random
 
 @testset "VPalm.jl" begin
     @testset "Code quality (Aqua.jl)" begin
@@ -22,6 +24,15 @@ using MultiScaleTreeGraph
 
     @testset "Stem allometries" begin
         include("test-stem.jl")
+    end
+
+    @testset "Petiole" begin
+        include("test-petiole.jl")
+    end
+
+    @testset "Biomechanical model" begin
+        include("test-point_interpolation.jl")
+        include("test-bend.jl")
     end
 
     @testset "Static mockup" begin
