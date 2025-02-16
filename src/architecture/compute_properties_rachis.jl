@@ -83,7 +83,7 @@ function biomechanical_properties_rachis(
         z[n] = sind(zenithal_cpoint_angle) * distances[n]
     end
 
-    step = rachis_length / nb_sections
+    step = rachis_length / (nb_sections - 1)
     # @show type width_bend height_bend initial_torsion_vec x y z mass mass_right mass_left distance_application elastic_modulus shear_modulus
     # error("stop here")
 
