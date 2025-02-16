@@ -4,6 +4,7 @@
         distance_application, elastic_modulus, shear_modulus, step, points, iterations;
         all_points=false,
         angle_max=deg2rad(21),
+        force=true,
         verbose=true
     )
 
@@ -26,14 +27,16 @@ Compute the deformation by applying both bending and torsion.
 - `step`: Length of the segments that discretize the object (m).
 - `points`: Number of points used in the grid discretizing the section.
 - `iterations`: Number of iterations to compute the torsion and bending.
-- `all_points`: return all points used in the computation (`true`), or only the input points corresponding to x, y and z coordinates (`false`, default).
-- `angle_max`: Maximum angle for testing the small displacement hypothesis (radians).
-- `verbose`: Provide information during computation.
+- `all_points=false`: return all points used in the computation (`true`), or only the input points corresponding to x, y and z coordinates (`false`, default).
+- `angle_max=deg2rad(21)`: Maximum angle for testing the small displacement hypothesis (radians).
+- `force=true`: Force the angle values `> angle_max` equal to `angle_max`? 
+- `verbose=true`: Provide information during computation.
 """
 function bend(type, width_bend, height_bend, init_torsion, x, y, z, mass_rachis, mass_leaflets_right, mass_leaflets_left,
     distance_application, elastic_modulus, shear_modulus, step, points, iterations;
     all_points=false,
     angle_max=deg2rad(21),
+    force=true,
     verbose=true
 )
 
@@ -156,6 +159,7 @@ function bend(type, width_bend, height_bend, init_torsion, x, y, z, mass_rachis,
         # Test of the small displacement hypothesis
         if verbose && maximum(abs.(vec_angle_flexion)) > angle_max
             @warn string("Maximum bending angle: ", rad2deg(maximum(abs.(vec_angle_flexion))), "°. Hypothesis of small displacements not verified for bending.")
+            force && (vec_angle_flexion[abs.(vec_angle_flexion).>angle_max] .= angle_max)
         end
 
         # Torsion
@@ -199,6 +203,7 @@ function bend(type, width_bend, height_bend, init_torsion, x, y, z, mass_rachis,
 
         if verbose && maximum(abs.(vec_angle_torsion)) > angle_max
             @warn string("Maximum torsion angle: ", rad2deg(maximum(abs.(vec_angle_torsion))), "°. Hypothesis of small displacements not verified for torsion.")
+            force && (vec_angle_torsion[abs.(vec_angle_torsion).>angle_max] .= angle_max)
         end
 
         som_cum_vec_agl_tor = som_cum_vec_agl_tor .+ vec_angle_torsion  # cumulative by weight increment
@@ -228,18 +233,14 @@ function bend(type, width_bend, height_bend, init_torsion, x, y, z, mass_rachis,
             # Segment becomes collinear to the OX axis
             vec_rot_inv = rota_inverse_yz(p2p1, vec_angle_xy[iter], vec_angle_xz[iter]) # Assuming this function is defined elsewhere
 
-            # Flexion
-            # Equivalent to a rotation around OY
-            # Rotation around OY
-            # The rotation is wrong for strong angles
-            # Code replaced by:
+            # Flexion equivalent to a rotation around OY
+            # Rotation around OY: The rotation is wrong for strong angles
             vec_rot_flex[1] = vec_rot_inv[1]
             vec_rot_flex[2] = vec_rot_inv[2]
             vec_rot_flex[3] = step * vec_angle_flexion[iter]
 
             # Torsion
-            # Equivalent to a rotation around OX
-            # Initially the section is rotated but without torsion
+            # Equivalent to a rotation around OX, initially the section is rotated but without torsion
             agl_tor_geom = som_cum_vec_agl_tor[iter] - vec_agl_tor[iter]
 
             cs = cos(agl_tor_geom)
@@ -276,7 +277,7 @@ function bend(type, width_bend, height_bend, init_torsion, x, y, z, mass_rachis,
 
         # Conservation of distances
         # step = distance between points
-        XYZangles = xyz_vers_agl(vec_x, vec_y, vec_z) # Assuming this function is defined elsewhere
+        XYZangles = xyz_vers_agl(vec_x, vec_y, vec_z)
 
         vec_x, vec_y, vec_z = agl_vers_xyz([0; fill(step, nlin - 1)], XYZangles.vangle_xy, XYZangles.vangle_xz) # Assuming this function is defined elsewhere
 
@@ -289,7 +290,7 @@ function bend(type, width_bend, height_bend, init_torsion, x, y, z, mass_rachis,
 
             mat_dist_pts_exp[iter_poids, iter] = sqrt(c1 + c2 + c3)
         end
-    end  # iterPoids
+    end
 
     if all_points
         i_discret_pts_exp = eachindex(vec_x)

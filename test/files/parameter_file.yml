@@ -148,6 +148,10 @@ leaflet_length_at_b_slope: 0.0544112333185808
 relative_length_first_leaflet: 0.180641437601563
 relative_length_last_leaflet: 0.523055131720828
 relative_position_leaflet_max_length: 0.522462119491008
+biomechanical_model:
+  nb_sections: 100 # Number of sections used to discretize the sections with constant form (!= rachis_nb_segments)
+  angle_max: 21.0 # maximum flexion and torsion angles allowed between two sections (°)
+  iterations: 15 # Number of iterations for the recursive computation
 widthFirst: 0.223139439734409
 widthLast: 0.53199251056915
 posWidthMax: 0.613356804949367

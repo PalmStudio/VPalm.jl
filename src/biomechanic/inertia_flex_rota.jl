@@ -4,6 +4,7 @@
 Compute the inertia of bending and torsion, and the cross-section area.
 
 # Arguments
+
 - `b`: Dimension of the base.
 - `h`: Dimension of the height.
 - `ag_deg`: Section orientation angle (torsion, in degrees).
@@ -11,6 +12,7 @@ Compute the inertia of bending and torsion, and the cross-section area.
 - `n`: Number of discretizations (default to 100).
 
 # Details
+
 For the section type, possible values are:
 - `sct = 1`: triangle (bottom-oriented)
 - `sct = 2`: rectangle
@@ -19,6 +21,7 @@ For the section type, possible values are:
 - `sct = 5`: circle
 
 # Returns
+
 - A NamedTuple with fields:
   - `ig_flex`: Bending inertia.
   - `ig_tor`: Torsion inertia.

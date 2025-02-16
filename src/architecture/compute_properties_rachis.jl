@@ -5,6 +5,7 @@ function biomechanical_properties_rachis(
     relative_position_bpoint_sd, relative_length_first_leaflet, relative_length_last_leaflet, relative_position_leaflet_max_length,
     rachis_fresh_weigth, rank, height_cpoint, zenithal_cpoint_angle, nb_sections,
     height_rachis_tappering,
+    points, iterations, angle_max,
     rng
 )
     # Frond section types (e.g., rectangle, ellipsoid, etc.)
@@ -83,9 +84,6 @@ function biomechanical_properties_rachis(
     end
 
     step = rachis_length / nb_sections
-    points = 100
-    iterations = 15
-
     # @show type width_bend height_bend initial_torsion_vec x y z mass mass_right mass_left distance_application elastic_modulus shear_modulus
     # error("stop here")
 
@@ -94,7 +92,7 @@ function biomechanical_properties_rachis(
     bending = bend(
         type, width_bend, height_bend, initial_torsion_vec, x, y, z, mass, mass_right, mass_left,
         distance_application, elastic_modulus, shear_modulus, step, points, iterations;
-        verbose=false, all_points=true, angle_max=21.0
+        verbose=false, all_points=true, angle_max=angle_max
     )
 
     points_bending = .-bending.angle_xy

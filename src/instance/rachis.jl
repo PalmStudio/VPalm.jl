@@ -11,7 +11,11 @@ function rachis(petiole_node, index, scale, leaf_rank, rachis_length, height_cpo
         parameters["rachis_fresh_weigth"][leaf_rank] / 1000.0, # Expected in kg
         #! change the way we index in the rachis_fresh_weigth vector, because we have values for the spears too in here, so rank <= 0
         leaf_rank, height_cpoint, zenithal_cpoint_angle, nb_segments,
-        parameters["height_rachis_tappering"], rng
+        parameters["height_rachis_tappering"],
+        parameters["biomechanical_model"]["nb_sections"],
+        parameters["biomechanical_model"]["iterations"],
+        deg2rad(parameters["biomechanical_model"]["angle_max"]),
+        rng
     )
 
     last_parent = rachis_node
