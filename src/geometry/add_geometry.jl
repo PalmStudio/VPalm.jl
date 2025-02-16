@@ -10,6 +10,7 @@ function add_geometry!(mtg, refmesh_cylinder, refmesh_snag)
     snag_height = 0.15
     snag_length = 3.0
     position_section = Ref(Meshes.Point(0.0, 0.0, 0.0))
+    angles = [0.0, 0.0, 0.0]
 
     traverse!(mtg, symbol=["Internode", "Leaf", "Petiole", "Rachis"]) do node
         if symbol(node) == "Internode"
@@ -28,10 +29,13 @@ function add_geometry!(mtg, refmesh_cylinder, refmesh_snag)
                 nothing
             end
         elseif symbol(node) == "Petiole"
+            # Initialise the position and angles for the petiole to 0.0
             position_section[] = Meshes.Point(0.0, 0.0, 0.0)
-            add_section_geometry!(node, internode_width, internode_height, snag_rotation, stem_bending, refmesh_cylinder, position_section)
+            angles .= 0.0
+            add_section_geometry!(node, internode_width, internode_height, snag_rotation, stem_bending, refmesh_cylinder, position_section, angles)
         elseif symbol(node) == "Rachis"
-            add_section_geometry!(node, internode_width, internode_height, snag_rotation, stem_bending, refmesh_cylinder, position_section)
+            add_section_geometry!(node, internode_width, internode_height, snag_rotation, stem_bending, refmesh_cylinder, position_section, angles)
+            # Note: we use the position and angles of the last petiole section to initialize the rachis
         end
     end
 end

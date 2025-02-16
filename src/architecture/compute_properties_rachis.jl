@@ -1,7 +1,7 @@
 function biomechanical_properties_rachis(
     rachis_twist_initial_angle, rachis_twist_initial_angle_sdp,
     elastic_modulus, shear_modulus, rachis_length,
-    lenflet_length_at_b_intercept, lenflet_length_at_b_slope, relative_position_bpoint,
+    lenflet_length_at_b_intercept, leaflet_length_at_b_slope, relative_position_bpoint,
     relative_position_bpoint_sd, relative_length_first_leaflet, relative_length_last_leaflet, relative_position_leaflet_max_length,
     rachis_fresh_weigth, rank, height_cpoint, zenithal_cpoint_angle, nb_sections,
     height_rachis_tappering,
@@ -38,7 +38,7 @@ function biomechanical_properties_rachis(
     distances = zeros(Float64, npoints)          # Distance between the points projected on the X axis
     distance_application = zeros(Float64, npoints) # Application distance for forces (if needed)
 
-    leaflet_length_at_bpoint = length_at_bpoint(rachis_length, lenflet_length_at_b_intercept, lenflet_length_at_b_slope)
+    leaflet_length_at_bpoint = length_at_bpoint(rachis_length, lenflet_length_at_b_intercept, leaflet_length_at_b_slope)
     leafletLengthMax = max_leaflet_length(leaflet_length_at_bpoint, relative_position_bpoint, relative_position_bpoint_sd, relative_length_first_leaflet, relative_length_last_leaflet, relative_position_leaflet_max_length, rng)
 
     # Parameters to compute rachis width from rachis height:
@@ -86,23 +86,29 @@ function biomechanical_properties_rachis(
     points = 100
     iterations = 15
 
+    # @show type width_bend height_bend initial_torsion_vec x y z mass mass_right mass_left distance_application elastic_modulus shear_modulus
+    # error("stop here")
+
     # Call the bend function, which returns a vector of arrays:
     # bending -> { PtsX, PtsY, PtsZ, PtsDist, PtsAglXY, PtsAglXZ, PtsAglTor }
     bending = bend(
         type, width_bend, height_bend, initial_torsion_vec, x, y, z, mass, mass_right, mass_left,
         distance_application, elastic_modulus, shear_modulus, step, points, iterations;
-        verbose=false, all_points=true
+        verbose=false, all_points=true, angle_max=21.0
     )
 
-    points_bending = bending[5]
-    points_bending[1] = zenithal_cpoint_angle         # Initialize the first angle as the angle at C point
+    points_bending = .-bending.angle_xy
+    # points_bending[1] = zenithal_cpoint_angle         # Initialize the first angle as the angle at C point
 
-    return (length=fill(step, length(bending[4])), points_positions=bending[4], bending=points_bending, deviation=bending[6], torsion=bending[7])
+    return (
+        length=fill(step, length(bending.x)), points_positions=bending.length, bending=points_bending, deviation=bending.angle_xz, torsion=bending.torsion,
+        x=bending.x, y=bending.y, z=bending.z
+    )
 end
 
 
-function length_at_bpoint(rachis_length, lenflet_length_at_b_intercept, lenflet_length_at_b_slope)
-    return linear(rachis_length, lenflet_length_at_b_intercept, lenflet_length_at_b_slope)
+function length_at_bpoint(rachis_length, lenflet_length_at_b_intercept, leaflet_length_at_b_slope)
+    return linear(rachis_length, lenflet_length_at_b_intercept, leaflet_length_at_b_slope)
 end
 
 function max_leaflet_length(leaflet_length_at_bpoint, relative_position_bpoint, relative_position_bpoint_sd, relative_length_first_leaflet, relative_length_last_leaflet, relative_position_leaflet_max_length, rng)
