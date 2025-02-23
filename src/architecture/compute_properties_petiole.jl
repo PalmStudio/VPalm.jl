@@ -26,6 +26,23 @@ Compute the dimensional properties of a petiole.
 - `petiole_rachis_ratio_sd`: the standard deviation of the ratio of the petiole to rachis length
 - `nb_sections`: the number of sections discretizing the petiole
 - `rng=Random.MersenneTwister(1)`: the random number generator
+
+# Returns
+The petiole node updated with properties.
+
+# Details
+Properties are computed based on the allometries of the petiole and the rachis:
+- length: the length of the petiole (m)
+- azimuthal_angle: the azimuthal angle of the petiole (°)
+- width_base: the width of the petiole at its base (m)
+- height_base: the height of the petiole at its base (m)
+- width_cpoint: the width of the petiole at the C point (m)
+- height_cpoint: the height of the petiole at the C point (m)
+- zenithal_insertion_angle: the zenithal angle of insertion of the petiole on the stem (°)
+- zenithal_cpoint_angle: the zenithal angle of the C point of the petiole (°)
+- section_length: the length of the petiole sections (m)
+- section_insertion_angle: the zenithal angle of insertion between the petioles sections (°)
+
 """
 function compute_properties_petiole!(
     petiole_node,
@@ -47,7 +64,6 @@ function compute_properties_petiole!(
     petiole_node[:height_cpoint] = petiole.height_cpoint
     petiole_node[:zenithal_insertion_angle] = insertion_angle
     petiole_node[:zenithal_cpoint_angle] = zenithal_cpoint_angle
-
     petiole_node[:section_length] = petiole.length / nb_sections
     petiole_node[:section_insertion_angle] = (zenithal_cpoint_angle - insertion_angle) / (nb_sections - 1)
     # Note: We use nb_sections - 1 because the first section already has an angle, the insertion_angle
@@ -67,8 +83,10 @@ Compute the dimension of a petiole section based on the dimensions of the petiol
 - `index`: the index of the section on the petiole, from 1 at the base to `nb_sections`.
 - `nb_sections`: the number of sections discretizing the petiole
 
-# Details
+# Returns
+The section node updated with dimensional properties.
 
+# Details
 The `petiole_node` should have the following attributes:
 
 - `width_base`: the width of the petiole at its base (m)
@@ -119,8 +137,7 @@ Compute the properties of each section of the petiole.
 - `petiole_section_insertion_angle`: The zenithal angle of insertion between the petioles sections (°)
 - `azimuthal_angle`: Azimuthal angle at the insertion (°)
 
-# Returns 
-
+# Returns
 A vector of dimensions for each section, given as a named tuple:
 
 - width: width of the section (m)

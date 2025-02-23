@@ -1,3 +1,36 @@
+"""
+    compute_properties_stem!(node, parameters, rng)
+
+Compute the properties of the stem node.
+
+# Arguments
+- `node`: the stem node
+- `parameters`: the parameters of the Vpalm model
+- `rng`: the random number generator
+
+# Returns
+The stem node updated with properties.
+
+# Details
+The stem dimensions are computed based on the parameters of the model:
+- stem_bending: the bending of the stem. Uses the `VPalm.stem_bending` function.
+- stem_height: the height of the stem. Uses the `VPalm.stem_height` function.
+- stem_diameter: the diameter of the stem. Uses the `VPalm.stem_diameter` function.
+
+# Examples
+```julia
+file = joinpath(dirname(dirname(pathof(VPalm))), "test", "files", "parameter_file.yml")
+parameters = read_parameters(file)
+nb_internodes = parameters["nb_leaves_emitted"] + parameters["nb_internodes_before_planting"] # The number of internodes emitted since the seed
+nb_leaves_alive = floor(Int, mean_and_sd(parameters["nb_leaves_mean"], parameters["nb_leaves_sd"]; rng=rng))
+nb_leaves_alive = min(nb_leaves_alive, nb_internodes)
+# Plant / Scale 1
+plant = Node(NodeMTG("/", "Plant", 1, 1))
+# Stem (& Roots) / Scale 2
+stem = Node(plant, NodeMTG("+", "Stem", 1, 2))
+compute_properties_stem!(stem, parameters, rng)
+```
+"""
 function compute_properties_stem!(node, parameters, rng)
     node[:stem_bending] = VPalm.stem_bending(
         parameters["stem_bending_mean"],

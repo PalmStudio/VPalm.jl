@@ -1,3 +1,58 @@
+"""
+    biomechanical_properties_rachis(
+        rachis_twist_initial_angle, rachis_twist_initial_angle_sdp,
+        elastic_modulus, shear_modulus, rachis_length,
+        lenflet_length_at_b_intercept, leaflet_length_at_b_slope, relative_position_bpoint,
+        relative_position_bpoint_sd, relative_length_first_leaflet, relative_length_last_leaflet, relative_position_leaflet_max_length,
+        rachis_fresh_weigth, rank, height_cpoint, zenithal_cpoint_angle, nb_sections,
+        height_rachis_tappering,
+        points, iterations, angle_max,
+        rng
+    )
+
+Use of the biomechanical model to compute the properties of the rachis.
+
+# Arguments
+- `rachis_twist_initial_angle`: initial twist angle of the rachis (°)
+- `rachis_twist_initial_angle_sdp`: standard deviation of the initial twist angle of the rachis (°)
+- `elastic_modulus`: elastic modulus of the rachis (Pa)
+- `shear_modulus`: shear modulus of the rachis (Pa)
+- `rachis_length`: length of the rachis (m)
+- `lenflet_length_at_b_intercept`: intercept of the linear function for the leaflet length at the B point (m)
+- `leaflet_length_at_b_slope`: slope of the linear function for the leaflet length at the B point (m)
+- `relative_position_bpoint`: relative position of the B point on the rachis (0: base to 1: tip)
+- `relative_position_bpoint_sd`: standard deviation of the relative position of the B point on the rachis
+- `relative_length_first_leaflet`: relative length of the first leaflet on the rachis (0 to 1)
+- `relative_length_last_leaflet`: relative length of the last leaflet on the rachis (0 to 1)
+- `relative_position_leaflet_max_length`: relative position of the longest leaflet on the rachis (0.111 to 0.999)
+- `rachis_fresh_weigth`: fresh weight of the rachis (g)
+- `rank`: rank of the rachis
+- `height_cpoint`: height of the C point (m)
+- `zenithal_cpoint_angle`: zenithal angle of the C point (°)
+- `nb_sections`: number of sections to compute the bending
+- `height_rachis_tappering`: tappering factor for the rachis height
+- `points`: number of points to compute the bending
+- `iterations`: number of iterations to compute the bending
+- `angle_max`: maximum angle to compute the bending (°)
+- `rng`: the random number generator
+
+# Returns
+A tuple with the following fields:
+- `length`: vector with the length of each segment
+- `points_positions`: the position of the points along the rachis
+- `bending`: the bending angle of the rachis
+- `deviation`: the deviation of the rachis (angle in the xz plane)
+- `torsion`: the torsion of the rachis
+- `x`: the x coordinates of the rachis
+- `y`: the y coordinates of the rachis
+- `z`: the z coordinates of the rachis
+
+# Details
+Split the rachis into 5 segments defined by remarkable points (C, C-B, B, B-A, A).
+Each segment has a particular shape, a mass, and the leaflets on both sides of the rachis have a mass.
+Coefficents are used to compute the mass distribution and relative lengths of segments.
+The rachis is bent using the `bend` function.
+"""
 function biomechanical_properties_rachis(
     rachis_twist_initial_angle, rachis_twist_initial_angle_sdp,
     elastic_modulus, shear_modulus, rachis_length,
@@ -152,6 +207,18 @@ function rachis_height(relative_position, cpoint_height, rachis_height_tappering
 end
 
 
+
+"""
+    rachis_width(relative_position, cpoint_width, rachis_width_tip)
+
+Computes the rachis width (m) at a given relative position using the width at C Point and rachis width at the tip.
+
+# Arguments
+
+- `relative_position`: The relative position along the rachis (0: base to 1: tip).
+- `cpoint_width`: The width of the rachis at the C point, *i.e.* rachis base (m).
+- `rachis_width_tip`: The width of the rachis at the tip (m).
+"""
 function rachis_width(relative_position, cpoint_width, rachis_width_tip)
     return cpoint_width * (1.0 - relative_position) + rachis_width_tip * relative_position
 end

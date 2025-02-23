@@ -1,3 +1,56 @@
+"""
+    compute_properties_leaf!(node, index, nb_internodes, nb_leaves_alive, parameters, rng)
+
+Compute the properties of a leaf node.
+- rank: the rank of the leaf
+- is_alive: is the leaf alive or dead (snag)?
+- zenithal_insertion_angle: the zenithal insertion angle of the leaf (rad)
+- rachis_length: the length of the rachis (m)
+- petiole_deviation_angle: the deviation angle of the petiole (rad)
+- zenithal_cpoint_angle: the zenithal angle at C-point (rad)
+
+# Arguments
+- `node`: the leaf node
+- `index`: the index of the leaf
+- `nb_internodes`: the total number of internodes
+- `nb_leaves_alive`: the number of leaves currently alive
+- `parameters`: the parameters of the model
+- `rng`: the random number generator
+
+# Returns
+The leaf node updated with properties.
+
+# Details
+The leaf dimensions are computed based on the dimensions of the stem and the parameters of the model:
+- rank: rank of the leaf (based on the number of internodes and the index of the leaf)
+- is_alive: is the leaf alive or dead (snag)?
+- zenithal_insertion_angle: the zenithal insertion angle of the leaf (rad). Uses the `VPalm.leaf_insertion_angle` function.
+- rachis_length: the length of the rachis (m). Uses the `rachis_expansion` function.
+- petiole_deviation_angle: the deviation angle of the petiole (rad). Computed using a normal deviation draw.
+- zenithal_cpoint_angle: the zenithal angle at C-point (rad). Uses the `c_point_angle` function.
+
+# Examples
+```julia
+file = joinpath(dirname(dirname(pathof(VPalm))), "test", "files", "parameter_file.yml")
+parameters = read_parameters(file)
+nb_internodes = parameters["nb_leaves_emitted"] + parameters["nb_internodes_before_planting"] # The number of internodes emitted since the seed
+nb_leaves_alive = floor(Int, mean_and_sd(parameters["nb_leaves_mean"], parameters["nb_leaves_sd"]; rng=rng))
+nb_leaves_alive = min(nb_leaves_alive, nb_internodes)
+# Plant / Scale 1
+plant = Node(NodeMTG("/", "Plant", 1, 1))
+# Stem (& Roots) / Scale 2
+stem = Node(plant, NodeMTG("+", "Stem", 1, 2))
+compute_properties_stem!(stem, parameters, rng)
+stem_height = stem[:stem_height]
+stem_diameter = stem[:stem_diameter]
+# Phytomer / Scale 3
+phytomer = Node(stem, NodeMTG("/", "Phytomer", 1, 3))
+# Internode & Leaf / Scale 4
+internode = Node(phytomer, NodeMTG("/", "Internode", 1, 4))
+leaf = Node(internode, NodeMTG("+", "Leaf", 1, 4))
+compute_properties_leaf!(leaf, 1, nb_internodes, nb_leaves_alive, parameters, rng)
+```
+"""
 function compute_properties_leaf!(node, index, nb_internodes, nb_leaves_alive, parameters, rng)
     leaf_rank = nb_internodes - index + 1
     node[:rank] = leaf_rank
