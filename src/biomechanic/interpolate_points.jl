@@ -19,7 +19,7 @@ Interpolate points along a curve.
 """
 function interp_points(x, y, z, pas)
     # Distance and angles of each segment P2P1
-    vdist_p2p1, vangle_xy, vangle_xz = xyz_vers_agl(x, y, z)
+    vdist_p2p1, vangle_xy, vangle_xz = xyz_to_dist_and_angles(x, y, z)
 
     dist_lineique = cumsum(vdist_p2p1)
     dist_totale = last(dist_lineique)
@@ -82,7 +82,7 @@ function interp_points(x, y, z, pas)
     end
 
     # Distance and angles of the interpolated points
-    XYZ_Agl = xyz_vers_agl(vec_x, vec_y, vec_z)
+    XYZ_Agl = xyz_to_dist_and_angles(vec_x, vec_y, vec_z)
 
     return (vec_x=vec_x, vec_y=vec_y, vec_z=vec_z, i_discret_pts_exp=i_discret_pts_exp, vec_dist_p2p1=XYZ_Agl.dist_p2p1,
         vec_angle_xy=XYZ_Agl.vangle_xy, vec_angle_xz=XYZ_Agl.vangle_xz)

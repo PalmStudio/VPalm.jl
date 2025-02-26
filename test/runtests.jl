@@ -31,8 +31,12 @@ using Random
     end
 
     @testset "Biomechanical model" begin
-        include("test-point_interpolation.jl")
+        include("test-interpolate_points.jl")
         include("test-bend.jl")
+        include("test-inertia_flex_rota.jl")
+        include("test-rota_inverse_yz.jl")
+        include("test_rotate_yz.jl")
+        include("test-xyz_dist_angles.jl")
     end
 
     @testset "Static mockup" begin

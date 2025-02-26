@@ -8,7 +8,7 @@
         verbose=true
     )
 
-Compute the deformation by applying both bending and torsion.
+Compute the deformation of the rachis by applying both bending and torsion.
 
 # Arguments
 - `type`: Vector of section types (1: triangle bottom, 2: rectangle, 3: triangle top, 4: ellipse, 5: circle).
@@ -29,8 +29,23 @@ Compute the deformation by applying both bending and torsion.
 - `iterations`: Number of iterations to compute the torsion and bending.
 - `all_points=false`: return all points used in the computation (`true`), or only the input points corresponding to x, y and z coordinates (`false`, default).
 - `angle_max=deg2rad(21)`: Maximum angle for testing the small displacement hypothesis (radians).
-- `force=true`: Force the angle values `> angle_max` equal to `angle_max`? 
+- `force=true`: Check if verify the small dispacements hypothesis and bounds the values to be at miximum `angle_max`
 - `verbose=true`: Provide information during computation.
+
+# Returns
+Named tuple with geometrical fields describing the rachis bended and with torsion applied
+- `x`: x coordinates of the points.
+- `y`: y coordinates of the points.
+- `z`: z coordinates of the points.
+- `length`: length of the segments.
+- `angle_xy`: angle between the xy-plan and the segment.
+- `angle_xz`: angle between the xz-plan and the segment.
+- `torsion`: torsion angle of the segment.
+All these fields are vectors of the same length as the input vectors (i.e. number of segments).
+
+# Details
+The bending and torsion are applied to the sections of the rachis defined by 5 segments.
+
 """
 function bend(type, width_bend, height_bend, init_torsion, x, y, z, mass_rachis, mass_leaflets_right, mass_leaflets_left,
     distance_application, elastic_modulus, shear_modulus, step, points, iterations;
@@ -48,9 +63,9 @@ function bend(type, width_bend, height_bend, init_torsion, x, y, z, mass_rachis,
     npoints_exp = length(x)  # Assuming x, y, z have the same length
 
     # Distances and angles of each segment P2P1
-    vdist_p2p1, = xyz_vers_agl(x, y, z)
+    vdist_p2p1, = xyz_to_dist_and_angles(x, y, z)
 
-    dist_lineique = [0; cumsum(vdist_p2p1)] # For interpolation 
+    dist_lineique = [0; cumsum(vdist_p2p1)] # For interpolation
     dist_totale = last(dist_lineique)
 
     # The distances of the segments cannot be zero. The origin point (0,0,0) cannot be in the data
@@ -129,7 +144,7 @@ function bend(type, width_bend, height_bend, init_torsion, x, y, z, mass_rachis,
 
         # Write angles from the new coordinates
         # Distance and angles of each segment P2P1
-        vec_dist_p2p1, vec_angle_xy, vec_angle_xz = xyz_vers_agl(vec_x, vec_y, vec_z) # Assuming this function is defined elsewhere
+        vec_dist_p2p1, vec_angle_xy, vec_angle_xz = xyz_to_dist_and_angles(vec_x, vec_y, vec_z) # Assuming this function is defined elsewhere
 
         vec_dist_p2p1[1] = 0
         vec_angle_xy[1] = vec_angle_xy[2]
@@ -277,9 +292,9 @@ function bend(type, width_bend, height_bend, init_torsion, x, y, z, mass_rachis,
 
         # Conservation of distances
         # step = distance between points
-        XYZangles = xyz_vers_agl(vec_x, vec_y, vec_z)
+        XYZangles = xyz_to_dist_and_angles(vec_x, vec_y, vec_z)
 
-        vec_x, vec_y, vec_z = agl_vers_xyz([0; fill(step, nlin - 1)], XYZangles.vangle_xy, XYZangles.vangle_xz) # Assuming this function is defined elsewhere
+        vec_x, vec_y, vec_z = dist_and_angles_to_xyz([0; fill(step, nlin - 1)], XYZangles.vangle_xy, XYZangles.vangle_xz) # Assuming this function is defined elsewhere
 
         # Calculation of the distances of the experimental points
         # Between before and after deformation
@@ -301,7 +316,7 @@ function bend(type, width_bend, height_bend, init_torsion, x, y, z, mass_rachis,
     pts_z = vec_z[i_discret_pts_exp]
     pts_agl_tor = rad2deg.(som_cum_vec_agl_tor[i_discret_pts_exp])
 
-    pts_dist, pts_agl_xy, pts_agl_xz = xyz_vers_agl(pts_x, pts_y, pts_z) # Assuming this function is defined elsewhere
+    pts_dist, pts_agl_xy, pts_agl_xz = xyz_to_dist_and_angles(pts_x, pts_y, pts_z) # Assuming this function is defined elsewhere
 
     return (x=pts_x, y=pts_y, z=pts_z, length=pts_dist, angle_xy=rad2deg.(pts_agl_xy), angle_xz=rad2deg.(pts_agl_xz), torsion=pts_agl_tor)
 end

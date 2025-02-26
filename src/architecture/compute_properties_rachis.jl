@@ -37,7 +37,7 @@ Use of the biomechanical model to compute the properties of the rachis.
 - `rng`: the random number generator
 
 # Returns
-A tuple with the following fields:
+A named tuple with the following fields:
 - `length`: vector with the length of each segment
 - `points_positions`: the position of the points along the rachis
 - `bending`: the bending angle of the rachis
