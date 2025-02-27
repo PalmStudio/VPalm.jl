@@ -11,7 +11,6 @@ Compute a logistic function.
 - `slope`: The slope of the logistic function.
 - `inflection`: The inflection point of the logistic function.
 """
-
 function logistic(x, max, slope, inflection)
     return max / (1. + exp(-4 * slope * (x - inflection)))
 end
@@ -31,7 +30,6 @@ Compute a random value from a normal distribution with a given mean and standard
 
 - `rng`: The random number generator.
 """
-
 function mean_and_sd(mean, sd; rng=Random.MersenneTwister(1234))
     return mean + randn(rng) * sd
 end
@@ -50,7 +48,6 @@ Draw a random value from a normal distribution with a given standard deviation.
 
 - `rng`: The random number generator.
 """
-
 function normal_deviation_draw(sd, rng=Random.MersenneTwister(1234))
     return sd * rand(rng)
 end
@@ -67,7 +64,6 @@ Compute a linear function at given `x` value.
 - `intercept`: The intercept of the linear function.
 - `slope`: The slope of the linear function.
 """
-
 function linear(x, intercept, slope)
     return intercept + slope * x
 end

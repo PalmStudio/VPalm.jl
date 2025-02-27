@@ -58,6 +58,7 @@ include("geometry/sections.jl")
 # Instance (create an organ with architecture + geometry)
 include("instance/petiole.jl")
 include("instance/rachis.jl")
+include("instance/leaflets.jl")
 
 export read_parameters, write_parameters
 end

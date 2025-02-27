@@ -135,11 +135,12 @@ rachis_final_lengths:
   ]
 rachis_length_reference: 5.0335230597
 laminaAngle: 140
-nbMax: 171.716496884477
-nbSlope: 0.00252868691666823
-nbInfl: 232.56241328755
-nbLeaflets_SDP: 6
-coefDispo: 2.47840369933858
+leaflets_nb_max: 171.716496884477 # Maximum number of leaflets on a leaf #! this seems low! See Perez et al. 2016 Fig.3 -> 250
+leaflets_nb_min: 20 # Minimum number of leaflets on a leaf (for very young palms)
+leaflets_nb_slope: 0.252868691666823 # slope of the logistic relationship between rachis length and nb leaflets
+leaflets_nb_inflexion: 2.3256241328755 # inflexion point of the logistic relationship between rachis length and nb leaflets
+nbLeaflets_SDP: 6 # standard deviation around the value computed for a given rachis lenght
+leaflet_position_shape_coefficient: 2.47840369933858 # shape coefficient for placing the leaflets along the rachis
 Dispo_SDP: 0.0368626708565566
 relative_position_bpoint: 0.658754588282827
 relative_position_bpoint_sd: 0.034351699174915
@@ -167,7 +168,7 @@ leafletAxialAngleSlope: -4.69087957587579
 leafletAxialAngle_SDP: 8.0576905643349
 leafletStiffness: 1500
 leafletStiffness_SD: 7000
-leafletFrequencyHigh:
+leaflet_frequency_high: # Frequency of leaflets of type "+1" (High) along 10 sub-sections of the rachis
   [
     0.219712525667351,
     0.388663967611336,
@@ -180,7 +181,7 @@ leafletFrequencyHigh:
     0.341176470588235,
     0.0688405797101449,
   ]
-leafletFrequencyLow:
+leaflet_frequency_low: # Frequency of leaflets of type "-1" (Low) along 10 sub-sections of the rachis
   [
     0.0184804928131417,
     0.165991902834008,
