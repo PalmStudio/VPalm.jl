@@ -9,6 +9,66 @@ function leaflets(rachis_node, index, scale, leaf_rank, rachis_length, height_cp
 
     leaflets_type_frequency = compute_leaflet_type_frequencies(parameters["leaflet_frequency_high"], parameters["leaflet_frequency_low"])
 
+    leaflets = group_leaflets(nb_leaflets, leaflets_type_frequency, parameters["leaflet_position_shape_coefficient"], rng)
+
+    return leaflets
+end
+
+
+"""
+    group_leaflets(nb_leaflets, leaflets_type_frequency, shape_coefficient, rng)
+
+Compute the group, group size and plane positions of each leaflet along the rachis.
+
+# Arguments
+
+- `nb_leaflets`: Total number of leaflets to create.
+- `leaflets_type_frequency`: Vector of NamedTuples representing frequency distributions along the rachis (if *e.g.* 10 values are provided, it means the rachis is divided into 10 sub-sections), with fields:
+  - `high`: Frequency of plane=+1 leaflets (first leaflet in each group), *i.e.* leaflets on "high" position
+  - `medium`: Frequency of plane=0 leaflets (intermediate leaflets in groups), *i.e.* leaflets on "medium" position, horizontally inserted on the rachis
+  - `low`: Frequency of plane=-1 leaflets (terminal leaflets in groups), *i.e.* leaflets on "low" position
+- `shape_coefficient`: Parameter controlling the distribution of leaflets along the rachis.
+- `rng`: Random number generator.
+
+# Details
+
+This function:
+
+    1. Creates a structure of arrays to represent the leaflets
+    2. Organizes leaflets into groups based on position-dependent size distributions
+    3. Assigns a spatial plane to each leaflet within a group:
+        - The first leaflet in each group is always placed on the high position (plane=1)
+        - Subsequent leaflets are positioned on medium (plane=0) or low (plane=-1) positions based on their frequency distribution at that rachis segment
+
+## Biological Context
+
+Grouping of leaflets is a key morphological feature in palm species, particularly in oil palm (Elaeis guineensis).
+Unlike some palms with regularly spaced leaflets, oil palms exhibit distinctive clustering patterns where:
+
+1. Leaflets occur in groups of variable sizes, but typically around 3 leaflets per group
+2. Within each group, leaflets emerge at different angles:
+   - The first leaflet points upward (high position)
+   - Others point horizontally or downward (medium and low positions)
+3. The pattern of grouping changes along the rachis:
+   - Closer to the base: typically larger groups with more leaflets
+   - Toward the tip: smaller groups or single leaflets
+
+These grouping patterns significantly affect light interception and overall frond architecture.
+The model uses an inverse relationship between high-position leaflet frequency and group size to
+recreate this natural variation - sections with many high-position leaflets have smaller groups (but more of them),
+while sections with few high-position leaflets form larger groups.
+
+The grouping pattern changes along the rachis, creating the characteristic 
+appearance of palm fronds with varying leaflet arrangement patterns from base to tip.
+
+# Returns
+
+A NamedTuple containing arrays for:
+- `group`: Group identifier for each leaflet
+- `group_size`: Size of the group that each leaflet belongs to
+- `plane`: Spatial position/orientation of each leaflet (1=high, 0=medium, -1=low)
+"""
+function group_leaflets(nb_leaflets, leaflets_type_frequency, shape_coefficient, rng)
     # Structure of Arrays approach
     leaflets = (
         group=zeros(Int, nb_leaflets),
@@ -16,12 +76,6 @@ function leaflets(rachis_node, index, scale, leaf_rank, rachis_length, height_cp
         plane=zeros(Int, nb_leaflets)
     )
 
-    group_leaflets!(leaflets, nb_leaflets, leaflets_type_frequency, parameters["leaflet_position_shape_coefficient"], rng)
-
-    return leaflets
-end
-
-function group_leaflets!(leaflets, nb_leaflets, leaflets_type_frequency, shape_coefficient, rng)
     group = 1
     l = 1
 
