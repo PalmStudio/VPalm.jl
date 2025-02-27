@@ -5,16 +5,23 @@ mutable struct Leaflet
 end
 
 function leaflets(rachis_node, index, scale, leaf_rank, rachis_length, height_cpoint, width_cpoint, zenithal_cpoint_angle, parameters; rng=rng)
-
     nb_leaflets = compute_number_of_leaflets(rachis_length, parameters["leaflets_nb_max"], parameters["leaflets_nb_min"], parameters["leaflets_nb_slope"], parameters["leaflets_nb_inflexion"], parameters["nbLeaflets_SDP"]; rng=rng)
+
     leaflets_type_frequency = compute_leaflet_type_frequencies(parameters["leaflet_frequency_high"], parameters["leaflet_frequency_low"])
-    leaflets = [Leaflet(0, 0, 0) for i in 1:nb_leaflets]
-    group_leaflets(leaflets, nb_leaflets, leaflets_type_frequency, parameters["leaflet_position_shape_coefficient"], rng)
+
+    # Structure of Arrays approach
+    leaflets = (
+        group=zeros(Int, nb_leaflets),
+        group_size=zeros(Int, nb_leaflets),
+        plane=zeros(Int, nb_leaflets)
+    )
+
+    group_leaflets!(leaflets, nb_leaflets, leaflets_type_frequency, parameters["leaflet_position_shape_coefficient"], rng)
 
     return leaflets
 end
 
-function group_leaflets(leaflets, nb_leaflets, leaflets_type_frequency, shape_coefficient, rng)
+function group_leaflets!(leaflets, nb_leaflets, leaflets_type_frequency, shape_coefficient, rng)
     group = 1
     l = 1
 
@@ -23,30 +30,30 @@ function group_leaflets(leaflets, nb_leaflets, leaflets_type_frequency, shape_co
         relative_position = relative_leaflet_position(relative_rank, shape_coefficient)
 
         group_size = draw_group_size(relative_position, leaflets_type_frequency, rng)
-        group_size = min(group_size, nb_leaflets - l + 1) # The size of the group cannot exceed the number of remaining leaflets
+        group_size = min(group_size, nb_leaflets - l + 1)
 
-        segment = floor(Int, relative_position * length(leaflets_type_frequency))
-        segment = clamp(segment, 1, length(leaflets_type_frequency)) # Ensure segment is within bounds
-
+        segment = clamp(floor(Int, relative_position * length(leaflets_type_frequency)), 1, length(leaflets_type_frequency))
         frequencies = leaflets_type_frequency[segment]
 
-        for f in 0:(group_size-1)
-            leaflet = leaflets[l+f]
-            leaflet.group = group
-            leaflet.group_size = group_size
+        # The first leaflet in the group is always plane=1
+        leaflets.group[l] = group
+        leaflets.group_size[l] = group_size
+        leaflets.plane[l] = 1
 
-            leaflet.plane = 1
-            if f > 0
-                # draw type 0 and -1 vs the ratio of their frequencies
-                if rand(rng) > (frequencies.medium / (frequencies.medium + frequencies.low))
-                    leaflet.plane = -1
-                else
-                    leaflet.plane = 0
-                end
+        # Process other leaflets in the group if any
+        for f in 1:(group_size-1)
+            idx = l + f
+            leaflets.group[idx] = group
+            leaflets.group_size[idx] = group_size
+
+            # Determine plane type based on frequencies
+            if rand(rng) > (frequencies.medium / (frequencies.medium + frequencies.low))
+                leaflets.plane[idx] = -1
+            else
+                leaflets.plane[idx] = 0
             end
         end
 
-        # Properly update the index to skip to the next group
         l += group_size
         group += 1
     end
