@@ -12,12 +12,16 @@ shear_modulus = 400.0
 ref = CSV.read(joinpath(@__DIR__, "files/6_EW01.22_17_kanan_unbent_bend.csv"), DataFrame)
 @testset "bend works" begin
     # Dummy input data for bend function
+    # Test the input data
+    @test length(df.type) == length(df.width) == length(df.height) == length(df.torsion) == length(df.x) == length(df.y) == length(df.z) == length(df.mass) == length(df.mass_right) == length(df.mass_left) == length(df.distance_application)
     # Call the function
     out = VPalm.bend(
         df.type, df.width, df.height, df.torsion, df.x, df.y, df.z, df.mass, df.mass_right, df.mass_left,
         df.distance_application, elastic_modulus, shear_modulus, pas, Ncalc, Nboucle;
         verbose=false
     )
+    # Test the output data
+    @test length(df.type) == length(out.type) == length(out.width) == length(out.height) == length(out.torsion) == length(out.x) == length(out.y) == length(out.z) == length(out.mass) == length(out.mass_right) == length(out.mass_left) == length(out.distance_application)
     # CSV.write(joinpath(@__DIR__, "files/6_EW01.22_17_kanan_unbent_bend.csv"), DataFrame(out))
     @test isapprox(ref, DataFrame(out); atol=10)
 end

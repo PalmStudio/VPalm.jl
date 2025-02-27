@@ -1,16 +1,21 @@
 """
-    Internode diameter model
+    internode_diameter(internode_index, nb_internodes, stem_diameter, stem_base_shrinkage, stem_top_shrinkage, leaves_in_sheath)
 
 Computes the diameter of an internode at a given rank.
 
 # Arguments
-
-- `internode_index`: The number of the internode.
+- `internode_index`: The index of the internode.
 - `nb_internodes`: The total number of internodes.
 - `stem_diameter`: The diameter of the stem at the base.
 - `stem_base_shrinkage`: The shrinkage coefficient at the stem base.
 - `stem_top_shrinkage`: The shrinkage coefficient at the stem top.
 - `leaves_in_sheath`: The number of leaves in the sheath.
+
+# Returns
+The diameter of the internode (m).
+
+# Details
+A shrinking function is applied to the stem base and top to compute the diameter of the internode.
 """
 function internode_diameter(internode_index, nb_internodes, stem_diameter, stem_base_shrinkage, stem_top_shrinkage, leaves_in_sheath)
     # Shrink trunk base
@@ -25,7 +30,21 @@ end
 """
     Internode length model
 
-Computes the length of an internode at a given rank. The internode length is computed using a quadratic function.
+Computes the length of an internode at a given rank.
+
+# Arguments
+- `i`/ `internode_index`: The index of the internode.
+- `Nbl` / `nb_internodes`: The total number of internodes == number of leaves emitted since planting.
+- `sh` / `stem_height`: The height of the stem.
+- `R` / `internode_rank_no_expansion`: The rank of the internode that will not expand.
+- `N` / `nb_internodes_before_planting`: The number of internodes before planting.
+- `l_0` / `internode_min_height`: The minimal length of the internode.
+
+# Returns
+The length of the internode (m).
+
+# Details
+The internode length is computed using a quadratic function.
 The objective is to have a internodes that are short and growing for the first emitted leaves (before `nb_internodes_before_planting`),
 and then getting to a stable "constant" height, and at the end for the youngest leaves, having nodes currently growing (smaller).
 
@@ -63,15 +82,6 @@ reminder:
     - the sum of integers from m to n is `n * (n + 1) / 2 - m * (m - 1) / 2`
     - the sum of cx + d from m to n is `c * (n * (n + 1) / 2 - m * (m - 1) / 2) + d * (n - m + 1)`
                                     or `(n - m + 1) * (c * (n + m) / 2 + d)`
-
-# Arguments
-
-- `i`/ `internode_number`: The number of the internode.
-- `Nbl` / `nb_internodes`: The total number of internodes == number of leaves emitted since planting.
-- `sh` / `stem_height`: The height of the stem.
-- `R` / `internode_rank_no_expansion`: The rank of the internode that will not expand.
-- `N` / `nb_internodes_before_planting`: The number of internodes before planting.
-- `l_0` / `internode_min_height`: The minimal length of the internode.
 """
 function internode_length(i, Nbl, sh, R, N, l_0)
 
