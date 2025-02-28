@@ -141,23 +141,24 @@ leaflets_nb_slope: 0.252868691666823 # slope of the logistic relationship betwee
 leaflets_nb_inflexion: 2.3256241328755 # inflexion point of the logistic relationship between rachis length and nb leaflets
 nbLeaflets_SDP: 6 # standard deviation around the value computed for a given rachis lenght
 leaflet_position_shape_coefficient: 2.47840369933858 # shape coefficient for placing the leaflets along the rachis
-Dispo_SDP: 0.0368626708565566
+# Dispo_SDP: 0.0368626708565566 #! Not used anymore, it was always added to the position (not randomly), I don't understand the utility of it
+leaflets_between_to_within_group_ratio: 2.0 # Ratio of inter-group to intra-group leaflets spacing.
 relative_position_bpoint: 0.658754588282827
 relative_position_bpoint_sd: 0.034351699174915
-lenflet_length_at_b_intercept: 0.610414306944301
-leaflet_length_at_b_slope: 0.0544112333185808
+leaflet_length_at_b_intercept: 0.610414306944301 #! check this value
+leaflet_length_at_b_slope: 0.0544112333185808 #! check this value
+leaflet_width_at_b_intercept: 0.0630094765967717 #! check this value
+leaflet_width_at_b_slope: -0.00399539575923089 #! check this value
 relative_length_first_leaflet: 0.180641437601563
 relative_length_last_leaflet: 0.523055131720828
 relative_position_leaflet_max_length: 0.522462119491008
+relative_width_first_leaflet: 0.223139439734409
+relative_width_last_leaflet: 0.53199251056915
+relative_position_leaflet_max_width: 0.613356804949367
 biomechanical_model:
   nb_sections: 100 # Number of sections used to discretize the sections with constant form (!= rachis_nb_segments)
   angle_max: 21.0 # maximum flexion and torsion angles allowed between two sections (°)
   iterations: 15 # Number of iterations for the recursive computation
-widthFirst: 0.223139439734409
-widthLast: 0.53199251056915
-posWidthMax: 0.613356804949367
-bWidthIntercept: 6.30094765967717
-bWidthSlope: -0.00399539575923089
 xm_intercept: 0.175776968972813
 xm_slope: 0.0797694058975581
 ym_intercept: 0.505722242500563

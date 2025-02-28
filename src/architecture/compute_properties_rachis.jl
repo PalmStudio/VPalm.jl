@@ -2,7 +2,7 @@
     biomechanical_properties_rachis(
         rachis_twist_initial_angle, rachis_twist_initial_angle_sdp,
         elastic_modulus, shear_modulus, rachis_length,
-        lenflet_length_at_b_intercept, leaflet_length_at_b_slope, relative_position_bpoint,
+        leaflet_length_at_b_intercept, leaflet_length_at_b_slope, relative_position_bpoint,
         relative_position_bpoint_sd, relative_length_first_leaflet, relative_length_last_leaflet, relative_position_leaflet_max_length,
         rachis_fresh_weigth, rank, height_cpoint, zenithal_cpoint_angle, nb_sections,
         height_rachis_tappering,
@@ -18,7 +18,7 @@ Use of the biomechanical model to compute the properties of the rachis.
 - `elastic_modulus`: elastic modulus of the rachis (Pa)
 - `shear_modulus`: shear modulus of the rachis (Pa)
 - `rachis_length`: length of the rachis (m)
-- `lenflet_length_at_b_intercept`: intercept of the linear function for the leaflet length at the B point (m)
+- `leaflet_length_at_b_intercept`: intercept of the linear function for the leaflet length at the B point (m)
 - `leaflet_length_at_b_slope`: slope of the linear function for the leaflet length at the B point (m)
 - `relative_position_bpoint`: relative position of the B point on the rachis (0: base to 1: tip)
 - `relative_position_bpoint_sd`: standard deviation of the relative position of the B point on the rachis
@@ -56,7 +56,7 @@ The rachis is bent using the `bend` function.
 function biomechanical_properties_rachis(
     rachis_twist_initial_angle, rachis_twist_initial_angle_sdp,
     elastic_modulus, shear_modulus, rachis_length,
-    lenflet_length_at_b_intercept, leaflet_length_at_b_slope, relative_position_bpoint,
+    leaflet_length_at_b_intercept, leaflet_length_at_b_slope, relative_position_bpoint,
     relative_position_bpoint_sd, relative_length_first_leaflet, relative_length_last_leaflet, relative_position_leaflet_max_length,
     rachis_fresh_weigth, rank, height_cpoint, zenithal_cpoint_angle, nb_sections,
     height_rachis_tappering,
@@ -94,8 +94,8 @@ function biomechanical_properties_rachis(
     distances = zeros(Float64, npoints)          # Distance between the points projected on the X axis
     distance_application = zeros(Float64, npoints) # Application distance for forces (if needed)
 
-    leaflet_length_at_bpoint = length_at_bpoint(rachis_length, lenflet_length_at_b_intercept, leaflet_length_at_b_slope)
-    leafletLengthMax = max_leaflet_length(leaflet_length_at_bpoint, relative_position_bpoint, relative_position_bpoint_sd, relative_length_first_leaflet, relative_length_last_leaflet, relative_position_leaflet_max_length, rng)
+    leaflet_length_at_b = leaflet_length_at_bpoint(rachis_length, leaflet_length_at_b_intercept, leaflet_length_at_b_slope)
+    leaflet_max_length = leaflet_length_max(leaflet_length_at_b, relative_position_bpoint, relative_position_bpoint_sd, relative_length_first_leaflet, relative_length_last_leaflet, relative_position_leaflet_max_length, rng)
 
     # Parameters to compute rachis width from rachis height:
     ratioPointC = 0.5220
@@ -111,7 +111,7 @@ function biomechanical_properties_rachis(
         mass_left[i] = mass_distribution_segment_leaflet[i] * rachis_fresh_weigth
 
         # leaflet length at the middle of the segment (in m):
-        length_leaflets_segment = leafletLengthMax * relative_leaflet_length(
+        length_leaflets_segment = leaflet_max_length * relative_leaflet_length(
             relative_position_mid_segment[i],
             relative_length_first_leaflet, relative_length_last_leaflet,
             relative_position_leaflet_max_length
@@ -157,37 +157,6 @@ function biomechanical_properties_rachis(
         length=fill(step, length(bending.x)), points_positions=bending.length, bending=points_bending, deviation=bending.angle_xz, torsion=bending.torsion,
         x=bending.x, y=bending.y, z=bending.z
     )
-end
-
-
-function length_at_bpoint(rachis_length, lenflet_length_at_b_intercept, leaflet_length_at_b_slope)
-    return linear(rachis_length, lenflet_length_at_b_intercept, leaflet_length_at_b_slope)
-end
-
-function max_leaflet_length(leaflet_length_at_bpoint, relative_position_bpoint, relative_position_bpoint_sd, relative_length_first_leaflet, relative_length_last_leaflet, relative_position_leaflet_max_length, rng)
-    relative_position_bpoint = relative_position_bpoint + normal_deviation_draw(relative_position_bpoint_sd, rng)
-    return leaflet_length_at_bpoint / relative_leaflet_length(relative_position_bpoint, relative_length_first_leaflet, relative_length_last_leaflet, relative_position_leaflet_max_length)
-end
-
-
-"""
-    relative_leaflet_length(x, relative_length_first_leaflet, relative_length_last_leaflet, relative_position_leaflet_max_length)
-
-Relative leaflet length given by their relative position along the rachis.
-
-# Arguments
-
-- `x`: relative leaflet position on the rachis (0: base to 1: tip)
-- `relative_length_first_leaflet`: relative length of the first leaflet on the rachis (0 to 1)
-- `relative_length_last_leaflet`: relative length of the last leaflet on the rachis  (0 to 1)
-- `relative_position_leaflet_max_length`: relative position of the longest leaflet on the rachis (0.111 to 0.999)
-"""
-function relative_leaflet_length(x, relative_length_first_leaflet, relative_length_last_leaflet, relative_position_leaflet_max_length)
-    if x < relative_position_leaflet_max_length
-        return relative_length_first_leaflet + ((1 - relative_length_first_leaflet) * x * (2 * relative_position_leaflet_max_length - x)) / relative_position_leaflet_max_length^2
-    else
-        return 1 + (relative_length_last_leaflet - 1) * (x - relative_position_leaflet_max_length)^2 / (1 - relative_position_leaflet_max_length)^2
-    end
 end
 
 

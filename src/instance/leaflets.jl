@@ -1,42 +1,60 @@
-mutable struct Leaflet
-    group::Int
-    group_size::Int
-    plane::Int
-end
-
 function leaflets(rachis_node, index, scale, leaf_rank, rachis_length, height_cpoint, width_cpoint, zenithal_cpoint_angle, parameters; rng=rng)
     nb_leaflets = compute_number_of_leaflets(rachis_length, parameters["leaflets_nb_max"], parameters["leaflets_nb_min"], parameters["leaflets_nb_slope"], parameters["leaflets_nb_inflexion"], parameters["nbLeaflets_SDP"]; rng=rng)
 
+    leaflets_relative_positions = relative_leaflet_position.(collect(1:nb_leaflets) ./ nb_leaflets, parameters["leaflet_position_shape_coefficient"])
+    leaflets_position = leaflets_relative_positions .* rachis_length
+
     leaflets_type_frequency = compute_leaflet_type_frequencies(parameters["leaflet_frequency_high"], parameters["leaflet_frequency_low"])
 
-    leaflets = group_leaflets(nb_leaflets, leaflets_type_frequency, parameters["leaflet_position_shape_coefficient"], rng)
+    leaflets = group_leaflets(leaflets_relative_positions, leaflets_type_frequency, rng)
 
-    return leaflets
+    # Re-compute the leaflets positions taking grouping into account (leaflets are closer to each other within a group)
+    shrink_leaflets_in_groups!(leaflets_position, leaflets, parameters["leaflets_between_to_within_group_ratio"])
+
+    # Second pass: Normalize to ensure spreading along the full rachis length (from base to tip):
+    normalize_positions!(leaflets_position, rachis_length)
+
+    nb_rachis_sections = parameters["rachis_nb_segments"]
+    rachis_segment_length = rachis_length / nb_rachis_sections
+    nb_petiole_sections = parameters["petiole_nb_segments"]
+
+    leaflet_length_at_b = leaflet_length_at_bpoint(rachis_length, parameters["leaflet_length_at_b_intercept"], parameters["leaflet_length_at_b_slope"])
+    leaflet_max_length = leaflet_length_max(leaflet_length_at_b, parameters["relative_position_bpoint"], parameters["relative_position_bpoint_sd"], parameters["relative_length_first_leaflet"], parameters["relative_length_last_leaflet"], parameters["relative_position_leaflet_max_length"], rng)
+    leaflet_width_at_b = leaflet_width_at_bpoint(rachis_length, parameters["leaflet_length_at_b_intercept"], parameters["leaflet_length_at_b_slope"])
+    leaflet_max_width = leaflet_width_max(leaflet_width_at_b, parameters["relative_position_bpoint"], parameters["relative_position_bpoint_sd"], parameters["relative_width_first_leaflet"], parameters["relative_width_last_leaflet"], parameters["relative_position_leaflet_max_width"], rng)
+
+    #! continue here!
+
+    # Return complete leaflet data including positions
+    return (
+        group=leaflets.group,
+        group_size=leaflets.group_size,
+        plane=leaflets.plane,
+        position=leaflets_position
+    )
 end
 
 
 """
-    group_leaflets(nb_leaflets, leaflets_type_frequency, shape_coefficient, rng)
+    group_leaflets(leaflets_relative_position, leaflets_type_frequency, rng)
 
 Compute the group, group size and plane positions of each leaflet along the rachis.
 
 # Arguments
 
-- `nb_leaflets`: Total number of leaflets to create.
+- `leaflets_relative_position`: Array of relative positions for the leaflets along the rachis (see `relative_leaflet_position()`).
 - `leaflets_type_frequency`: Vector of NamedTuples representing frequency distributions along the rachis (if *e.g.* 10 values are provided, it means the rachis is divided into 10 sub-sections), with fields:
   - `high`: Frequency of plane=+1 leaflets (first leaflet in each group), *i.e.* leaflets on "high" position
   - `medium`: Frequency of plane=0 leaflets (intermediate leaflets in groups), *i.e.* leaflets on "medium" position, horizontally inserted on the rachis
   - `low`: Frequency of plane=-1 leaflets (terminal leaflets in groups), *i.e.* leaflets on "low" position
-- `shape_coefficient`: Parameter controlling the distribution of leaflets along the rachis.
 - `rng`: Random number generator.
 
 # Details
 
 This function:
 
-    1. Creates a structure of arrays to represent the leaflets
-    2. Organizes leaflets into groups based on position-dependent size distributions
-    3. Assigns a spatial plane to each leaflet within a group:
+    1. Organizes leaflets into groups based on position-dependent size distributions
+    2. Assigns a spatial plane to each leaflet within a group:
         - The first leaflet in each group is always placed on the high position (plane=1)
         - Subsequent leaflets are positioned on medium (plane=0) or low (plane=-1) positions based on their frequency distribution at that rachis segment
 
@@ -53,13 +71,12 @@ Unlike some palms with regularly spaced leaflets, oil palms exhibit distinctive 
    - Closer to the base: typically larger groups with more leaflets
    - Toward the tip: smaller groups or single leaflets
 
-These grouping patterns significantly affect light interception and overall frond architecture.
 The model uses an inverse relationship between high-position leaflet frequency and group size to
-recreate this natural variation - sections with many high-position leaflets have smaller groups (but more of them),
+recreate the natural variation in leaflet insertion angle - sections with many high-position leaflets have smaller groups (but more of them),
 while sections with few high-position leaflets form larger groups.
 
-The grouping pattern changes along the rachis, creating the characteristic 
-appearance of palm fronds with varying leaflet arrangement patterns from base to tip.
+The grouping pattern changes along the rachis, creating the characteristic appearance of palm fronds with varying leaflet arrangement 
+patterns from base to tip.
 
 # Returns
 
@@ -68,51 +85,106 @@ A NamedTuple containing arrays for:
 - `group_size`: Size of the group that each leaflet belongs to
 - `plane`: Spatial position/orientation of each leaflet (1=high, 0=medium, -1=low)
 """
-function group_leaflets(nb_leaflets, leaflets_type_frequency, shape_coefficient, rng)
+function group_leaflets(leaflets_relative_position, leaflets_type_frequency, rng)
+
+    @assert length(leaflets_type_frequency) > 0 "Frequency distribution must have at least one segment"
+
+    nb_leaflets = length(leaflets_relative_position)
+
     # Structure of Arrays approach
     leaflets = (
         group=zeros(Int, nb_leaflets),
         group_size=zeros(Int, nb_leaflets),
-        plane=zeros(Int, nb_leaflets)
+        plane=zeros(Int, nb_leaflets),
     )
 
-    group = 1
-    l = 1
+    current_group = 1
+    current_group_size = 0
+    leaflets_in_current_group = 0
 
-    while l <= nb_leaflets
-        relative_rank = l / nb_leaflets
-        relative_position = relative_leaflet_position(relative_rank, shape_coefficient)
-
-        group_size = draw_group_size(relative_position, leaflets_type_frequency, rng)
-        group_size = min(group_size, nb_leaflets - l + 1)
-
-        segment = clamp(floor(Int, relative_position * length(leaflets_type_frequency)), 1, length(leaflets_type_frequency))
+    for (leaflet_index, relative_position) in enumerate(leaflets_relative_position)
+        segment = calculate_segment(relative_position, length(leaflets_type_frequency))
         frequencies = leaflets_type_frequency[segment]
 
-        # The first leaflet in the group is always plane=1
-        leaflets.group[l] = group
-        leaflets.group_size[l] = group_size
-        leaflets.plane[l] = 1
+        # Determine if this leaflet starts a new group or belongs to current group
+        if leaflets_in_current_group == 0 || leaflets_in_current_group >= current_group_size
+            # Start a new group
+            current_group_size = draw_group_size(segment, leaflets_type_frequency, rng)
+            # Ensure we don't exceed the number of remaining leaflets
+            current_group_size = min(current_group_size, nb_leaflets - leaflet_index + 1)
+            leaflets_in_current_group = 0
 
-        # Process other leaflets in the group if any
-        for f in 1:(group_size-1)
-            idx = l + f
-            leaflets.group[idx] = group
-            leaflets.group_size[idx] = group_size
-
-            # Determine plane type based on frequencies
-            if rand(rng) > (frequencies.medium / (frequencies.medium + frequencies.low))
-                leaflets.plane[idx] = -1
-            else
-                leaflets.plane[idx] = 0
+            # Only increment group number if this isn't the first leaflet
+            if leaflet_index > 1
+                current_group += 1
             end
         end
 
-        l += group_size
-        group += 1
+        # Set group information for this leaflet
+        leaflets.group[leaflet_index] = current_group
+        leaflets.group_size[leaflet_index] = current_group_size
+
+        # Determine plane position based on position within group
+        if leaflets_in_current_group == 0
+            # First leaflet in group is always high position (plane=1)
+            leaflets.plane[leaflet_index] = 1
+        else
+            # Subsequent leaflets are medium or low based on frequencies
+            if rand(rng) > (frequencies.medium / (frequencies.medium + frequencies.low))
+                leaflets.plane[leaflet_index] = -1  # Low position
+            else
+                leaflets.plane[leaflet_index] = 0   # Medium position
+            end
+        end
+
+        # Increment counter for leaflets in this group
+        leaflets_in_current_group += 1
     end
 
     return leaflets
+end
+
+
+"""
+    calculate_segment(relative_position, num_segments=10)
+
+Calculate the segment index for a given relative position along the rachis.
+
+# Arguments
+
+- `relative_position`: Relative position along the rachis [0 to 1), where 0 is the base and 1 is the tip.
+- `num_segments`: Number of segments the rachis is divided into (default: 10).
+
+# Details
+
+We divide the rachis into segments to capture variations in properties along its length. This function:
+
+1. Converts a continuous relative position (0-1) into a discrete segment index
+2. Ensures the segment index is within valid bounds (1 to num_segments)
+
+# Biological Context
+
+The palm rachis exhibits changing properties along its length, including:
+
+- Leaflet grouping patterns
+- Leaflet sizes and angles
+
+Dividing the rachis into discrete segments allows the model to represent these
+gradual changes in a computationally efficient manner. Each segment can have different
+parameter values that together create the characteristic patterns seen in real palms.
+
+# Returns
+
+The segment index (starts at 1 in Julia).
+"""
+function calculate_segment(relative_position, num_segments=10)
+    # Calculate segment index (convert to 1-based indexing for Julia)
+    segment = floor(Int, relative_position * num_segments) + 1
+
+    # Ensure segment is within valid range
+    segment = clamp(segment, 1, num_segments)
+
+    return segment
 end
 
 
@@ -205,13 +277,13 @@ function compute_leaflet_type_frequencies(leaflet_frequency_high, leaflet_freque
 end
 
 """
-    draw_group_size(rel_pos, leaflet_type_frequencies, rng)
+    draw_group_size(group, leaflet_type_frequencies, rng)
 
 Determine the size of a leaflet group based on the relative position along the rachis and frequency patterns.
 
 # Arguments
 
-- `rel_pos`: Relative position on the rachis (0 to 1], where 0 is the base (C-point) and 1 is the tip (A-point).
+- `group`: Index of the leaflet group based on its relative position on the rachis (1 to `length(leaflet_type_frequencies)`).
 - `leaflet_type_frequencies`: Vector of NamedTuples representing frequency distributions for each rachis segment, with fields:
   - `high`: Frequency of plane=+1 leaflets (first leaflet in each group), *i.e.* leaflets on "high" position
   - `medium`: Frequency of plane=0 leaflets (intermediate leaflets in groups), *i.e.* leaflets on "medium" position, horizontally inserted on the rachis
@@ -220,7 +292,7 @@ Determine the size of a leaflet group based on the relative position along the r
 
 # Details
 
-This function implements an inverse relationship between the frequency of high (plane=1) leaflets 
+This function implements an inverse relationship between the frequency of high (plane=1) leaflets
 and group size, modeling a fundamental biological pattern in palm frond architecture:
 
 - Segments with high frequency of high leaflets produce many small groups of leaflets
@@ -234,12 +306,9 @@ fronds, where clustering patterns change systematically from base to tip.
 
 An integer representing the number of leaflets in the group.
 """
-function draw_group_size(rel_pos, leaflet_type_frequencies, rng)
-    segment = floor(Int, rel_pos * length(leaflet_type_frequencies))
-    segment = clamp(segment, 1, length(leaflet_type_frequencies)) # Ensure segment is within bounds
-    size_d = 1.0 / leaflet_type_frequencies[segment].high
-
-    size_i = floor(Int, size_d)
+function draw_group_size(group, leaflet_type_frequencies, rng)
+    size_d = 1.0 / leaflet_type_frequencies[group].high
+    size_i = max(1, floor(Int, size_d))
     delta = size_d - size_i
 
     if rand(rng) < delta
@@ -247,4 +316,347 @@ function draw_group_size(rel_pos, leaflet_type_frequencies, rng)
     end
 
     return size_i
+end
+
+
+"""
+    shrink_leaflets_in_groups!(positions, leaflets, ratio=2.0)
+
+Adjust the spacing between leaflets to create appropriate within-group and between-group distances.
+
+# Arguments
+
+- `positions`: Vector of current leaflet positions along the rachis.
+- `leaflets`: A NamedTuple containing arrays for leaflet properties (group, group_size, plane).
+- `ratio=2.0`: Ratio of inter-group to intra-group spacing.
+
+# Details
+
+This function implements a biological principle where leaflets within the same group
+are positioned closer together than leaflets in different groups. It:
+
+1. Uses a fixed ratio (2:1) between inter-group and intra-group spacing
+2. Preserves the overall distribution pattern while creating distinct groups
+3. Processes each group sequentially, adjusting positions based on group size
+
+# Biological Context
+
+In many palm species, particularly oil palm, leaflets appear in distinct groups along the rachis.
+This grouping pattern is characterized by:
+
+1. Consistent, smaller spacing between leaflets within the same group
+2. Larger spacing between adjacent groups
+3. The ratio between these spacings is typically species-specific
+
+This spacing pattern is essential for the palm's characteristic appearance and 
+affects light interception patterns along the frond.
+"""
+function shrink_leaflets_in_groups!(positions, leaflets, ratio=2.0)
+    current_group = -1
+    last_leaflet_pos = 0.0
+    l = 1
+
+    while l <= length(positions)
+        # Check if this is the first leaflet in a new group
+        group = leaflets.group[l]
+        if group != current_group
+            group_size = leaflets.group_size[l]
+            current_group = group
+
+            # Find the last leaflet in this group
+            last_leaflet_index = l + group_size - 1
+
+            # Calculate spacings
+            total_spacing = positions[last_leaflet_index] - last_leaflet_pos
+            intra_group_spacing = total_spacing / (ratio + group_size - 1)
+            inter_group_spacing = intra_group_spacing * ratio
+
+            # Position first leaflet in group
+            positions[l] = last_leaflet_pos + inter_group_spacing
+            last_leaflet_pos = positions[l]
+
+            # Position remaining leaflets in group
+            for p in 1:(group_size-1)
+                positions[l+p] = last_leaflet_pos + intra_group_spacing
+                last_leaflet_pos = positions[l+p]
+            end
+
+            l += group_size
+        else
+            l += 1
+        end
+    end
+end
+
+"""
+    normalize_positions!(positions, rachis_length)
+
+Scale and offset positions to span the full rachis length.
+
+
+# Arguments
+
+- `positions`: Vector of positions to be modified in place.
+- `rachis_length`: Total length of rachis in meters.
+
+# Details
+
+This function:
+1. Offsets positions so the first leaflet is at position 0
+2. Scales all positions to ensure the last leaflet is exactly at rachis_length
+3. Maintains the relative spacing pattern established by previous processing
+
+This ensures leaflets are properly distributed along the entire rachis while
+preserving the characteristic grouping patterns.
+"""
+function normalize_positions!(positions, rachis_length)
+    offset = positions[1]
+    rescale_factor = rachis_length / (positions[end] - offset)
+
+    for l in eachindex(positions)
+        positions[l] = (positions[l] - offset) * rescale_factor
+    end
+
+    return nothing
+end
+
+
+"""
+    leaflet_length_at_bpoint(rachis_length, intercept, slope)
+
+Compute the length of leaflets at the B point of the rachis using a linear relationship.
+
+# Arguments
+
+- `rachis_length`: The total length of the rachis (m).
+- `intercept`: The intercept parameter of the linear function (m).
+- `slope`: The slope parameter of the linear function (dimensionless).
+
+# Details
+
+This function uses a linear model to determine leaflet length at the B point:
+    
+    leaflet_length = intercept + slope * rachis_length
+
+The B point is a key reference point on the rachis that marks the transition from an oval to a round shape of the 
+rachis. The leaflet length at this point serves as a reference for calculating the distribution of leaflet lengths 
+along the entire rachis.
+
+# Returns
+
+The length of leaflets at the B point position (m).
+"""
+function leaflet_length_at_bpoint(rachis_length, intercept, slope)
+    return intercept + slope * rachis_length
+end
+
+"""
+    leaflet_length_max(
+        leaflet_length_at_b, 
+        relative_position_bpoint, 
+        relative_position_bpoint_sd, 
+        relative_length_first_leaflet, 
+        relative_length_last_leaflet, 
+        relative_position_leaflet_max_length, 
+        rng
+    )
+
+Calculate the maximum leaflet length for the rachis, used to scale the relative length profile.
+
+# Arguments
+
+- `leaflet_length_at_b`: Length of leaflets at the B point on the rachis (m).
+- `relative_position_bpoint`: Relative position of the B point along the rachis (0 to 1).
+- `relative_position_bpoint_sd`: Standard deviation for stochastic variation in B point position.
+- `relative_length_first_leaflet`: Relative length of the first leaflet at rachis base [0 to 1].
+- `relative_length_last_leaflet`: Relative length of the last leaflet at rachis tip [0 to 1].
+- `relative_position_leaflet_max_length`: Relative position where leaflets reach maximum length [0 to 1].
+- `rng`: Random number generator.
+
+# Details
+
+This function calculates the maximum leaflet length that would result in the specified 
+leaflet length at the B point, considering the shape of the length profile along the rachis.
+
+The calculation uses the inverse of the relative length function at the B point position 
+to determine what maximum value would yield the desired length at that specific position.
+
+# Biological Context
+
+In palm fronds, leaflet length typically follows a bell-shaped distribution along the rachis:
+
+1. Leaflets are short at the base (petiole end)
+2. They increase in length to reach a maximum somewhere close to the middle of the rachis
+3. They decrease in length toward the tip
+
+The B point is a key morphological reference point where the rachis cross-section 
+transitions from oval to round. By knowing the leaflet length at this specific point,
+we can calculate the maximum leaflet length for the entire frond, which serves as
+a scaling factor for all other leaflets.
+
+The stochastic variation in B point position reflects natural biological variability
+between individual palms or fronds.
+
+# Returns
+
+The maximum leaflet length for the rachis (m).
+"""
+function leaflet_length_max(leaflet_length_at_b, relative_position_bpoint, relative_position_bpoint_sd, relative_length_first_leaflet, relative_length_last_leaflet, relative_position_leaflet_max_length, rng)
+    relative_position_bpoint = relative_position_bpoint + normal_deviation_draw(relative_position_bpoint_sd, rng)
+
+    if relative_position_bpoint < 0 || relative_position_bpoint > 1
+        error("Relative position bpoint must be between 0 and 1.")
+    end
+
+    @assert leaflet_length_at_b > 0 "Leaflet length at b must be positive."
+
+    return leaflet_length_at_b / relative_leaflet_length(relative_position_bpoint, relative_length_first_leaflet, relative_length_last_leaflet, relative_position_leaflet_max_length)
+end
+
+"""
+    relative_leaflet_length(x, relative_length_first_leaflet, relative_length_last_leaflet, relative_position_leaflet_max_length)
+
+Relative leaflet length given by their relative position along the rachis.
+
+# Arguments
+
+- `x`: relative leaflet position on the rachis (0: base to 1: tip)
+- `relative_length_first_leaflet`: relative length of the first leaflet on the rachis (0 to 1)
+- `relative_length_last_leaflet`: relative length of the last leaflet on the rachis  (0 to 1)
+- `relative_position_leaflet_max_length`: relative position of the longest leaflet on the rachis (0.111 to 0.999)
+"""
+function relative_leaflet_length(x, relative_length_first_leaflet, relative_length_last_leaflet, relative_position_leaflet_max_length)
+    if x < relative_position_leaflet_max_length
+        return relative_length_first_leaflet + ((1 - relative_length_first_leaflet) * x * (2 * relative_position_leaflet_max_length - x)) / relative_position_leaflet_max_length^2
+    else
+        return 1 + (relative_length_last_leaflet - 1) * (x - relative_position_leaflet_max_length)^2 / (1 - relative_position_leaflet_max_length)^2
+    end
+end
+
+
+"""
+    leaflet_width_at_bpoint(rachis_length, intercept, slope)
+
+Calculate leaflet width at B point (reference point).
+
+# Arguments
+- `rachis_length`: The total length of the rachis (m).
+- `intercept`: The intercept parameter of the linear function (m).
+- `slope`: The slope parameter of the linear function (dimensionless).
+
+# Details
+This function uses a linear model to determine leaflet width at the B point:
+    
+    leaflet_width = intercept + slope * rachis_length
+
+The B point is a key reference point on the rachis that marks the transition 
+between different architectural zones. The leaflet width at this point serves 
+as a reference for calculating the distribution of leaflet widths along the 
+entire rachis.
+
+# Returns
+- The width of leaflets at the B point position (m).
+"""
+function leaflet_width_at_bpoint(rachis_length, intercept, slope)
+    return intercept + slope * rachis_length
+end
+
+"""
+    leaflet_width_max(
+        leaflet_width_at_b,
+        relative_position_bpoint,
+        relative_position_bpoint_sd,
+        width_first,
+        width_last,
+        pos_width_max,
+        rng
+    )
+
+Calculate the maximum leaflet width for the rachis, used to scale the width profile.
+
+# Arguments
+
+- `leaflet_width_at_b`: Width of leaflets at the B point on the rachis (m).
+- `relative_position_bpoint`: Mean relative position of the B point along the rachis [0 to 1].
+- `relative_position_bpoint_sd`: Standard deviation for stochastic variation in B point position.
+- `width_first`: Relative width of the first leaflet at rachis base [0 to 1].
+- `width_last`: Relative width of the last leaflet at rachis tip [0 to 1].
+- `pos_width_max`: Relative position where leaflets reach maximum width [0 to 1].
+- `rng`: Random number generator.
+
+# Details
+
+This function calculates the maximum leaflet width that would result in the specified 
+width at the B point, considering the shape of the width profile along the rachis.
+
+The calculation uses the inverse of the relative width function at the B point position 
+to determine what maximum value would yield the desired width at that specific position.
+
+# Biological Context
+
+In palm fronds, leaflet width typically varies along the rachis:
+1. Narrow leaflets at the base (petiole end)
+2. Wider leaflets in the middle region
+3. Narrowing again toward the tip
+
+By knowing the leaflet width at the B point, we can calculate the maximum 
+leaflet width for the entire frond, which serves as a scaling factor for 
+all other leaflets.
+
+# Returns
+
+The maximum leaflet width for the rachis (m).
+"""
+function leaflet_width_max(
+    leaflet_width_at_b,
+    relative_position_bpoint,
+    relative_position_bpoint_sd,
+    width_first,
+    width_last,
+    pos_width_max,
+    rng
+)
+    point_b_relative_position = relative_position_bpoint + normal_deviation_draw(relative_position_bpoint_sd, rng)
+    return leaflet_width_at_b / relative_leaflet_width(point_b_relative_position, width_first, width_last, pos_width_max)
+end
+
+
+"""
+    relative_leaflet_width(x, width_first, width_last, pos_width_max)
+
+Calculate the relative leaflet width at a given position along the rachis.
+
+# Arguments
+
+- `x`: Relative position of the leaflet on the rachis [0 to 1].
+- `width_first`: Relative width of the first leaflet (at rachis base).
+- `width_last`: Relative width of the last leaflet (at rachis tip).
+- `pos_width_max`: Relative position where leaflets reach maximum width [0 to 1].
+
+# Details
+
+This function uses a piecewise linear model to calculate relative leaflet width:
+
+1. From base to maximum width position: Linear increase from `width_first` to 1.0
+2. From maximum width position to tip: Linear decrease from 1.0 to `width_last`
+
+# Biological Context
+
+The width of leaflets along a palm frond typically follows a pattern where:
+
+- Leaflets start relatively narrow at the base
+- Widen to reach maximum width at some point along the rachis
+- Narrow again toward the tip
+
+# Returns
+
+The relative width at position x [0 to 1].
+"""
+function relative_leaflet_width(x, width_first, width_last, pos_width_max)
+    if x < pos_width_max
+        return width_first + x * (1 - width_first) / pos_width_max
+    else
+        return x * (width_last - 1) / (1 - pos_width_max) +
+               (1 - pos_width_max * width_last) / (1 - pos_width_max)
+    end
 end
