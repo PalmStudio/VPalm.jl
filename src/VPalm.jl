@@ -27,8 +27,7 @@ include("IO/parameters_IO.jl")
 include("architecture/mtg_skeleton.jl")
 
 # Biomechanical model
-include("biomechanic/xyz_to_angles.jl")
-include("biomechanic/angles_to_xyz.jl")
+include("biomechanic/xyz_dist_angles.jl")
 include("biomechanic/rotate_yz.jl")
 include("biomechanic/rota_inverse_yz.jl")
 include("biomechanic/inertia_flex_rota.jl")
