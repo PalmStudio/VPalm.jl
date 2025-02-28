@@ -62,14 +62,6 @@ end
     @test isapprox(res.vangle_xy, [0.0]; atol=1e-10)
     @test isapprox(res.vangle_xz, [0.0]; atol=1e-10)
 
-    x = [1.0]
-    y = [0.0]
-    z = [0.0]
-    res = VPalm.xyz_to_dist_and_angles(x, y, z)
-    @test isapprox(res.dist_p2p1, [1.0]; atol=1e-10)
-    @test isapprox(res.vangle_xy, [0.0]; atol=1e-10)
-    @test isapprox(res.vangle_xz, [0.0]; atol=1e-10)
-
     # Test simple case (0° to XY, 0° to XZ)
     x = [1.0]
     y = [0.0]
