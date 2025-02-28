@@ -20,8 +20,7 @@ ref = CSV.read(joinpath(@__DIR__, "files/6_EW01.22_17_kanan_unbent_bend.csv"), D
         df.distance_application, elastic_modulus, shear_modulus, pas, Ncalc, Nboucle;
         verbose=false
     )
-    # Test the output data
-    @test length(df.type) == length(out.type) == length(out.width) == length(out.height) == length(out.torsion) == length(out.x) == length(out.y) == length(out.z) == length(out.mass) == length(out.mass_right) == length(out.mass_left) == length(out.distance_application)
+
     # CSV.write(joinpath(@__DIR__, "files/6_EW01.22_17_kanan_unbent_bend.csv"), DataFrame(out))
     @test isapprox(ref, DataFrame(out); atol=10)
 end

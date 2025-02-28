@@ -41,7 +41,7 @@ function xyz_to_dist_and_angles(vec_x, vec_y, vec_z)
 
         p2p1 = p2 .- p1
 
-        if p2p1[1] != 0
+        if p2p1[1] != 0 #! why?? We could have some distance in the Z or Y axis?
             # Distances
             dist_p2p1[iter] = sqrt(p2p1[1]^2 + p2p1[2]^2 + p2p1[3]^2)
 
