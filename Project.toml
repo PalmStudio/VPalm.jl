@@ -15,7 +15,7 @@ TransformsBase = "28dd2a49-a57a-4bfb-84ca-1a49db9b96b8"
 YAML = "ddb6d928-2868-570f-bddf-ab3f9cf99eb6"
 
 [compat]
-Meshes = "0.52"
+Meshes = "0.52, 0.53"
 MultiScaleTreeGraph = "0.14"
 OrderedCollections = "1.6"
 PlantGeom = "0.10"
