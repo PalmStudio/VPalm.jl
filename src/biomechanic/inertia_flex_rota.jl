@@ -49,17 +49,22 @@ function inertia_flex_rota(b, h, ag_deg, sct, n=100)
 
     # Inerties et surface
     angle_radian = deg2rad(ag_deg)
-    rot_matrix = [cos(angle_radian) -sin(angle_radian);
-        sin(angle_radian) cos(angle_radian)]
+
+    # Use Rotations.jl instead of manual rotation matrix
+    rotation = RotZ(angle_radian)
 
     point_x = section .* ((mat_ind_colonne .- mg) .* pas)
     point_y = section .* ((mat_ind_ligne .- ng) .* pas)
 
-    point = vcat(point_x[:]', point_y[:]')
-    rot_point = rot_matrix * point
+    # Create 3D points (with z=0) for rotation
+    points = [point_x[:] point_y[:] zeros(length(point_x[:]))]
 
-    x = rot_point[1, :]
-    y = rot_point[2, :]
+    # Apply rotation to each point
+    rotated_points = [rotation * [points[i, 1], points[i, 2], points[i, 3]] for i in 1:size(points, 1)]
+
+    # Extract x and y coordinates from rotated points
+    x = [p[1] for p in rotated_points]
+    y = [p[2] for p in rotated_points]
 
     ds = pas^2
     ig_flex = sum(y .^ 2) * ds

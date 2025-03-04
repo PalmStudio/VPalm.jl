@@ -1,7 +1,7 @@
 """
     bend(
         type, width_bend, height_bend, init_torsion, x, y, z, mass_rachis, mass_leaflets_right, mass_leaflets_left,
-        distance_application, elastic_modulus, shear_modulus, step, points, iterations;
+        distance_application, elastic_modulus, shear_modulus, step, npoints, nsegments;
         all_points=false,
         angle_max=deg2rad(21),
         force=true,
@@ -25,11 +25,11 @@ Compute the deformation of the rachis by applying both bending and torsion.
 - `elastic_modulus`: Vector of elasticity moduli (bending, MPa).
 - `shear_modulus`: Vector of shear moduli (torsion, MPa).
 - `step`: Length of the segments that discretize the object (m).
-- `points`: Number of points used in the grid discretizing the section.
-- `iterations`: Number of iterations to compute the torsion and bending.
+- `npoints`: Number of points used in the grid discretizing the section.
+- `nsegments`: Number of segments dividing the rachis to compute the torsion and bending.
 - `all_points=false`: return all points used in the computation (`true`), or only the input points corresponding to x, y and z coordinates (`false`, default).
 - `angle_max=deg2rad(21)`: Maximum angle for testing the small displacement hypothesis (radians).
-- `force=true`: Check if verify the small dispacements hypothesis and bounds the values to be at miximum `angle_max`
+- `force=true`: Check if verify the small displacements hypothesis and bounds the values to be at maximum `angle_max`
 - `verbose=true`: Provide information during computation.
 
 # Returns
@@ -48,34 +48,40 @@ The bending and torsion are applied to the sections of the rachis defined by 5 s
 
 """
 function bend(type, width_bend, height_bend, init_torsion, x, y, z, mass_rachis, mass_leaflets_right, mass_leaflets_left,
-    distance_application, elastic_modulus, shear_modulus, step, points, iterations;
+    distance_application, elastic_modulus, shear_modulus, step, npoints, nsegments;
     all_points=false,
     angle_max=deg2rad(21),
     force=true,
     verbose=true
 )
 
-    gravity = 9.8
+    if unit(step) == NoUnits
+        @warn "The `step` argument should have units, using meters as default."
+        step = step * u"m"
+    end
 
-    vec_rot_flex = zeros(3) # Originally a 3x1 matrix in R
+    # use coordinates x,y,z to make points:
+    points = [Meshes.Point(x[i], y[i], z[i]) for i in eachindex(x)]
+    gravity = 9.8
 
     # Number of experimental points
     npoints_exp = length(x)  # Assuming x, y, z have the same length
 
     # Distances and angles of each segment P2P1
-    vdist_p2p1, = xyz_to_dist_and_angles(x, y, z)
-
-    dist_lineique = [0; cumsum(vdist_p2p1)] # For interpolation
+    vdist_p2p1, = xyz_to_dist_and_angles(points)
+    zero_m = zero(eltype(vdist_p2p1))
+    dist_lineique = [zero_m; cumsum(vdist_p2p1)] # For interpolation
     dist_totale = last(dist_lineique)
 
     # The distances of the segments cannot be zero. The origin point (0,0,0) cannot be in the data
-    if any(vdist_p2p1 .== 0)
+    if any(vdist_p2p1 .== zero_m)
         error("Found distances between segments equal to 0.")
     end
 
-    poids_lin_tige = mass_rachis ./ vdist_p2p1 ./ iterations
-    v_poids_feuilles_d = mass_leaflets_right ./ vdist_p2p1 ./ iterations
-    v_poids_feuilles_g = mass_leaflets_left ./ vdist_p2p1 ./ iterations
+    vdist_p2p1_nounit = ustrip(vdist_p2p1)
+    poids_lin_tige = mass_rachis ./ vdist_p2p1_nounit ./ nsegments
+    v_poids_feuilles_d = mass_leaflets_right ./ vdist_p2p1_nounit ./ nsegments
+    v_poids_feuilles_g = mass_leaflets_left ./ vdist_p2p1_nounit ./ nsegments
     v_poids_flexion = poids_lin_tige .+ v_poids_feuilles_d .+ v_poids_feuilles_g
 
     # Linear interpolations, segment length = step
@@ -109,22 +115,22 @@ function bend(type, width_bend, height_bend, init_torsion, x, y, z, mass_rachis,
 
     # Interpolation of coordinates in the origin frame
     # Identification of experimental points in the linear discretization
-    vec_x, vec_y, vec_z, i_discret_pts_exp, vec_dist_p2p1, vec_angle_xy, vec_angle_xz = interp_points(x, y, z, step)
+    vec_points, i_discret_pts_exp, vec_dist_p2p1, vec_angle_xy, vec_angle_xz = interp_points(points, step)
 
     val_epsilon = 1e-6
     if (vec_dist_p2p1[2] > (step + val_epsilon)) || (vec_dist_p2p1[2] < (step - val_epsilon))
         error("Point distance too narrow")
     end
-    if (length(vec_x) != nlin)
-        error("length(vec_x) != nlin")
+    if (length(vec_points) != nlin)
+        error("length(vec_points) != nlin")
     end
 
     # Increment of weight for the iterative calculation
-    mat_dist_pts_exp = zeros(iterations, npoints_exp)
+    mat_dist_pts_exp = zeros(nsegments, npoints_exp)
 
     som_cum_vec_agl_tor = copy(vec_agl_tor)  # geometric rotation and section
 
-    for iter_poids in 1:iterations
+    for iter_poids in 1:nsegments
         # Inertias and surfaces of the experimental points
         v_ig_flex = zeros(npoints_exp)
         v_ig_tor = zeros(npoints_exp)
@@ -132,7 +138,7 @@ function bend(type, width_bend, height_bend, init_torsion, x, y, z, mass_rachis,
 
         for iter in 1:npoints_exp
             ag_deg = rad2deg(som_cum_vec_agl_tor[i_discret_pts_exp[iter]])  # orientation section (degrees)
-            inertia_flex_rot = inertia_flex_rota(width_bend[iter], height_bend[iter], ag_deg, type[iter], points) # Assuming this function is defined elsewhere
+            inertia_flex_rot = inertia_flex_rota(width_bend[iter], height_bend[iter], ag_deg, type[iter], npoints) # Assuming this function is defined elsewhere
             v_ig_flex[iter] = inertia_flex_rot.ig_flex
             v_ig_tor[iter] = inertia_flex_rot.ig_tor
             v_sr[iter] = inertia_flex_rot.sr
@@ -144,9 +150,9 @@ function bend(type, width_bend, height_bend, init_torsion, x, y, z, mass_rachis,
 
         # Write angles from the new coordinates
         # Distance and angles of each segment P2P1
-        vec_dist_p2p1, vec_angle_xy, vec_angle_xz = xyz_to_dist_and_angles(vec_x, vec_y, vec_z) # Assuming this function is defined elsewhere
+        vec_dist_p2p1, vec_angle_xy, vec_angle_xz = xyz_to_dist_and_angles(vec_points) # Assuming this function is defined elsewhere
 
-        vec_dist_p2p1[1] = 0
+        vec_dist_p2p1[1] = zero(eltype(vec_dist_p2p1))
         vec_angle_xy[1] = vec_angle_xy[2]
         vec_angle_xz[1] = vec_angle_xz[2]
 
@@ -182,11 +188,8 @@ function bend(type, width_bend, height_bend, init_torsion, x, y, z, mass_rachis,
 
         for iter in 1:npoints_exp
             fdr = [0, 0, -v_poids_feuilles_d[iter] * vdist_p2p1[iter] * gravity]
-            # Code with invariance by 'iterations'
             force_feuille_dr = rota_inverse_yz(fdr, vec_angle_xy[iter], vec_angle_xz[iter]) # Assuming this function is defined elsewhere
-
             fga = [0, 0, -v_poids_feuilles_g[iter] * vdist_p2p1[iter] * gravity]
-            # Code with invariance by 'iterations'
             force_feuille_ga = rota_inverse_yz(fga, vec_angle_xy[iter], vec_angle_xz[iter]) # Assuming this function is defined elsewhere
 
             dist_point = vec_d_appli_poids_feuille[i_discret_pts_exp[iter]]
@@ -223,100 +226,71 @@ function bend(type, width_bend, height_bend, init_torsion, x, y, z, mass_rachis,
 
         som_cum_vec_agl_tor = som_cum_vec_agl_tor .+ vec_angle_torsion  # cumulative by weight increment
 
-        if verbose && iter_poids == iterations
+        if verbose && iter_poids == nsegments
             @info string("Final torsion angle at the tip: ", rad2deg(som_cum_vec_agl_tor[length(som_cum_vec_agl_tor)]), "°")
         end
 
         # New coordinates of the points
-        neo_vec_x = zeros(nlin)
-        neo_vec_y = zeros(nlin)
-        neo_vec_z = zeros(nlin)
+        neo_points = fill(Meshes.Point(0, 0, 0), nlin)
 
         for iter in 1:nlin
             # Origin P1
-            p2 = [vec_x[iter], vec_y[iter], vec_z[iter]]
-
+            p2 = vec_points[iter]
             if iter == 1
-                p1 = zeros(3)
+                p1 = Meshes.Point(0, 0, 0)
             else
-                p1 = [vec_x[iter-1], vec_y[iter-1], vec_z[iter-1]]
+                p1 = vec_points[iter-1]
             end
 
-            p2p1 = p2 .- p1
+            p2p1 = Meshes.Point(p2 - p1)
 
             # Change of basis
             # Segment becomes collinear to the OX axis
-            vec_rot_inv = rota_inverse_yz(p2p1, vec_angle_xy[iter], vec_angle_xz[iter]) # Assuming this function is defined elsewhere
-
+            p2_rot = Meshes.Rotate(RotYZ(-vec_angle_xy[iter], -vec_angle_xz[iter]))(p2p1) #! shouldn't we use p2 directly here?
+            coords_p2_rot = Meshes.coords(p2_rot)
             # Flexion equivalent to a rotation around OY
             # Rotation around OY: The rotation is wrong for strong angles
-            vec_rot_flex[1] = vec_rot_inv[1]
-            vec_rot_flex[2] = vec_rot_inv[2]
-            vec_rot_flex[3] = step * vec_angle_flexion[iter]
-
+            flex_point = Meshes.Point(coords_p2_rot.x, coords_p2_rot.y, step * vec_angle_flexion[iter])
             # Torsion
             # Equivalent to a rotation around OX, initially the section is rotated but without torsion
             agl_tor_geom = som_cum_vec_agl_tor[iter] - vec_agl_tor[iter]
+            point_rot = Meshes.Rotate(RotXYZ(agl_tor_geom, vec_angle_xy[iter], vec_angle_xz[iter]))(flex_point)
 
-            cs = cos(agl_tor_geom)
-            sn = sin(agl_tor_geom)
-
-            mat_rot_x = [1 0 0; 0 cs -sn; 0 sn cs]
-
-            vec_rot_tor = mat_rot_x * vec_rot_flex
-
-            # Original base
-            vec_rot = rota_yz(vec_rot_tor, vec_angle_xy[iter], vec_angle_xz[iter]) # Assuming this function is defined elsewhere
-
-            # Point in the origin base
+            # Re-writing the points:
             if iter == 1
-                neo_x = vec_rot[1]
-                neo_y = vec_rot[2]
-                neo_z = vec_rot[3]
+                neo_points[iter] = point_rot
             else
-                neo_x = neo_vec_x[iter-1] + vec_rot[1]
-                neo_y = neo_vec_y[iter-1] + vec_rot[2]
-                neo_z = neo_vec_z[iter-1] + vec_rot[3]
+                neo_points[iter] = neo_points[iter-1] + Meshes.to(point_rot)
             end
-
-            # Re-writing the points
-            neo_vec_x[iter] = neo_x
-            neo_vec_y[iter] = neo_y
-            neo_vec_z[iter] = neo_z
         end
 
-        # Update variables
-        vec_x = neo_vec_x
-        vec_y = neo_vec_y
-        vec_z = neo_vec_z
-
+        #! At this point, vec_x, vec_y and vec_z are defined in neo_points
         # Conservation of distances
-        # step = distance between points
-        XYZangles = xyz_to_dist_and_angles(vec_x, vec_y, vec_z)
+        XYZangles = xyz_to_dist_and_angles(neo_points)
 
-        vec_x, vec_y, vec_z = dist_and_angles_to_xyz([0; fill(step, nlin - 1)], XYZangles.vangle_xy, XYZangles.vangle_xz) # Assuming this function is defined elsewhere
+        vec_points = dist_and_angles_to_xyz([0; fill(step, nlin - 1)], XYZangles.vangle_xy, XYZangles.vangle_xz) # Assuming this function is defined elsewhere
+        neo_points = vec_points
 
         # Calculation of the distances of the experimental points
         # Between before and after deformation
-        for iter in 1:npoints_exp
-            c1 = (x[iter] - vec_x[i_discret_pts_exp[iter]])^2
-            c2 = (y[iter] - vec_y[i_discret_pts_exp[iter]])^2
-            c3 = (z[iter] - vec_z[i_discret_pts_exp[iter]])^2
+        for i in 1:npoints_exp
+            vec_p = vec_points[i_discret_pts_exp[i]]
+            p = points[i]
+            c1 = (p.x - vec_p.x)^2
+            c2 = (p.y - vec_p.y)^2
+            c3 = (p.z - vec_p.z)^2
 
-            mat_dist_pts_exp[iter_poids, iter] = sqrt(c1 + c2 + c3)
+            mat_dist_pts_exp[iter_poids, i] = sqrt(c1 + c2 + c3)
         end
     end
 
     if all_points
-        i_discret_pts_exp = eachindex(vec_x)
+        i_discret_pts_exp = eachindex(points)
     end
 
-    pts_x = vec_x[i_discret_pts_exp]
-    pts_y = vec_y[i_discret_pts_exp]
-    pts_z = vec_z[i_discret_pts_exp]
     pts_agl_tor = rad2deg.(som_cum_vec_agl_tor[i_discret_pts_exp])
 
-    pts_dist, pts_agl_xy, pts_agl_xz = xyz_to_dist_and_angles(pts_x, pts_y, pts_z) # Assuming this function is defined elsewhere
+    pts_dist, pts_agl_xy, pts_agl_xz = xyz_to_dist_and_angles(points[i_discret_pts_exp]) # Assuming this function is defined elsewhere
 
-    return (x=pts_x, y=pts_y, z=pts_z, length=pts_dist, angle_xy=rad2deg.(pts_agl_xy), angle_xz=rad2deg.(pts_agl_xz), torsion=pts_agl_tor)
+    return (points=points[i_discret_pts_exp], length=pts_dist, angle_xy=rad2deg.(pts_agl_xy), angle_xz=rad2deg.(pts_agl_xz), torsion=pts_agl_tor)
 end

@@ -5,6 +5,7 @@ using JET
 using MultiScaleTreeGraph
 using CSV, DataFrames
 using Random
+using Unitful, Meshes
 
 @testset "VPalm.jl" begin
     @testset "Code quality (Aqua.jl)" begin

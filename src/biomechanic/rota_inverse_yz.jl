@@ -12,26 +12,12 @@ Rotate a point around the Z axis and then the Y axis (inverse rotation).
 - The rotated point as a Vector.
 """
 function rota_inverse_yz(op, agl_y, agl_z)
-    agl_y = -agl_y
-    agl_z = -agl_z
+    # For the inverse rotation, we use the negative angles
+    # and the inverse order (ZY instead of YZ)
+    # Rotations.jl convention is that RotZY means "first rotate around Y, then Z"
+    # so we use RotYZ here with negated angles
+    rotation = RotYZ(-agl_z, -agl_y)
 
-    # Rotation around OZ
-    cs_z = cos(agl_z)
-    sn_z = sin(agl_z)
-
-    mat_rot_z = [cs_z -sn_z 0;
-        sn_z cs_z 0;
-        0 0 1]
-
-    vec_rot_z = mat_rot_z * op
-
-    # Rotation around OY
-    cs_y = cos(agl_y)
-    sn_y = sin(agl_y)
-
-    mat_rot_y = [cs_y 0 -sn_y;
-        0 1 0;
-        sn_y 0 cs_y]
-
-    return mat_rot_y * vec_rot_z
+    # Apply the rotation to the point
+    return rotation * op
 end

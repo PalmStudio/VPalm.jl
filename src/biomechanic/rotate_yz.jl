@@ -12,24 +12,9 @@ Rotate a 3D vector around the Y and then the Z axes.
 - The rotated vector.
 """
 function rota_yz(op, agl_y, agl_z)
-    # Rotation around OY
-    cs_y = cos(agl_y)
-    sn_y = sin(agl_y)
+    # Use the combined RotYZ rotation directly
+    rotation = RotYZ(agl_y, agl_z)
 
-    mat_rot_y = [cs_y 0 -sn_y;
-        0 1 0;
-        sn_y 0 cs_y]
-
-    vec_rot_y = mat_rot_y * op
-
-    # Rotation around OZ
-    cs_z = cos(agl_z)
-    sn_z = sin(agl_z)
-
-    mat_rot_z = [cs_z -sn_z 0;
-        sn_z cs_z 0;
-        0 0 1]
-
-    return mat_rot_z * vec_rot_y
+    # Apply the rotation to the point
+    return rotation * op
 end
-#! We should use the Rotations package instead
