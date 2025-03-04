@@ -298,7 +298,7 @@ function bend(type, width_bend, height_bend, init_torsion, x, y, z, mass_rachis,
 
             # Change of basis
             # Segment becomes collinear to the OX axis
-            p2_rot = Meshes.Rotate(RotYZ(-vec_angle_xy[iter], -vec_angle_xz[iter]))(p2p1) #! shouldn't we use the vector directly here?
+            p2_rot = Meshes.Rotate(Rotations.RotYZ(-vec_angle_xy[iter], -vec_angle_xz[iter]))(p2p1) #! shouldn't we use the vector directly here?
             coords_p2_rot = Meshes.coords(p2_rot)
             # Flexion equivalent to a rotation around OY
             # Rotation around OY: The rotation is wrong for strong angles
@@ -306,7 +306,7 @@ function bend(type, width_bend, height_bend, init_torsion, x, y, z, mass_rachis,
             # Torsion
             # Equivalent to a rotation around OX, initially the section is rotated but without torsion
             agl_tor_geom = som_cum_vec_agl_tor[iter] - vec_agl_tor[iter]
-            point_rot = Meshes.Rotate(RotXYZ(agl_tor_geom, vec_angle_xy[iter], vec_angle_xz[iter]))(flex_point)
+            point_rot = Meshes.Rotate(RotXYZ(agl_tor_geom, -vec_angle_xy[iter], -vec_angle_xz[iter]))(flex_point)
 
             # Re-writing the points:
             if iter == 1

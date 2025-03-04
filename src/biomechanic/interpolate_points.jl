@@ -54,7 +54,7 @@ function interp_points(points, pas)
         end
 
         dist_points = vec_dist[ind_points]
-        vec_rot = RotYZ(-vangle_xy[i], -vangle_xz[i]) * [dist_points'; zeros(eltype(dist_points), 2, length(dist_points))]
+        vec_rot = RotZY(vangle_xz[i], vangle_xy[i]) * [dist_points'; zeros(eltype(dist_points), 2, length(dist_points))]
 
         if i > 1
             vec_points = cumsum(vec_rot, dims=2) .+ mat_xyz[:, end]

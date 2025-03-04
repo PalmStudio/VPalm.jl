@@ -13,7 +13,7 @@ import YAML, OrderedCollections
 import PlantGeom
 import Meshes
 import TransformsBase: →
-import Rotations: RotX, RotY, RotZ, RotYZ, RotXYZ
+import Rotations: RotX, RotY, RotZ, RotYZ, RotXYZ, RotZY
 import Rotations
 import PlyIO
 import Unitful: @u_str, ustrip, unit, NoUnits, uconvert
