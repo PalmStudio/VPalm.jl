@@ -13,7 +13,7 @@ import YAML, OrderedCollections
 import PlantGeom
 import Meshes
 import TransformsBase: →
-import Rotations: RotX, RotY, RotZ, RotYZ, RotXYZ
+import Rotations: RotX, RotY, RotZ, RotYZ, RotZY, RotXYZ
 import Rotations
 import PlyIO
 
@@ -29,11 +29,12 @@ include("architecture/mtg_skeleton.jl")
 # Biomechanical model
 
 include("biomechanic/xyz_dist_angles.jl")
-include("biomechanic/rotate_yz.jl")
-include("biomechanic/rota_inverse_yz.jl")
+#include("biomechanic/rotate_yz.jl")
+#include("biomechanic/rota_inverse_yz.jl")
 include("biomechanic/inertia_flex_rota.jl")
 include("biomechanic/interpolate_points.jl")
 include("biomechanic/bend.jl")
+include("biomechanic/unbend.jl")
 
 # Allometries:
 include("allometries/stem.jl")

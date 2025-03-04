@@ -183,11 +183,13 @@ function bend(type, width_bend, height_bend, init_torsion, x, y, z, mass_rachis,
         for iter in 1:npoints_exp
             fdr = [0, 0, -v_poids_feuilles_d[iter] * vdist_p2p1[iter] * gravity]
             # Code with invariance by 'iterations'
-            force_feuille_dr = rota_inverse_yz(fdr, vec_angle_xy[iter], vec_angle_xz[iter]) # Assuming this function is defined elsewhere
+            #force_feuille_dr = rota_inverse_yz(fdr, vec_angle_xy[iter], vec_angle_xz[iter]) # Assuming this function is defined elsewhere
+            force_feuille_dr = RotZY(vec_angle_xz[iter], vec_angle_xy[iter]) * fdr
 
             fga = [0, 0, -v_poids_feuilles_g[iter] * vdist_p2p1[iter] * gravity]
             # Code with invariance by 'iterations'
-            force_feuille_ga = rota_inverse_yz(fga, vec_angle_xy[iter], vec_angle_xz[iter]) # Assuming this function is defined elsewhere
+            #force_feuille_ga = rota_inverse_yz(fga, vec_angle_xy[iter], vec_angle_xz[iter]) # Assuming this function is defined elsewhere
+            force_feuille_ga = RotZY(vec_angle_xz[iter], vec_angle_xy[iter]) * fga
 
             dist_point = vec_d_appli_poids_feuille[i_discret_pts_exp[iter]]
             angle_point = som_cum_vec_agl_tor[i_discret_pts_exp[iter]]
@@ -246,7 +248,8 @@ function bend(type, width_bend, height_bend, init_torsion, x, y, z, mass_rachis,
 
             # Change of basis
             # Segment becomes collinear to the OX axis
-            vec_rot_inv = rota_inverse_yz(p2p1, vec_angle_xy[iter], vec_angle_xz[iter]) # Assuming this function is defined elsewhere
+            #vec_rot_inv = rota_inverse_yz(p2p1, vec_angle_xy[iter], vec_angle_xz[iter]) # Assuming this function is defined elsewhere
+            vec_rot_inv = RotZY(vec_angle_xz[iter], vec_angle_xy[iter]) * p2p1
 
             # Flexion equivalent to a rotation around OY
             # Rotation around OY: The rotation is wrong for strong angles
@@ -266,7 +269,8 @@ function bend(type, width_bend, height_bend, init_torsion, x, y, z, mass_rachis,
             vec_rot_tor = mat_rot_x * vec_rot_flex
 
             # Original base
-            vec_rot = rota_yz(vec_rot_tor, vec_angle_xy[iter], vec_angle_xz[iter]) # Assuming this function is defined elsewhere
+            #vec_rot = rota_yz(vec_rot_tor, vec_angle_xy[iter], vec_angle_xz[iter]) # Assuming this function is defined elsewhere
+            vec_rot = RotYZ(vec_angle_xy[iter], vec_angle_xz[iter]) * vec_rot_tor
 
             # Point in the origin base
             if iter == 1

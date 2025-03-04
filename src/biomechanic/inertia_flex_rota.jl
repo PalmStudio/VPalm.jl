@@ -32,28 +32,28 @@ function inertia_flex_rota(b, h, ag_deg, sct, n=100)
     nn = round(Int, h / pas)
     m = round(Int, b / pas)
 
-    # Creation de la section
+    # Section definition
     section = zeros(nn, m)
-    section = remplir(section, sct)
+    section = fill_section(section, sct)
 
-    # Construction des variables vectorisees
+    # Vectorized variables
     iter_n = 1:size(section, 1)
     iter_m = 1:size(section, 2)
 
-    mat_ind_ligne = repeat(iter_n, 1, m)
-    mat_ind_colonne = repeat(iter_m', nn, 1)
+    mat_ind_row = repeat(iter_n, 1, m)
+    mat_ind_column = repeat(iter_m', nn, 1)
 
-    # Centre de gravite
-    ng = sum(section .* mat_ind_ligne) / sum(section)
-    mg = sum(section .* mat_ind_colonne) / sum(section)
+    # Gravity center
+    ng = sum(section .* mat_ind_row) / sum(section)
+    mg = sum(section .* mat_ind_column) / sum(section)
 
-    # Inerties et surface
+    # Inertia and surface calculation
     angle_radian = deg2rad(ag_deg)
     rot_matrix = [cos(angle_radian) -sin(angle_radian);
         sin(angle_radian) cos(angle_radian)]
 
-    point_x = section .* ((mat_ind_colonne .- mg) .* pas)
-    point_y = section .* ((mat_ind_ligne .- ng) .* pas)
+    point_x = section .* ((mat_ind_column .- mg) .* pas)
+    point_y = section .* ((mat_ind_row .- ng) .* pas)
 
     point = vcat(point_x[:]', point_y[:]')
     rot_point = rot_matrix * point
@@ -70,7 +70,7 @@ function inertia_flex_rota(b, h, ag_deg, sct, n=100)
 end
 
 """
-    remplir(section, sct)
+    fill_section(section, sct)
 
 Fill in the matrix according to the section shape.
 
@@ -81,8 +81,8 @@ Fill in the matrix according to the section shape.
 # Returns
 - The filled matrix.
 """
-function remplir(section, sct)
-    # sct = 1 : triangle bas
+function fill_section(section, sct)
+    # sct = 1 : bottom-oriented triangle
     if sct == 1
         b13 = [1 1; size(section, 2)/2 1] \ [1; size(section, 1)]
         b23 = [size(section, 2) 1; size(section, 2)/2 1] \ [1; size(section, 1)]
@@ -104,7 +104,7 @@ function remplir(section, sct)
         section = ones(size(section))
     end
 
-    # sct = 3 : triangle haut
+    # sct = 3 : top-oriented triangle
     if sct == 3
         b13 = [1 1; size(section, 2)/2 1] \ [size(section, 1); 1]
         b23 = [size(section, 2) 1; size(section, 2)/2 1] \ [size(section, 1); 1]
@@ -159,7 +159,7 @@ function remplir(section, sct)
         end
     end
 
-    # sct = 5 : cercle
+    # sct = 5 : circle
     if sct == 5
         rayon = minimum(size(section)) / 2
 
