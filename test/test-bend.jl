@@ -22,10 +22,10 @@ ref = CSV.read(joinpath(@__DIR__, "files/6_EW01.22_17_kanan_unbent_bend.csv"), D
     )
 
     # CSV.write(joinpath(@__DIR__, "files/6_EW01.22_17_kanan_unbent_bend.csv"), DataFrame(out))
-    @test isapprox(ref, DataFrame(out); atol=10)
+    ref_points = [Meshes.Point(row.x, row.y, row.z) for row in eachrow(ref)]
+    @test ref_points == out.points
+    @test ref.length * u"m" == out.length
+    @test ref.angle_xy == out.angle_xy
+    @test ref.angle_xz == out.angle_xz
+    @test ref.torsion == out.torsion
 end
-
-step_ = 0.2u"m"
-dist_totale = 10.0u"m"
-nlin = round(Int, dist_totale / pas + 1)
-nlin = round(Int, dist_totale / pas) + 1
