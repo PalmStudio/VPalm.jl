@@ -57,7 +57,8 @@ function inertia_flex_rota(b, h, ag_deg, sct, n=100)
     point_y = section .* ((mat_ind_ligne .- ng) .* pas)
 
     # Create 3D points (with z=0) for rotation
-    points = [point_x[:] point_y[:] zeros(length(point_x[:]))]
+
+    points = [point_x[:] point_y[:] fill(zero(point_x[1]), length(point_x[:]))]
 
     # Apply rotation to each point
     rotated_points = [rotation * [points[i, 1], points[i, 2], points[i, 3]] for i in 1:size(points, 1)]

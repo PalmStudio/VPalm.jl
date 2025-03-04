@@ -3,11 +3,11 @@
 df = CSV.read(joinpath(@__DIR__, "files/6_EW01.22_17_kanan_unbent.csv"), DataFrame)
 
 # Set test parameters
-pas = 0.02  # in meter. -> Length of the segments that discretize the object.
+pas = 0.02u"m"  # in meter. -> Length of the segments that discretize the object.
 Ncalc = 100 # number of points used in the grid that discretized the section.
 Nboucle = 15 # if we want to compute the torsion after the bending step by step instead of
-elastic_modulus = 2000.0
-shear_modulus = 400.0
+elastic_modulus = 2000.0u"MPa"
+shear_modulus = 400.0u"MPa"
 
 ref = CSV.read(joinpath(@__DIR__, "files/6_EW01.22_17_kanan_unbent_bend.csv"), DataFrame)
 @testset "bend works" begin
@@ -24,3 +24,8 @@ ref = CSV.read(joinpath(@__DIR__, "files/6_EW01.22_17_kanan_unbent_bend.csv"), D
     # CSV.write(joinpath(@__DIR__, "files/6_EW01.22_17_kanan_unbent_bend.csv"), DataFrame(out))
     @test isapprox(ref, DataFrame(out); atol=10)
 end
+
+step_ = 0.2u"m"
+dist_totale = 10.0u"m"
+nlin = round(Int, dist_totale / pas + 1)
+nlin = round(Int, dist_totale / pas) + 1

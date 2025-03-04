@@ -58,11 +58,49 @@ function bend(type, width_bend, height_bend, init_torsion, x, y, z, mass_rachis,
     if unit(step) == NoUnits
         @warn "The `step` argument should have units, using meters as default."
         step = step * u"m"
+    else
+        step = uconvert(u"m", step)
+    end
+
+    if unit(mass_leaflets_right[1]) == NoUnits
+        @warn "The `mass_leaflets_right` argument should have units, using kilograms as default."
+        mass_leaflets_right = mass_leaflets_right * u"kg"
+    else
+        mass_leaflets_right = uconvert(u"kg", mass_leaflets_right)
+    end
+
+    if unit(mass_leaflets_left[1]) == NoUnits
+        @warn "The `mass_leaflets_left` argument should have units, using kilograms as default."
+        mass_leaflets_left = mass_leaflets_left * u"kg"
+    else
+        mass_leaflets_left = uconvert(u"kg", mass_leaflets_left)
+    end
+
+    if unit(mass_rachis[1]) == NoUnits
+        @warn "The `mass_rachis` argument should have units, using kilograms as default."
+        mass_rachis = mass_rachis * u"kg"
+    else
+        mass_rachis = uconvert(u"kg", mass_rachis)
+    end
+
+
+    if unit(width_bend[1]) == NoUnits
+        @warn "The `width_bend` argument should have units, using meters as default."
+        width_bend = width_bend * u"m"
+    else
+        width_bend = uconvert(u"m", width_bend)
+    end
+
+    if unit(height_bend[1]) == NoUnits
+        @warn "The `height_bend` argument should have units, using meters as default."
+        height_bend = height_bend * u"m"
+    else
+        height_bend = uconvert(u"m", height_bend)
     end
 
     # use coordinates x,y,z to make points:
     points = [Meshes.Point(x[i], y[i], z[i]) for i in eachindex(x)]
-    gravity = 9.8
+    gravity = 9.8u"m/s^2"
 
     # Number of experimental points
     npoints_exp = length(x)  # Assuming x, y, z have the same length
@@ -71,6 +109,7 @@ function bend(type, width_bend, height_bend, init_torsion, x, y, z, mass_rachis,
     vdist_p2p1, = xyz_to_dist_and_angles(points)
     zero_m = zero(eltype(vdist_p2p1))
     dist_lineique = [zero_m; cumsum(vdist_p2p1)] # For interpolation
+    dist_lineique_nounit = ustrip(dist_lineique)
     dist_totale = last(dist_lineique)
 
     # The distances of the segments cannot be zero. The origin point (0,0,0) cannot be in the data
@@ -88,7 +127,7 @@ function bend(type, width_bend, height_bend, init_torsion, x, y, z, mass_rachis,
     nlin = round(Int, dist_totale / step + 1)
     step = dist_totale / (nlin - 1)
     vec_dist = collect((0:(nlin-1)) .* step)
-    vec_dist[end] = dist_lineique[end]
+    vec_dist[end] = dist_totale
     # Note: we force vec_dist[end] to dist_lineique[end] to avoid any rounding error
 
     if length(elastic_modulus) != npoints_exp
@@ -99,6 +138,13 @@ function bend(type, width_bend, height_bend, init_torsion, x, y, z, mass_rachis,
         end
     end
 
+    if unit(elastic_modulus[1]) == NoUnits
+        @warn "The `elastic_modulus` argument should have units, using MPa as default."
+        elastic_modulus = elastic_modulus * u"MPa"
+    else
+        elastic_modulus = uconvert.(u"MPa", elastic_modulus)
+    end
+
     if length(shear_modulus) != npoints_exp
         if length(shear_modulus) == 1
             shear_modulus = fill(shear_modulus, npoints_exp)
@@ -107,8 +153,16 @@ function bend(type, width_bend, height_bend, init_torsion, x, y, z, mass_rachis,
         end
     end
 
-    vec_moe = linear_interpolation(dist_lineique, [elastic_modulus[1]; elastic_modulus])(vec_dist) .* 1e6
-    vec_g = linear_interpolation(dist_lineique, [shear_modulus[1]; shear_modulus])(vec_dist) .* 1e6
+    if unit(shear_modulus[1]) == NoUnits
+        @warn "The `shear_modulus` argument should have units, using MPa as default."
+        shear_modulus = shear_modulus * u"MPa"
+    else
+        shear_modulus = uconvert.(u"MPa", shear_modulus)
+    end
+
+    vec_moe = uconvert.(u"Pa", linear_interpolation(dist_lineique, [elastic_modulus[1]; elastic_modulus])(vec_dist))
+    @show vec_moe[1]
+    vec_g = uconvert.(u"Pa", linear_interpolation(dist_lineique, [shear_modulus[1]; shear_modulus])(vec_dist))
     vangle_tor = deg2rad.(init_torsion)
     vec_agl_tor = linear_interpolation(dist_lineique, [vangle_tor[1]; vangle_tor])(vec_dist)
     vec_d_appli_poids_feuille = linear_interpolation(dist_lineique, [distance_application[1]; distance_application])(vec_dist)
@@ -117,7 +171,7 @@ function bend(type, width_bend, height_bend, init_torsion, x, y, z, mass_rachis,
     # Identification of experimental points in the linear discretization
     vec_points, i_discret_pts_exp, vec_dist_p2p1, vec_angle_xy, vec_angle_xz = interp_points(points, step)
 
-    val_epsilon = 1e-6
+    val_epsilon = 1e-6u"m"
     if (vec_dist_p2p1[2] > (step + val_epsilon)) || (vec_dist_p2p1[2] < (step - val_epsilon))
         error("Point distance too narrow")
     end
@@ -132,9 +186,9 @@ function bend(type, width_bend, height_bend, init_torsion, x, y, z, mass_rachis,
 
     for iter_poids in 1:nsegments
         # Inertias and surfaces of the experimental points
-        v_ig_flex = zeros(npoints_exp)
-        v_ig_tor = zeros(npoints_exp)
-        v_sr = zeros(npoints_exp)
+        v_ig_flex = fill(0.0u"m^4", npoints_exp)
+        v_ig_tor = fill(0.0u"m^4", npoints_exp)
+        v_sr = fill(0.0u"m^2", npoints_exp)
 
         for iter in 1:npoints_exp
             ag_deg = rad2deg(som_cum_vec_agl_tor[i_discret_pts_exp[iter]])  # orientation section (degrees)
@@ -146,6 +200,7 @@ function bend(type, width_bend, height_bend, init_torsion, x, y, z, mass_rachis,
 
         # Linear interpolation of inertias
         vec_inertie_flex = linear_interpolation(dist_lineique, [v_ig_flex[1]; v_ig_flex])(vec_dist)
+        @show vec_inertie_flex[1]
         vec_inertie_tor = linear_interpolation(dist_lineique, [v_ig_tor[1]; v_ig_tor])(vec_dist)
 
         # Write angles from the new coordinates
@@ -158,6 +213,7 @@ function bend(type, width_bend, height_bend, init_torsion, x, y, z, mass_rachis,
 
         # Flexion: linear bending forces and linear interpolation
         v_force = v_poids_flexion .* cos.(vec_angle_xy[i_discret_pts_exp]) .* gravity
+        @show v_force[1]
 
         vec_force = linear_interpolation(dist_lineique, [v_force[1]; v_force])(vec_dist)
 
@@ -167,7 +223,7 @@ function bend(type, width_bend, height_bend, init_torsion, x, y, z, mass_rachis,
 
         vec_moment = -cumsum(vec_shear[nlin:-1:1] .* step)
         vec_moment = vec_moment[nlin:-1:1]
-
+        @show vec_moment[1]
         # Classic calculation of the deflection (distance delta)
         fct = vec_moment ./ (vec_moe .* vec_inertie_flex)
 
@@ -184,13 +240,12 @@ function bend(type, width_bend, height_bend, init_torsion, x, y, z, mass_rachis,
         end
 
         # Torsion
-        v_m_tor = zeros(npoints_exp)
+        zero_kg_m2_s2 = zero(-v_poids_feuilles_d[1] * vdist_p2p1[1] * gravity)
+        v_m_tor = fill(zero_kg_m2_s2, npoints_exp)
 
         for iter in 1:npoints_exp
-            fdr = [0, 0, -v_poids_feuilles_d[iter] * vdist_p2p1[iter] * gravity]
-            force_feuille_dr = rota_inverse_yz(fdr, vec_angle_xy[iter], vec_angle_xz[iter]) # Assuming this function is defined elsewhere
-            fga = [0, 0, -v_poids_feuilles_g[iter] * vdist_p2p1[iter] * gravity]
-            force_feuille_ga = rota_inverse_yz(fga, vec_angle_xy[iter], vec_angle_xz[iter]) # Assuming this function is defined elsewhere
+            force_feuille_dr = RotYZ(-vec_angle_xy[iter], -vec_angle_xz[iter]) * [zero_kg_m2_s2, zero_kg_m2_s2, -v_poids_feuilles_d[iter] * vdist_p2p1[iter] * gravity]
+            force_feuille_ga = RotYZ(-vec_angle_xy[iter], -vec_angle_xz[iter]) * [zero_kg_m2_s2, zero_kg_m2_s2, -v_poids_feuilles_g[iter] * vdist_p2p1[iter] * gravity]
 
             dist_point = vec_d_appli_poids_feuille[i_discret_pts_exp[iter]]
             angle_point = som_cum_vec_agl_tor[i_discret_pts_exp[iter]]
@@ -224,10 +279,10 @@ function bend(type, width_bend, height_bend, init_torsion, x, y, z, mass_rachis,
             force && (vec_angle_torsion[abs.(vec_angle_torsion).>angle_max] .= angle_max)
         end
 
-        som_cum_vec_agl_tor = som_cum_vec_agl_tor .+ vec_angle_torsion  # cumulative by weight increment
+        som_cum_vec_agl_tor += ustrip(vec_angle_torsion)  # cumulative by weight increment #! shouldn't it be .+= ?
 
         if verbose && iter_poids == nsegments
-            @info string("Final torsion angle at the tip: ", rad2deg(som_cum_vec_agl_tor[length(som_cum_vec_agl_tor)]), "°")
+            @info string("Final torsion angle at the tip: ", rad2deg(som_cum_vec_agl_tor[end]), "°")
         end
 
         # New coordinates of the points
@@ -242,14 +297,16 @@ function bend(type, width_bend, height_bend, init_torsion, x, y, z, mass_rachis,
                 p1 = vec_points[iter-1]
             end
 
-            p2p1 = Meshes.Point(p2 - p1)
+            p2p1_vec = p2 - p1
+            p2p1 = Meshes.Point(p2p1_vec...)
 
             # Change of basis
             # Segment becomes collinear to the OX axis
-            p2_rot = Meshes.Rotate(RotYZ(-vec_angle_xy[iter], -vec_angle_xz[iter]))(p2p1) #! shouldn't we use p2 directly here?
+            p2_rot = Meshes.Rotate(RotYZ(-vec_angle_xy[iter], -vec_angle_xz[iter]))(p2p1) #! shouldn't we use the vector directly here?
             coords_p2_rot = Meshes.coords(p2_rot)
             # Flexion equivalent to a rotation around OY
             # Rotation around OY: The rotation is wrong for strong angles
+            @show vec_angle_flexion[iter]
             flex_point = Meshes.Point(coords_p2_rot.x, coords_p2_rot.y, step * vec_angle_flexion[iter])
             # Torsion
             # Equivalent to a rotation around OX, initially the section is rotated but without torsion

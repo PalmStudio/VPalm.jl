@@ -29,12 +29,12 @@ function interp_points(points, pas)
     end
 
     # Construction of interpolated points
-    nlin = round(Int, dist_totale / pas + 1)
+    nlin = round(Int, dist_totale / pas) + 1
     pas = dist_totale / (nlin - 1)
 
     npoints_exp = length(points)
 
-    vec_dist = [zero(eltype(pas)); fill(pas, (nlin - 1))]
+    vec_dist = [zero(eltype(pas)); fill(pas, nlin - 1)]
     dist_interp = cumsum(vec_dist)
 
     # Avoid rounding errors
