@@ -294,15 +294,14 @@ function bend(type, width_bend, height_bend, init_torsion, x, y, z, mass_rachis,
             end
 
             p2p1_vec = p2 - p1
-            p2p1 = Meshes.Point(p2p1_vec...)
 
             # Change of basis
             # Segment becomes collinear to the OX axis
-            p2_rot = Meshes.Rotate(Rotations.RotYZ(-vec_angle_xy[iter], -vec_angle_xz[iter]))(p2p1) #! shouldn't we use the vector directly here?
-            coords_p2_rot = Meshes.coords(p2_rot)
+            p2_rot = Meshes.Rotate(Rotations.RotYZ(-vec_angle_xy[iter], -vec_angle_xz[iter]))(p2p1_vec)
+
             # Flexion equivalent to a rotation around OY
             # Rotation around OY: The rotation is wrong for strong angles
-            flex_point = Meshes.Point(coords_p2_rot.x, coords_p2_rot.y, step * vec_angle_flexion[iter])
+            flex_point = Meshes.Point(p2_rot[1], p2_rot[2], step * vec_angle_flexion[iter])
             # Torsion
             # Equivalent to a rotation around OX, initially the section is rotated but without torsion
             agl_tor_geom = som_cum_vec_agl_tor[iter] - vec_agl_tor[iter]
@@ -316,11 +315,10 @@ function bend(type, width_bend, height_bend, init_torsion, x, y, z, mass_rachis,
             end
         end
 
-        #! At this point, vec_x, vec_y and vec_z are defined in neo_points
         # Conservation of distances
         XYZangles = xyz_to_dist_and_angles(neo_points)
 
-        vec_points = dist_and_angles_to_xyz([0; fill(step, nlin - 1)], XYZangles.vangle_xy, XYZangles.vangle_xz) # Assuming this function is defined elsewhere
+        vec_points = dist_and_angles_to_xyz([zero(step); fill(step, nlin - 1)], XYZangles.vangle_xy, XYZangles.vangle_xz) # Assuming this function is defined elsewhere
         neo_points = vec_points
 
         # Calculation of the distances of the experimental points
