@@ -310,7 +310,7 @@ function bend(type, width_bend, height_bend, init_torsion, x, y, z, mass_rachis,
 
             # Change of basis
             # Segment becomes collinear to the OX axis
-            p2_rot = Meshes.Rotate(Rotations.RotYZ(-vec_angle_xy[iter], -vec_angle_xz[iter]))(p2p1_vec)
+            p2_rot = Meshes.Rotate(RotYZ(-vec_angle_xy[iter], -vec_angle_xz[iter]))(p2p1_vec)
 
             # Flexion equivalent to a rotation around OY
             # Rotation around OY: The rotation is wrong for strong angles
@@ -330,7 +330,6 @@ function bend(type, width_bend, height_bend, init_torsion, x, y, z, mass_rachis,
 
         # Conservation of distances
         XYZangles = xyz_to_dist_and_angles(neo_points)
-
         vec_points = dist_and_angles_to_xyz([zero(step); fill(step, nlin - 1)], XYZangles.vangle_xy, XYZangles.vangle_xz) # Assuming this function is defined elsewhere
         neo_points = vec_points
 
