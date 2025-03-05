@@ -55,6 +55,8 @@ function bend(type, width_bend, height_bend, init_torsion, x, y, z, mass_rachis,
     verbose=true
 )
 
+    @assert length(type) == length(width_bend) == length(height_bend) == length(init_torsion) == length(x) == length(y) == length(z) == length(mass_rachis) == length(mass_leaflets_right) == length(mass_leaflets_left) == length(distance_application) "All arguments should have the same length."
+
     if unit(step) == NoUnits
         @warn "The `step` argument should have units, using meters as default."
         step = step * u"m"
@@ -83,7 +85,6 @@ function bend(type, width_bend, height_bend, init_torsion, x, y, z, mass_rachis,
         mass_rachis = uconvert(u"kg", mass_rachis)
     end
 
-
     if unit(width_bend[1]) == NoUnits
         @warn "The `width_bend` argument should have units, using meters as default."
         width_bend = width_bend * u"m"
@@ -96,6 +97,13 @@ function bend(type, width_bend, height_bend, init_torsion, x, y, z, mass_rachis,
         height_bend = height_bend * u"m"
     else
         height_bend = uconvert(u"m", height_bend)
+    end
+
+    if unit(distance_application[1]) == NoUnits
+        @warn "The `distance_application` argument should have units, using meters as default."
+        distance_application = distance_application * u"m"
+    else
+        distance_application = uconvert(u"m", distance_application)
     end
 
     # use coordinates x,y,z to make points:
@@ -210,7 +218,7 @@ function bend(type, width_bend, height_bend, init_torsion, x, y, z, mass_rachis,
         vec_angle_xz[1] = vec_angle_xz[2]
 
         # Flexion: linear bending forces and linear interpolation
-        v_force = v_poids_flexion .* cos.(vec_angle_xy[i_discret_pts_exp]) .* gravity # Should be in N/m, or kg·m²·s⁻²
+        v_force = v_poids_flexion .* cos.(vec_angle_xy[i_discret_pts_exp]) .* gravity # Should be in N*m, or kg·m²·s⁻²
 
         vec_force = linear_interpolation(dist_lineique, [v_force[1]; v_force])(vec_dist)
 
@@ -236,12 +244,17 @@ function bend(type, width_bend, height_bend, init_torsion, x, y, z, mass_rachis,
         end
 
         # Torsion
-        zero_kg_m2_s2 = zero(-v_poids_feuilles_d[1] * vdist_p2p1[1] * gravity)
-        v_m_tor = fill(zero_kg_m2_s2, npoints_exp)
+        zero_force = 0.0u"N"
+        zero_torque = 0.0u"N*m"
+        v_m_tor = fill(zero_torque, npoints_exp) # should be in kg·m²·s⁻² == N·m
 
         for iter in 1:npoints_exp
-            force_feuille_dr = RotYZ(-vec_angle_xy[iter], -vec_angle_xz[iter]) * [zero_kg_m2_s2, zero_kg_m2_s2, -v_poids_feuilles_d[iter] * vdist_p2p1[iter] * gravity]
-            force_feuille_ga = RotYZ(-vec_angle_xy[iter], -vec_angle_xz[iter]) * [zero_kg_m2_s2, zero_kg_m2_s2, -v_poids_feuilles_g[iter] * vdist_p2p1[iter] * gravity]
+            # Calculate forces with explicit units
+            force_z_right = -v_poids_feuilles_d[iter] * vdist_p2p1[iter] * gravity  # N
+            force_z_left = -v_poids_feuilles_g[iter] * vdist_p2p1[iter] * gravity   # N
+
+            force_feuille_dr = RotYZ(-vec_angle_xy[iter], -vec_angle_xz[iter]) * [zero_force, zero_force, force_z_right]
+            force_feuille_ga = RotYZ(-vec_angle_xy[iter], -vec_angle_xz[iter]) * [zero_force, zero_force, force_z_left]
 
             dist_point = vec_d_appli_poids_feuille[i_discret_pts_exp[iter]]
             angle_point = som_cum_vec_agl_tor[i_discret_pts_exp[iter]]
@@ -259,7 +272,7 @@ function bend(type, width_bend, height_bend, init_torsion, x, y, z, mass_rachis,
             end
 
             md = dist_point * kd * cos(angle_point) * force_feuille_dr[3]
-            mg = dist_point * kg * cos(angle_point + pi) * force_feuille_ga[3]
+            mg = dist_point * kg * cos(angle_point + π) * force_feuille_ga[3]
 
             v_m_tor[iter] = md + mg
         end
@@ -275,7 +288,7 @@ function bend(type, width_bend, height_bend, init_torsion, x, y, z, mass_rachis,
             force && (vec_angle_torsion[abs.(vec_angle_torsion).>angle_max] .= angle_max)
         end
 
-        som_cum_vec_agl_tor += ustrip(vec_angle_torsion)  # cumulative by weight increment #! shouldn't it be .+= ?
+        som_cum_vec_agl_tor .+= vec_angle_torsion  # cumulative by weight increment
 
         if verbose && iter_poids == nsegments
             @info string("Final torsion angle at the tip: ", rad2deg(som_cum_vec_agl_tor[end]), "°")
