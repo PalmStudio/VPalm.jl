@@ -1,24 +1,23 @@
 """
-    inertia_flex_rota(b, h, orientation_angle, sct, n = 100)
+    inertia_flex_rota(base_width, height, orientation_angle, section_type, grid_size = 100)
 
 Compute the inertia of bending and torsion, and the cross-section area.
 
 # Arguments
-
-- `b`: Dimension of the base.
-- `h`: Dimension of the height.
+- `base_width`: Dimension of the base.
+- `height`: Dimension of the height.
 - `orientation_angle`: Section orientation angle (torsion, in radians).
-- `sct`: Section type (see details).
-- `n`: Number of discretizations (default to 100).
+- `section_type`: Section type (see details).
+- `grid_size`: Number of discretizations (default to 100).
 
 # Details
 
 For the section type, possible values are:
-- `sct = 1`: triangle (bottom-oriented)
-- `sct = 2`: rectangle
-- `sct = 3`: triangle (top-oriented)
-- `sct = 4`: ellipse
-- `sct = 5`: circle
+- `section_type = 1`: triangle (bottom-oriented)
+- `section_type = 2`: rectangle
+- `section_type = 3`: triangle (top-oriented)
+- `section_type = 4`: ellipse
+- `section_type = 5`: circle
 
 # Returns
 
@@ -27,154 +26,145 @@ For the section type, possible values are:
   - `ig_tor`: Torsion inertia.
   - `sr`: Cross-section surface.
 """
-function inertia_flex_rota(b, h, orientation_angle, sct, n=100)
-    pas = min(b, h) / n
-    nn = round(Int, h / pas)
-    m = round(Int, b / pas)
+function inertia_flex_rota(base_width, height, orientation_angle, section_type, grid_size=100)
+    # Calculate cell size for grid discretization
+    cell_size = min(base_width, height) / grid_size
+    rows = round(Int, height / cell_size)
+    cols = round(Int, base_width / cell_size)
 
-    # Creation de la section
-    section = zeros(nn, m)
-    section = VPalm.remplir(section, sct)
+    # Create the section grid based on the section type
+    section = zeros(rows, cols)
+    section = create_section(section, section_type)
 
-    # Centre de gravite
-    total_mass = sum(section)
-    center_y = sum(section .* (1:nn)) / total_mass
-    center_x = sum(section .* (1:m)') / total_mass
+    # Center of gravity calculation
+    total_cells = sum(section)
 
-    # Create Meshes.Point collection
-    p_type = typeof(Meshes.Point(0.0, 0.0, 0.0))
-    points = Vector{p_type}()
+    # Calculate center of gravity using matrix operations
+    row_indices = 1:rows
+    col_indices = 1:cols
+    row_matrix = repeat(row_indices, 1, cols)
+    col_matrix = repeat(col_indices', rows, 1)
 
-    for i in 1:nn
-        for j in 1:m
-            if section[i, j] > 0
-                # Calculate position relative to center of mass
-                x = (j - center_x) * pas
-                y = (i - center_y) * pas
-                z = 0.0
-                push!(points, Meshes.Point(x, y, z))
-            end
+    center_row = sum(section .* row_matrix) / total_cells
+    center_col = sum(section .* col_matrix) / total_cells
+
+    # Create points for cells in the section relative to the center of gravity
+    section_points = Vector{typeof(Meshes.Point(0.0, 0.0, 0.0))}()
+
+    for row in 1:rows, col in 1:cols
+        if section[row, col] > 0
+            # Calculate position relative to center of mass
+            x = (col - center_col) * cell_size
+            y = (row - center_row) * cell_size
+            z = 0.0
+            push!(section_points, Meshes.Point(x, y, z))
         end
     end
 
-    # Apply rotation to each point
+    # Apply rotation using Meshes.Rotate with RotZ
     rotation = RotZ(orientation_angle)
-    rotated_points = Meshes.Rotate(rotation)(points)
+    rotated_points = Meshes.Rotate(rotation)(section_points)
 
-    # Calculate inertias
-    ds = pas^2
-    ig_flex = sum(Meshes.coords(p).y^2 for p in rotated_points) * ds
-    ig_tor = sum(Meshes.coords(p).x^2 + Meshes.coords(p).y^2 for p in rotated_points) * ds
-    sr = length(points) * ds
+    # Calculate inertias using efficient vector operations
+    cell_area = cell_size^2
 
-    return (ig_flex=ig_flex, ig_tor=ig_tor, sr=sr)
+    # Extract coordinates from rotated points
+    x_coords = [Meshes.coords(p).x for p in rotated_points]
+    y_coords = [Meshes.coords(p).y for p in rotated_points]
+
+    # Calculate inertias and cross-section area
+    bending_inertia = sum(y_coords .^ 2) * cell_area
+    torsion_inertia = sum(x_coords .^ 2 .+ y_coords .^ 2) * cell_area
+    section_area = length(section_points) * cell_area
+
+    return (ig_flex=bending_inertia, ig_tor=torsion_inertia, sr=section_area)
 end
 
 """
-    remplir(section, sct)
+    create_section(section, section_type)
 
 Fill in the matrix according to the section shape.
 
 # Arguments
 - `section`: Section matrix.
-- `sct`: Section type (see details).
+- `section_type`: Section type (1: triangle bottom, 2: rectangle, 3: triangle top, 4: ellipse, 5: circle).
 
 # Returns
-- The filled matrix.
+- The filled section matrix with 1s for cells inside the shape and 0s outside.
 """
-function remplir(section, sct)
-    # sct = 1 : triangle bas
-    if sct == 1
-        b13 = [1 1; size(section, 2)/2 1] \ [1; size(section, 1)]
-        b23 = [size(section, 2) 1; size(section, 2)/2 1] \ [1; size(section, 1)]
+function create_section(section, section_type)
+    rows, cols = size(section)
 
-        iter_n = 1:size(section, 1)
-        iter_m = 1:size(section, 2)
+    # Create index matrices once (efficient for all section types)
+    row_indices = 1:rows
+    col_indices = 1:cols
+    row_matrix = repeat(row_indices, 1, cols)
+    col_matrix = repeat(col_indices', rows, 1)
 
-        mat_ind_ligne = repeat(iter_n, 1, size(section, 2))
-        mat_ind_colonne = repeat(iter_m', size(section, 1), 1)
+    # section_type = 1: triangle (bottom-oriented)
+    if section_type == 1
+        b13 = [1 1; cols/2 1] \ [1; rows]
+        b23 = [cols 1; cols/2 1] \ [1; rows]
 
-        n13 = mat_ind_colonne * b13[1] .+ b13[2]
-        n23 = mat_ind_colonne * b23[1] .+ b23[2]
+        n13 = col_matrix * b13[1] .+ b13[2]
+        n23 = col_matrix * b23[1] .+ b23[2]
 
-        section = (mat_ind_ligne .<= n13) .& (mat_ind_ligne .<= n23)
-    end
+        section = (row_matrix .<= n13) .& (row_matrix .<= n23)
 
-    # sct = 2 : rectangle
-    if sct == 2
-        section = ones(size(section))
-    end
+        # section_type = 2: rectangle
+    elseif section_type == 2
+        section = ones(Bool, size(section))
 
-    # sct = 3 : triangle haut
-    if sct == 3
-        b13 = [1 1; size(section, 2)/2 1] \ [size(section, 1); 1]
-        b23 = [size(section, 2) 1; size(section, 2)/2 1] \ [size(section, 1); 1]
+        # section_type = 3: triangle (top-oriented)
+    elseif section_type == 3
+        b13 = [1 1; cols/2 1] \ [rows; 1]
+        b23 = [cols 1; cols/2 1] \ [rows; 1]
 
-        iter_n = 1:size(section, 1)
-        iter_m = 1:size(section, 2)
+        n13 = col_matrix * b13[1] .+ b13[2]
+        n23 = col_matrix * b23[1] .+ b23[2]
 
-        mat_ind_ligne = repeat(iter_n, 1, size(section, 2))
-        mat_ind_colonne = repeat(iter_m', size(section, 1), 1)
+        section = (row_matrix .>= n13) .& (row_matrix .>= n23)
 
-        n13 = mat_ind_colonne * b13[1] .+ b13[2]
-        n23 = mat_ind_colonne * b23[1] .+ b23[2]
-
-        section = (mat_ind_ligne .>= n13) .& (mat_ind_ligne .>= n23)
-    end
-
-    # sct = 4 : ellipse
-    if sct == 4
+        # section_type = 4: ellipse
+    elseif section_type == 4
         a = maximum(size(section)) / 2
         b = minimum(size(section)) / 2
-
         c = sqrt(a^2 - b^2)
 
-        iter_n = 1:size(section, 1)
-        iter_m = 1:size(section, 2)
+        if rows >= cols
+            # Ellipse with major axis in the vertical direction
+            col_center = cols / 2
 
-        mat_ind_ligne = repeat(iter_n, 1, size(section, 2))
-        mat_ind_colonne = repeat(iter_m', size(section, 1), 1)
+            focal_point1 = (a - c)
+            focal_point2 = 2 * c + (a - c)
 
-        if size(section, 1) >= size(section, 2)
-            mf = size(section, 2) / 2
+            dist1 = sqrt.((row_matrix .- focal_point1) .^ 2 .+ (col_matrix .- col_center) .^ 2)
+            dist2 = sqrt.((row_matrix .- focal_point2) .^ 2 .+ (col_matrix .- col_center) .^ 2)
 
-            nf1 = (a - c)
-            nf2 = 2 * c + (a - c)
+            section = ((dist1 .+ dist2) .<= (2 * a))
+        else
+            # Ellipse with major axis in the horizontal direction
+            row_center = rows / 2
 
-            dist1 = sqrt.((mat_ind_ligne .- nf1) .^ 2 .+ (mat_ind_colonne .- mf) .^ 2)
-            dist2 = sqrt.((mat_ind_ligne .- nf2) .^ 2 .+ (mat_ind_colonne .- mf) .^ 2)
+            focal_point1 = (a - c)
+            focal_point2 = 2 * c + (a - c)
+
+            dist1 = sqrt.((row_matrix .- row_center) .^ 2 .+ (col_matrix .- focal_point1) .^ 2)
+            dist2 = sqrt.((row_matrix .- row_center) .^ 2 .+ (col_matrix .- focal_point2) .^ 2)
 
             section = ((dist1 .+ dist2) .<= (2 * a))
         end
 
-        if size(section, 1) < size(section, 2)
-            nf = size(section, 1) / 2
+        # section_type = 5: circle
+    elseif section_type == 5
+        radius = minimum(size(section)) / 2
 
-            mf1 = (a - c)
-            mf2 = 2 * c + (a - c)
+        row_center = rows / 2
+        col_center = cols / 2
 
-            dist1 = sqrt.((mat_ind_ligne .- nf) .^ 2 .+ (mat_ind_colonne .- mf1) .^ 2)
-            dist2 = sqrt.((mat_ind_ligne .- nf) .^ 2 .+ (mat_ind_colonne .- mf2) .^ 2)
-
-            section = ((dist1 .+ dist2) .<= (2 * a))
-        end
+        dist = sqrt.((row_matrix .- row_center) .^ 2 .+ (col_matrix .- col_center) .^ 2)
+        section = dist .<= radius
     end
 
-    # sct = 5 : cercle
-    if sct == 5
-        rayon = minimum(size(section)) / 2
-
-        n0 = size(section, 1) / 2
-        m0 = size(section, 2) / 2
-
-        iter_n = 1:size(section, 1)
-        iter_m = 1:size(section, 2)
-
-        mat_ind_ligne = repeat(iter_n, 1, size(section, 2))
-        mat_ind_colonne = repeat(iter_m', size(section, 1), 1)
-
-        dist = sqrt.((mat_ind_ligne .- n0) .^ 2 .+ (mat_ind_colonne .- m0) .^ 2)
-        section = dist .<= rayon
-    end
     return section
 end
