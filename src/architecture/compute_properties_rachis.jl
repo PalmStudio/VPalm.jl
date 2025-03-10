@@ -4,7 +4,7 @@
         elastic_modulus, shear_modulus, rachis_length,
         leaflet_length_at_b_intercept, leaflet_length_at_b_slope, relative_position_bpoint,
         relative_position_bpoint_sd, relative_length_first_leaflet, relative_length_last_leaflet, relative_position_leaflet_max_length,
-        rachis_fresh_weigth, rank, height_cpoint, zenithal_cpoint_angle, nb_sections,
+        rachis_fresh_weight, rank, height_cpoint, zenithal_cpoint_angle, nb_sections,
         height_rachis_tappering,
         points, iterations, angle_max,
         rng
@@ -25,7 +25,7 @@ Use of the biomechanical model to compute the properties of the rachis.
 - `relative_length_first_leaflet`: relative length of the first leaflet on the rachis (0 to 1)
 - `relative_length_last_leaflet`: relative length of the last leaflet on the rachis (0 to 1)
 - `relative_position_leaflet_max_length`: relative position of the longest leaflet on the rachis (0.111 to 0.999)
-- `rachis_fresh_weigth`: fresh weight of the rachis (g)
+- `rachis_fresh_weight`: fresh weight of the rachis (g)
 - `rank`: rank of the rachis
 - `height_cpoint`: height of the C point (m)
 - `zenithal_cpoint_angle`: zenithal angle of the C point (°)
@@ -58,11 +58,40 @@ function biomechanical_properties_rachis(
     elastic_modulus, shear_modulus, rachis_length,
     leaflet_length_at_b_intercept, leaflet_length_at_b_slope, relative_position_bpoint,
     relative_position_bpoint_sd, relative_length_first_leaflet, relative_length_last_leaflet, relative_position_leaflet_max_length,
-    rachis_fresh_weigth, rank, height_cpoint, zenithal_cpoint_angle, nb_sections,
+    rachis_fresh_weight, rank, height_cpoint, zenithal_cpoint_angle, nb_sections,
     height_rachis_tappering,
     points, iterations, angle_max,
     rng
 )
+
+    if unit(rachis_length) == NoUnits
+        @warn "The `rachis_length` argument should have units, using meters as default."
+        rachis_length = rachis_length * u"m"
+    else
+        rachis_length = uconvert(u"m", rachis_length)
+    end
+
+    if unit(leaflet_length_at_b_intercept) == NoUnits
+        @warn "The `leaflet_length_at_b_intercept` argument should have units, using meters as default."
+        leaflet_length_at_b_intercept = leaflet_length_at_b_intercept * u"m"
+    else
+        leaflet_length_at_b_intercept = uconvert(u"m", leaflet_length_at_b_intercept)
+    end
+
+    if unit(rachis_fresh_weight) == NoUnits
+        @warn "The `rachis_fresh_weight` argument should have units, using kilograms as default."
+        rachis_fresh_weight = rachis_fresh_weight * u"kg"
+    else
+        rachis_fresh_weight = uconvert(u"kg", rachis_fresh_weight)
+    end
+
+    if unit(height_cpoint) == NoUnits
+        @warn "The `height_cpoint` argument should have units, using meters as default."
+        height_cpoint = height_cpoint * u"m"
+    else
+        height_cpoint = uconvert(u"m", height_cpoint)
+    end
+
     # Frond section types (e.g., rectangle, ellipsoid, etc.)
     type = [1, 2, 3, 4, 5]
     npoints = length(type)
@@ -86,13 +115,13 @@ function biomechanical_properties_rachis(
     mass_distribution_segment_leaflet = [0.0, 0.0658151279405379, 0.201957451540734, 0.105263443497354, 0.0475385258600695]
 
     # Initialization of data computed for each of the 5 remarkable points:
-    mass = zeros(Float64, npoints)               # Mass of each segment represented by the points
-    mass_right = zeros(Float64, npoints)         # Mass of the leaflets on the right-hand side of each segment
-    mass_left = zeros(Float64, npoints)          # Mass of the leaflets on the left-hand side of each segment
-    width_bend = zeros(Float64, npoints)         # Width of the segment (rachis width)
-    height_bend = zeros(Float64, npoints)        # Height of the segment (rachis height)
-    distances = zeros(Float64, npoints)          # Distance between the points projected on the X axis
-    distance_application = zeros(Float64, npoints) # Application distance for forces (if needed)
+    mass = fill(0.0u"kg", npoints)               # Mass of each segment represented by the points
+    mass_right = fill(0.0u"kg", npoints)         # Mass of the leaflets on the right-hand side of each segment
+    mass_left = fill(0.0u"kg", npoints)          # Mass of the leaflets on the left-hand side of each segment
+    width_bend = fill(0.0u"m", npoints)          # Width of the segment (rachis width)
+    height_bend = fill(0.0u"m", npoints)         # Height of the segment (rachis height)
+    distances = fill(0.0u"m", npoints)           # Distance between the points projected on the X axis
+    distance_application = fill(0.0u"m", npoints) # Application distance for forces (if needed)
 
     leaflet_length_at_b = leaflet_length_at_bpoint(rachis_length, leaflet_length_at_b_intercept, leaflet_length_at_b_slope)
     leaflet_max_length = leaflet_length_max(leaflet_length_at_b, relative_position_bpoint, relative_position_bpoint_sd, relative_length_first_leaflet, relative_length_last_leaflet, relative_position_leaflet_max_length, rng)
@@ -105,10 +134,10 @@ function biomechanical_properties_rachis(
 
     for i in 1:npoints
         distances[i] = rachis_length * relative_position_remarkable_points[i]
-        mass[i] = mass_distribution_segment_rachis[i] * rachis_fresh_weigth
+        mass[i] = mass_distribution_segment_rachis[i] * rachis_fresh_weight
         # we consider that the leaflets on both sides of the rachis have the same mass:
-        mass_right[i] = mass_distribution_segment_leaflet[i] * rachis_fresh_weigth
-        mass_left[i] = mass_distribution_segment_leaflet[i] * rachis_fresh_weigth
+        mass_right[i] = mass_distribution_segment_leaflet[i] * rachis_fresh_weight
+        mass_left[i] = mass_distribution_segment_leaflet[i] * rachis_fresh_weight
 
         # leaflet length at the middle of the segment (in m):
         length_leaflets_segment = leaflet_max_length * relative_leaflet_length(
@@ -120,7 +149,7 @@ function biomechanical_properties_rachis(
         distance_application[i] = length_leaflets_segment / 10.0  # The leaflet weight is applied at the middle of the leaflets
 
         if rank < 3
-            distance_application[i] = 1e-8
+            distance_application[i] = 1e-8u"m"
             initial_torsion_vec[i] = 0.0
         end
 
@@ -129,9 +158,9 @@ function biomechanical_properties_rachis(
     end
 
     # Un-bent coordinates (take the leaf as a straight line in x and z)
-    x = zeros(5)
-    y = zeros(5)
-    z = zeros(5)
+    x = fill(0.0u"m", 5)
+    y = fill(0.0u"m", 5)
+    z = fill(0.0u"m", 5)
 
     for n in eachindex(distances)
         x[n] = cosd(zenithal_cpoint_angle) * distances[n] # Note: zenithal_cpoint_angle is in degrees, so we use cosd instead of cos
@@ -152,10 +181,13 @@ function biomechanical_properties_rachis(
 
     points_bending = .-bending.angle_xy
     points_bending[1] = -zenithal_cpoint_angle         # Initialize the first angle as the angle at C point
+    x_coordinates = [Meshes.coords(p).x for p in bending.points]
+    y_coordinates = [Meshes.coords(p).y for p in bending.points]
+    z_coordinates = [Meshes.coords(p).z for p in bending.points]
 
     return (
-        length=fill(step, length(bending.x)), points_positions=bending.length, bending=points_bending, deviation=bending.angle_xz, torsion=bending.torsion,
-        x=bending.x, y=bending.y, z=bending.z
+        length=fill(step, length(x_coordinates)), points_positions=bending.length, bending=points_bending, deviation=bending.angle_xz, torsion=bending.torsion,
+        x=x_coordinates, y=y_coordinates, z=z_coordinates
     )
 end
 
