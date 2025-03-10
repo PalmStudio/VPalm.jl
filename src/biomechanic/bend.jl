@@ -253,8 +253,8 @@ function bend(type, width_bend, height_bend, init_torsion, x, y, z, mass_rachis,
             force_z_right = -v_poids_feuilles_d[iter] * vdist_p2p1[iter] * gravity  # N
             force_z_left = -v_poids_feuilles_g[iter] * vdist_p2p1[iter] * gravity   # N
 
-            force_feuille_dr = RotYZ(-vec_angle_xy[iter], -vec_angle_xz[iter]) * [zero_force, zero_force, force_z_right]
-            force_feuille_ga = RotYZ(-vec_angle_xy[iter], -vec_angle_xz[iter]) * [zero_force, zero_force, force_z_left]
+            force_feuille_dr = RotYZ(vec_angle_xy[iter], -vec_angle_xz[iter]) * [zero_force, zero_force, force_z_right]
+            force_feuille_ga = RotYZ(vec_angle_xy[iter], -vec_angle_xz[iter]) * [zero_force, zero_force, force_z_left]
 
             dist_point = vec_d_appli_poids_feuille[i_discret_pts_exp[iter]]
             angle_point = som_cum_vec_agl_tor[i_discret_pts_exp[iter]]
@@ -310,7 +310,7 @@ function bend(type, width_bend, height_bend, init_torsion, x, y, z, mass_rachis,
 
             # Change of basis
             # Segment becomes collinear to the OX axis
-            p2_rot = Meshes.Rotate(RotYZ(-vec_angle_xy[iter], -vec_angle_xz[iter]))(p2p1_vec)
+            p2_rot = Meshes.Rotate(RotYZ(vec_angle_xy[iter], -vec_angle_xz[iter]))(p2p1_vec)
 
             # Flexion equivalent to a rotation around OY
             # Rotation around OY: The rotation is wrong for strong angles
