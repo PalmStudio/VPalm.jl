@@ -1,5 +1,5 @@
 """
-    inertia_flex_rota(b, h, ag_deg, sct, n = 100)
+    inertia_flex_rota(b, h, orientation_angle, sct, n = 100)
 
 Compute the inertia of bending and torsion, and the cross-section area.
 
@@ -7,7 +7,7 @@ Compute the inertia of bending and torsion, and the cross-section area.
 
 - `b`: Dimension of the base.
 - `h`: Dimension of the height.
-- `ag_deg`: Section orientation angle (torsion, in degrees).
+- `orientation_angle`: Section orientation angle (torsion, in radians).
 - `sct`: Section type (see details).
 - `n`: Number of discretizations (default to 100).
 
@@ -27,50 +27,45 @@ For the section type, possible values are:
   - `ig_tor`: Torsion inertia.
   - `sr`: Cross-section surface.
 """
-function inertia_flex_rota(b, h, ag_deg, sct, n=100)
+function inertia_flex_rota(b, h, orientation_angle, sct, n=100)
     pas = min(b, h) / n
     nn = round(Int, h / pas)
     m = round(Int, b / pas)
 
     # Creation de la section
     section = zeros(nn, m)
-    section = remplir(section, sct)
-
-    # Construction des variables vectorisees
-    iter_n = 1:size(section, 1)
-    iter_m = 1:size(section, 2)
-
-    mat_ind_ligne = repeat(iter_n, 1, m)
-    mat_ind_colonne = repeat(iter_m', nn, 1)
+    section = VPalm.remplir(section, sct)
 
     # Centre de gravite
-    ng = sum(section .* mat_ind_ligne) / sum(section)
-    mg = sum(section .* mat_ind_colonne) / sum(section)
+    total_mass = sum(section)
+    center_y = sum(section .* (1:nn)) / total_mass
+    center_x = sum(section .* (1:m)') / total_mass
 
-    # Inerties et surface
-    angle_radian = deg2rad(ag_deg)
+    # Create Meshes.Point collection
+    p_type = typeof(Meshes.Point(0.0, 0.0, 0.0))
+    points = Vector{p_type}()
 
-    # Use Rotations.jl instead of manual rotation matrix
-    rotation = RotZ(angle_radian)
-
-    point_x = section .* ((mat_ind_colonne .- mg) .* pas)
-    point_y = section .* ((mat_ind_ligne .- ng) .* pas)
-
-    # Create 3D points (with z=0) for rotation
-
-    points = [point_x[:] point_y[:] fill(zero(point_x[1]), length(point_x[:]))]
+    for i in 1:nn
+        for j in 1:m
+            if section[i, j] > 0
+                # Calculate position relative to center of mass
+                x = (j - center_x) * pas
+                y = (i - center_y) * pas
+                z = 0.0
+                push!(points, Meshes.Point(x, y, z))
+            end
+        end
+    end
 
     # Apply rotation to each point
-    rotated_points = [rotation * [points[i, 1], points[i, 2], points[i, 3]] for i in 1:size(points, 1)]
+    rotation = RotZ(orientation_angle)
+    rotated_points = Meshes.Rotate(rotation)(points)
 
-    # Extract x and y coordinates from rotated points
-    x = [p[1] for p in rotated_points]
-    y = [p[2] for p in rotated_points]
-
+    # Calculate inertias
     ds = pas^2
-    ig_flex = sum(y .^ 2) * ds
-    ig_tor = sum(x .^ 2 .+ y .^ 2) * ds
-    sr = sum(section) * ds
+    ig_flex = sum(Meshes.coords(p).y^2 for p in rotated_points) * ds
+    ig_tor = sum(Meshes.coords(p).x^2 + Meshes.coords(p).y^2 for p in rotated_points) * ds
+    sr = length(points) * ds
 
     return (ig_flex=ig_flex, ig_tor=ig_tor, sr=sr)
 end

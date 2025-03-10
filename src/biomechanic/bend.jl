@@ -198,8 +198,8 @@ function bend(type, width_bend, height_bend, init_torsion, x, y, z, mass_rachis,
         v_sr = fill(0.0u"m^2", npoints_exp)
 
         for iter in 1:npoints_exp
-            ag_deg = rad2deg(som_cum_vec_agl_tor[i_discret_pts_exp[iter]])  # orientation section (degrees)
-            inertia_flex_rot = inertia_flex_rota(width_bend[iter], height_bend[iter], ag_deg, type[iter], npoints) # Assuming this function is defined elsewhere
+            ag_rad = som_cum_vec_agl_tor[i_discret_pts_exp[iter]]  # orientation section (radians)
+            inertia_flex_rot = inertia_flex_rota(width_bend[iter], height_bend[iter], ag_rad, type[iter], npoints)
             v_ig_flex[iter] = inertia_flex_rot.ig_flex
             v_ig_tor[iter] = inertia_flex_rot.ig_tor
             v_sr[iter] = inertia_flex_rot.sr
@@ -211,7 +211,7 @@ function bend(type, width_bend, height_bend, init_torsion, x, y, z, mass_rachis,
 
         # Write angles from the new coordinates
         # Distance and angles of each segment P2P1
-        vec_dist_p2p1, vec_angle_xy, vec_angle_xz = xyz_to_dist_and_angles(vec_points) # Assuming this function is defined elsewhere
+        vec_dist_p2p1, vec_angle_xy, vec_angle_xz = xyz_to_dist_and_angles(vec_points)
 
         vec_dist_p2p1[1] = zero(eltype(vec_dist_p2p1))
         vec_angle_xy[1] = vec_angle_xy[2]
