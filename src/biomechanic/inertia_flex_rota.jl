@@ -51,12 +51,13 @@ function inertia_flex_rota(base_width, height, orientation_angle, section_type, 
     # Create points for cells in the section relative to the center of gravity
     section_points = Vector{typeof(Meshes.Point(0.0, 0.0, 0.0))}()
 
+    zero_length = zero(eltype(base_width))
     for row in 1:rows, col in 1:cols
         if section[row, col] > 0
             # Calculate position relative to center of mass
             x = (col - center_col) * cell_size
             y = (row - center_row) * cell_size
-            z = 0.0
+            z = zero_length
             push!(section_points, Meshes.Point(x, y, z))
         end
     end
