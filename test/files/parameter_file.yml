@@ -37,7 +37,7 @@ rachis_nb_segments: 100 # Number of segments in the rachis
 leafLengthIntercept: 351.197778086018
 leafLengthSlope: 0.058350292901005
 rachisLength_SDP: 15.2515779099962
-rachis_fresh_weigth:
+rachis_fresh_weight:
   [
     3283.69036312366,
     1063.9932881231,

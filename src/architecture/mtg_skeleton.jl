@@ -29,7 +29,7 @@ function mtg_skeleton(parameters; rng=Random.MersenneTwister(parameters["seed"])
     nb_leaves_alive = min(nb_leaves_alive, nb_internodes)
     nb_petiole_segments = parameters["petiole_nb_segments"]
 
-    @assert length(parameters["rachis_fresh_weigth"]) >= nb_leaves_alive "The number of rachis biomass values should be greater than or equal to the number of leaves alive ($nb_leaves_alive)."
+    @assert length(parameters["rachis_fresh_weight"]) >= nb_leaves_alive "The number of rachis biomass values should be greater than or equal to the number of leaves alive ($nb_leaves_alive)."
 
     # Plant / Scale 1
     plant = Node(NodeMTG("/", "Plant", 1, 1))
