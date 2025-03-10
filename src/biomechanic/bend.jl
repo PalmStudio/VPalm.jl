@@ -68,42 +68,42 @@ function bend(type, width_bend, height_bend, init_torsion, x, y, z, mass_rachis,
         @warn "The `mass_leaflets_right` argument should have units, using kilograms as default."
         mass_leaflets_right = mass_leaflets_right * u"kg"
     else
-        mass_leaflets_right = uconvert(u"kg", mass_leaflets_right)
+        mass_leaflets_right = uconvert.(u"kg", mass_leaflets_right)
     end
 
     if unit(mass_leaflets_left[1]) == NoUnits
         @warn "The `mass_leaflets_left` argument should have units, using kilograms as default."
         mass_leaflets_left = mass_leaflets_left * u"kg"
     else
-        mass_leaflets_left = uconvert(u"kg", mass_leaflets_left)
+        mass_leaflets_left = uconvert.(u"kg", mass_leaflets_left)
     end
 
     if unit(mass_rachis[1]) == NoUnits
         @warn "The `mass_rachis` argument should have units, using kilograms as default."
         mass_rachis = mass_rachis * u"kg"
     else
-        mass_rachis = uconvert(u"kg", mass_rachis)
+        mass_rachis = uconvert.(u"kg", mass_rachis)
     end
 
     if unit(width_bend[1]) == NoUnits
         @warn "The `width_bend` argument should have units, using meters as default."
         width_bend = width_bend * u"m"
     else
-        width_bend = uconvert(u"m", width_bend)
+        width_bend = uconvert.(u"m", width_bend)
     end
 
     if unit(height_bend[1]) == NoUnits
         @warn "The `height_bend` argument should have units, using meters as default."
         height_bend = height_bend * u"m"
     else
-        height_bend = uconvert(u"m", height_bend)
+        height_bend = uconvert.(u"m", height_bend)
     end
 
     if unit(distance_application[1]) == NoUnits
         @warn "The `distance_application` argument should have units, using meters as default."
         distance_application = distance_application * u"m"
     else
-        distance_application = uconvert(u"m", distance_application)
+        distance_application = uconvert.(u"m", distance_application)
     end
 
     # use coordinates x,y,z to make points:
@@ -318,7 +318,9 @@ function bend(type, width_bend, height_bend, init_torsion, x, y, z, mass_rachis,
             # Torsion
             # Equivalent to a rotation around OX, initially the section is rotated but without torsion
             agl_tor_geom = som_cum_vec_agl_tor[iter] - vec_agl_tor[iter]
-            point_rot = Meshes.Rotate(RotXYZ(agl_tor_geom, -vec_angle_xy[iter], -vec_angle_xz[iter]))(flex_point)
+            # point_rot = Meshes.Rotate(RotXYZ(agl_tor_geom, -vec_angle_xy[iter], -vec_angle_xz[iter]))(flex_point)
+            point_rot = Meshes.Rotate(Rotations.RotZYX(vec_angle_xz[iter], -vec_angle_xy[iter], agl_tor_geom))(flex_point)
+            # point_rot = Meshes.Rotate(Rotations.RotZY(vec_angle_xz[iter], agl_tor_geom))(flex_point)
 
             # Re-writing the points:
             if iter == 1
