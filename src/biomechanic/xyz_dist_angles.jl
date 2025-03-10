@@ -14,7 +14,7 @@ Compute segment lengths and angles from point coordinates.
   - `vangle_xy`: Vector of angles between the segment and the XY plane (radians).
   - `vangle_xz`: Vector of angles between the segment and the XZ plane (radians).
 """
-function xyz_to_dist_and_angles(points)
+function xyz_to_dist_and_angles(points::AbstractVector{P}) where {P<:Meshes.Point}
     n = length(points)
 
     zero_point = Meshes.Point(0.0, 0.0, 0.0)
