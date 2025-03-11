@@ -209,15 +209,15 @@ The computed number of leaflets (integer).
 """
 function compute_number_of_leaflets(rachis_final_length, nb_max, nb_min, nb_slope, nb_infl, nbLeaflets_SDP; rng)
 
-    @assert rachis_final_length >= 0 "Rachis length must be non-negative"
+    @assert rachis_final_length >= 0u"m" "Rachis length must be non-negative"
     @assert nb_max > 0 "Maximum number of leaflets must be positive"
     @assert nb_min >= 0 "Minimum number of leaflets must be non-negative"
     @assert nb_slope > 0 "Slope parameter must be positive"
-    @assert nb_infl > 0 "Inflection point must be positive"
+    @assert nb_infl > 0u"m" "Inflection point must be positive"
 
     nb_leaflets = logistic(rachis_final_length, nb_max, nb_slope, nb_infl)
 
-    deviation_factor = rachis_final_length < 1.0 ? 0.3 : 1.0
+    deviation_factor = rachis_final_length < 1.0u"m" ? 0.3 : 1.0
     nb_leaflets += deviation_factor * normal_deviation_draw(nbLeaflets_SDP, rng)
 
     nb_leaflets = round(Int, max(nb_min, nb_leaflets))
@@ -353,7 +353,7 @@ affects light interception patterns along the frond.
 """
 function shrink_leaflets_in_groups!(positions, leaflets, ratio=2.0)
     current_group = -1
-    last_leaflet_pos = 0.0
+    last_leaflet_pos = 0.0u"m"
     l = 1
 
     while l <= length(positions)

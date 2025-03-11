@@ -84,7 +84,6 @@ reminder:
                                     or `(n - m + 1) * (c * (n + m) / 2 + d)`
 """
 function internode_length(i, Nbl, sh, R, N, l_0)
-
     # Computation of the internode final / max length so that the sum of all the internodes length is equal to the stem height
     l = (sh - l_0 * (N / 2 - (R + 1) / 2 + R + 1)) / (N / 2 + Nbl - R - 1 + (R + 1) / 2)
 

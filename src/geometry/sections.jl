@@ -28,10 +28,8 @@ function add_section_geometry!(
         β = angles[2] # Azimuth (in degrees)
         γ = angles[3] # Torsion (in degrees)
 
-        section_dimensions = [node_section.width / 2.0, node_section.height / 2.0, node_section.length]
-
         mesh_transformation =
-            Meshes.Scale(section_dimensions...) →
+            Meshes.Scale(ustrip(node_section.width) / 2.0, ustrip(node_section.height) / 2.0, ustrip(node_section.length)) →
             Meshes.Rotate(RotXYZ(-deg2rad(α), deg2rad(β), deg2rad(γ))) →
             Meshes.Translate(Meshes.to(position_section[])...) →
             Meshes.Rotate(RotZ(-π / 2)) → # orient the reference cylinder to face X forward
@@ -47,7 +45,8 @@ function add_section_geometry!(
         y = sind(α) * cosd(β)
         z = sind(β)
         n = Meshes.Vec(z, y, x) # vector normal to the plane at point p1
-        position_section[] += n * node_section.length
+
+        position_section[] += n * ustrip(node_section.length)
     end
 
     return nothing

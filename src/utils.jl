@@ -15,6 +15,10 @@ function logistic(x, max, slope, inflection)
     return max / (1. + exp(-4 * slope * (x - inflection)))
 end
 
+function logistic(x::T, max, slope, inflection::T) where T<:Quantity
+    return max / (1. + exp(-4 * slope * (ustrip(x) - ustrip(inflection))))
+end
+
 """
 
     mean_and_sd(mean, sd; rng=Random.MersenneTwister(1234))

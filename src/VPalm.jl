@@ -16,7 +16,7 @@ import TransformsBase: →
 import Rotations: RotX, RotY, RotZ, RotYZ, RotXYZ, RotZY
 import Rotations
 import PlyIO
-import Unitful: @u_str, ustrip, unit, NoUnits, uconvert
+import Unitful: @u_str, ustrip, unit, NoUnits, uconvert, Quantity
 
 # For the biomechanical model
 import Interpolations: linear_interpolation
