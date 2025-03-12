@@ -34,7 +34,7 @@ rachisLength	REAL
 petioleLength	REAL
 angleA	REAL
 Rank	REAL
-rachisFreshWeigth_kg	REAL
+rachisFreshweight_kg	REAL
 Cangle	REAL
 DeviationAngle	REAL
 Side	INT
@@ -48,7 +48,7 @@ XInsertionAngle	REAL
 Offset	REAL
 
 MTG:
-ENTITY-CODE			YEuler	Name	Length	Orthotropy	XEuler	Width	InternodeRank	Height	TopWidth	TopHeight	YInsertionAngle	rachisLength	petioleLength	angleA	Rank	rachisFreshWeigth_kg	Cangle	DeviationAngle	Side	LeafletRank	Plane	ZInsertionAngle	StifnessTapering	RelativePosition	Stifness	XInsertionAngle	Offset	
+ENTITY-CODE			YEuler	Name	Length	Orthotropy	XEuler	Width	InternodeRank	Height	TopWidth	TopHeight	YInsertionAngle	rachisLength	petioleLength	angleA	Rank	rachisFreshweight_kg	Cangle	DeviationAngle	Side	LeafletRank	Plane	ZInsertionAngle	StifnessTapering	RelativePosition	Stifness	XInsertionAngle	Offset	
 /Plant0																														
 ^/Trunk0			0.0	trunk																										
 ^/trunkNode0				tn0	0.0	0.05	136.65356	0.0	145																					
