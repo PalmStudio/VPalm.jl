@@ -33,6 +33,7 @@ include("biomechanic/xyz_dist_angles.jl")
 include("biomechanic/inertia_flex_rota.jl")
 include("biomechanic/interpolate_points.jl")
 include("biomechanic/bend.jl")
+include("biomechanic/unbend.jl")
 
 # Allometries:
 include("allometries/stem.jl")

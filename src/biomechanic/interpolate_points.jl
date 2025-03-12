@@ -74,6 +74,7 @@ function interp_points(points::AbstractVector{P}, step) where P<:Meshes.Point
                 # Apply the rotated displacement to the segment start point
                 vec_points[j] = p1 + rotated_displacement
             end
+
         end
     end
 
