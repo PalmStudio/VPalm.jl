@@ -3,11 +3,13 @@
 df = CSV.read(joinpath(@__DIR__, "files/6_EW01.22_17_kanan_unbent.csv"), DataFrame)
 
 # Set test parameters
-pas = 0.02  # in meter. -> Length of the segments that discretize the object.
+pas = 0.02u"m"  # in meter. -> Length of the segments that discretize the object.
 Ncalc = 100 # number of points used in the grid that discretized the section.
 Nboucle = 15 # if we want to compute the torsion after the bending step by step instead of
-elastic_modulus = 2000.0
-shear_modulus = 400.0
+elastic_modulus = 2000.0u"MPa"
+shear_modulus = 400.0u"MPa"
+
+atol_length = 1e-3u"m" # mm tolerance
 
 ref = CSV.read(joinpath(@__DIR__, "files/6_EW01.22_17_kanan_unbent_bend.csv"), DataFrame)
 @testset "bend works" begin
@@ -22,5 +24,27 @@ ref = CSV.read(joinpath(@__DIR__, "files/6_EW01.22_17_kanan_unbent_bend.csv"), D
     )
 
     # CSV.write(joinpath(@__DIR__, "files/6_EW01.22_17_kanan_unbent_bend.csv"), DataFrame(out))
-    @test isapprox(ref, DataFrame(out); atol=10)
+    ref_points = [Meshes.Point(row.x, row.y, row.z) for row in eachrow(ref)]
+    for (ref_p, p) in zip(ref_points, out.points)
+        @test isapprox(ref_p, p, atol=atol_length)
+    end
+    @test only(unique(unit.(out.length))) == u"m"
+    @test ref.length * u"m" ≈ out.length atol = atol_length
+    @test ref.angle_xy ≈ out.angle_xy atol = 1e-2
+    @test ref.angle_xz ≈ out.angle_xz atol = 1e-2
+    @test ref.torsion ≈ out.torsion atol = 1e-2
+end
+
+@testset "unbend" begin
+    bent_data = CSV.read(joinpath(@__DIR__, "files/6_EW01.22_17_kanan.txt"), DataFrame, header=false) |> Matrix |> adjoint
+
+    unbent_points = VPalm.unbend(
+        bent_data[:, 1] * u"m", bent_data[:, 5]
+    )
+
+    ref_points_data = CSV.read(joinpath(@__DIR__, "files/6_EW01.22_17_kanan_unbent.csv"), DataFrame)
+    ref_points = [Meshes.Point(row.x, row.y, row.z) for row in eachrow(ref_points_data)]
+
+    @test length(ref_points) == length(unbent_points)
+    @test all(isapprox(ref, unbent, atol=atol_length) for (ref, unbent) in zip(ref_points, unbent_points))
 end

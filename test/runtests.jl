@@ -5,6 +5,7 @@ using JET
 using MultiScaleTreeGraph
 using CSV, DataFrames
 using Random
+using Unitful, Meshes
 
 @testset "VPalm.jl" begin
     @testset "Code quality (Aqua.jl)" begin
@@ -34,8 +35,6 @@ using Random
         include("test-interpolate_points.jl")
         include("test-bend.jl")
         include("test-inertia_flex_rota.jl")
-        # include("test-rota_inverse_yz.jl")
-        # include("test_rotate_yz.jl")
         include("test-xyz_dist_angles.jl")
     end
 

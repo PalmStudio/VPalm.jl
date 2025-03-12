@@ -62,7 +62,7 @@ function compute_properties_internode!(node, index, nb_internodes, nb_leaves_ali
         stem_height,
         parameters["internode_rank_no_expansion"],
         parameters["nb_internodes_before_planting"],
-        0.001
+        0.001u"m"
         # internode_min_height
     )
 

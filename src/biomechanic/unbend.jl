@@ -1,61 +1,52 @@
 """
-    unbend(df)
+    unbend(distance, inclination)
 
 Removes torsion and bending of a bent beam by transforming it into a straight line,
 while preserving its insertion angle (inclination angle of the first segment).
 
-# Note
-Mainly used to compute the input matrix for `bend()` from experimental points.
-
 # Arguments
-- `df`: DataFrame containing experimental data (see Details)
-
-# Details
-`df` must be a formatted DataFrame with each row representing a point and the following columns:
-- `distance` (m): distance between previous point and this point (first value must be positive)
-- `inclination` (degrees): insertion angle of the first point (only first value is used)
+- `distance`: Vector of distances between consecutive points (in meters)
+- `inclination`: Vector of inclination angles (in degrees), only the first value is used
 
 # Returns
-The input DataFrame with modified (or enriched) columns:
-- `x`: x coordinate
-- `y`: y coordinate
-- `z`: z coordinate
+- A vector of Meshes.Point objects representing the unbent positions
+
+# Details
+This function creates a straight line with the same cumulative length as the input
+distances, while maintaining the insertion angle specified by the first inclination value.
+The output points represent the unbent state of a curved structure.
+
+# Note
+Mainly used to compute the input coordinates for `bend()` from experimental points.
 
 # Example
-```julia
-using CSV
-filepath = joinpath(@__DIR__, "data", "6_EW01.22_17_kanan.txt")
-df = CSV.read(filepath, DataFrame)
-unbend(df)
+
+```jl
+using VPalm, Unitful, Meshes
+distances = [0.001, 1.340, 1.340, 0.770, 0.770]u"m";
+inclinations = [48.8, 48.8, 48.8, 48.8, 48.8];  # degrees
+points = VPalm.unbend(distances, inclinations)
 ```
 """
-function unbend(df)
+function unbend(distance, inclination)
     # Distance between points cannot be 0
-    zero_dist = findall(iszero, df.distance)
+    zero_dist = findall(iszero, distance)
     if !isempty(zero_dist)
-        df.distance[zero_dist] .= 1e-3 # (m)
+        distance[zero_dist] .= 1e-3u"m" # (m)
     end
     # Cumulative distance of each segment
-    x_distance = cumsum(df.distance)
+    x_distance = cumsum(distance)
 
     # Keep insertion angle of first segment
-    agl_y = df.inclination[1] * π / 180
+    agl_y = -deg2rad(inclination[1])
     agl_z = 0.0
 
-    # Initialize columns if missing
-    df.x = zeros(nrow(df))
-    df.y = zeros(nrow(df))
-    df.z = zeros(nrow(df))
+    vec_points = Vector{typeof(Meshes.Point(0.0, 0.0, 0.0))}(undef, length(distance))
 
     # Compute coordinates of points (unbent state)
-    for iter in 1:nrow(df)
-        op = [x_distance[iter], 0.0, 0.0]
-        vec_rot = RotYZ(agl_y, agl_z) * op
-
-        df.x[iter] = vec_rot[1]
-        df.y[iter] = vec_rot[2]
-        df.z[iter] = vec_rot[3]
+    for i in 1:length(distance)
+        vec_points[i] = Meshes.Rotate(RotYZ(agl_y, agl_z))(Meshes.Point(x_distance[i], 0.0u"m", 0.0u"m"))
     end
 
-    return df
+    return vec_points
 end
