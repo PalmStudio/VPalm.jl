@@ -9,7 +9,7 @@ Nboucle = 15 # if we want to compute the torsion after the bending step by step 
 elastic_modulus = 2000.0u"MPa"
 shear_modulus = 400.0u"MPa"
 
-atol_length = 1e-4
+atol_length = 1e-4u"m"
 
 ref = CSV.read(joinpath(@__DIR__, "files/6_EW01.22_17_kanan_unbent_bend.csv"), DataFrame)
 @testset "bend works" begin
@@ -31,4 +31,18 @@ ref = CSV.read(joinpath(@__DIR__, "files/6_EW01.22_17_kanan_unbent_bend.csv"), D
     @test ref.angle_xy ≈ out.angle_xy atol = 1e-3
     @test ref.angle_xz ≈ out.angle_xz atol = 1e-3
     @test ref.torsion ≈ out.torsion atol = 1e-3
+end
+
+@testset "unbend" begin
+    bent_data = CSV.read(joinpath(@__DIR__, "files/6_EW01.22_17_kanan.txt"), DataFrame, header=false) |> Matrix |> adjoint
+
+    unbent_points = VPalm.unbend(
+        bent_data[:, 1] * u"m", bent_data[:, 5]
+    )
+
+    ref_points_data = CSV.read(joinpath(@__DIR__, "files/6_EW01.22_17_kanan_unbent.csv"), DataFrame)
+    ref_points = [Meshes.Point(row.x, row.y, row.z) for row in eachrow(ref_points_data)]
+
+    @test length(ref_points) == length(unbent_points)
+    @test all(isapprox(ref, unbent, atol=atol_length) for (ref, unbent) in zip(ref_points, unbent_points))
 end
