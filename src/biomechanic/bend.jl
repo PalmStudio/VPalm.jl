@@ -295,13 +295,13 @@ function bend(type, width_bend, height_bend, init_torsion, x, y, z, mass_rachis,
         end
 
         # New coordinates of the points
-        neo_points = fill(Meshes.Point(0, 0, 0), nlin)
+        neo_points = fill(Meshes.Point(0.0u"m", 0.0u"m", 0.0u"m"), nlin)
 
         for iter in 1:nlin
             # Origin P1
             p2 = vec_points[iter]
             if iter == 1
-                p1 = Meshes.Point(0, 0, 0)
+                p1 = Meshes.Point(0.0u"m", 0.0u"m", 0.0u"m")
             else
                 p1 = vec_points[iter-1]
             end

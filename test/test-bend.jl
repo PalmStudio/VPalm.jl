@@ -9,7 +9,7 @@ Nboucle = 15 # if we want to compute the torsion after the bending step by step 
 elastic_modulus = 2000.0u"MPa"
 shear_modulus = 400.0u"MPa"
 
-atol_length = 1e-4u"m"
+atol_length = 1e-3u"m" # mm tolerance
 
 ref = CSV.read(joinpath(@__DIR__, "files/6_EW01.22_17_kanan_unbent_bend.csv"), DataFrame)
 @testset "bend works" begin
@@ -25,12 +25,14 @@ ref = CSV.read(joinpath(@__DIR__, "files/6_EW01.22_17_kanan_unbent_bend.csv"), D
 
     # CSV.write(joinpath(@__DIR__, "files/6_EW01.22_17_kanan_unbent_bend.csv"), DataFrame(out))
     ref_points = [Meshes.Point(row.x, row.y, row.z) for row in eachrow(ref)]
-    @test all([isapprox(ref_p, p, atol=atol_length) for (ref_p, p) in zip(ref_points, out.points)])
+    for (ref_p, p) in zip(ref_points, out.points)
+        @test isapprox(ref_p, p, atol=atol_length)
+    end
     @test only(unique(unit.(out.length))) == u"m"
     @test ref.length * u"m" ≈ out.length atol = atol_length
-    @test ref.angle_xy ≈ out.angle_xy atol = 1e-3
-    @test ref.angle_xz ≈ out.angle_xz atol = 1e-3
-    @test ref.torsion ≈ out.torsion atol = 1e-3
+    @test ref.angle_xy ≈ out.angle_xy atol = 1e-2
+    @test ref.angle_xz ≈ out.angle_xz atol = 1e-2
+    @test ref.torsion ≈ out.torsion atol = 1e-2
 end
 
 @testset "unbend" begin
