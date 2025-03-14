@@ -1,4 +1,3 @@
-
 """
     logistic(x, max, slope, inflection)
 
@@ -90,4 +89,44 @@ The exponential function is defined as `a * exp(b * x)`.
 """
 function exponetial(x, a, b)
     return a * exp(b * x)
+end
+
+"""
+    normal_deviation_percent_draw(value, sdp, rng)
+
+Calculate a normally distributed random deviation based on a percentage of the value.
+
+# Arguments
+- `value`: Base value.
+- `sd`: Standard deviation in %.
+- `rng`: Random number generator.
+
+# Returns
+
+- The random deviation.
+"""
+function normal_deviation_percent_draw(value, sd, rng)
+    return normal_deviation_draw(sd, rng) * (value / 100.0)
+end
+
+"""
+    beta_distribution_norm(x, xm, ym)
+
+Calculate the normalized beta distribution value at point x.
+
+# Arguments
+- `x`: Position [0 to 1].
+- `xm`: Mode of the beta distribution.
+- `ym`: Maximum value of the beta distribution.
+
+# Returns
+- Normalized beta distribution value.
+"""
+function beta_distribution_norm(x, xm, ym)
+    if x <= 0 || x >= 1
+        return 0.0
+    end
+
+    # Bell curve approximation
+    return ym * (x / xm) * ((1 - x) / (1 - xm)) * 4
 end

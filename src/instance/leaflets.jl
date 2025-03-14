@@ -23,17 +23,156 @@ function leaflets(rachis_node, index, scale, leaf_rank, rachis_length, height_cp
     leaflet_width_at_b = leaflet_width_at_bpoint(rachis_length, parameters["leaflet_length_at_b_intercept"], parameters["leaflet_length_at_b_slope"])
     leaflet_max_width = leaflet_width_max(leaflet_width_at_b, parameters["relative_position_bpoint"], parameters["relative_position_bpoint_sd"], parameters["relative_width_first_leaflet"], parameters["relative_width_last_leaflet"], parameters["relative_position_leaflet_max_width"], rng)
 
-    #! continue here!
+    # In Java: side parameter (left or right side)
+    side = index % 2 == 0 ? 1 : -1
+
+    # Create leaflets and add them to the appropriate rachis sections
+    rachis_children = collect(MultiScaleTreeGraph.children(rachis_node))
+
+    # This will hold all the created leaflets for return
+    created_leaflets = []
+
+    for i in 1:nb_leaflets
+        # Find the rachis segment this leaflet belongs to
+        rachis_segment = floor(Int, leaflets_position[i] / rachis_segment_length)
+        rachis_segment = min(rachis_segment, nb_rachis_sections - 1)
+
+        # Calculate offset from the segment start
+        offset = leaflets_position[i] - (rachis_segment_length * rachis_segment)
+
+        # Find the corresponding rachis section node
+        # In Java: rachis = frond.getLinkedComponent(rachisSegment + nbPetioleSections)
+        # In Julia, we need to find the correct child node of rachis_node
+        rachis_section_index = rachis_segment + 1  # 1-based indexing
+
+        # Skip petiole sections and find the right rachis section
+        if rachis_section_index <= length(rachis_children)
+            rachis_section = rachis_children[rachis_section_index]
+
+            # Create a new leaflet node
+            leaflet_node = MultiScaleTreeGraph.Node(
+                MultiScaleTreeGraph.NodeMTG(
+                    index=index + i,  # Generate unique index
+                    symbol="Leaflet",
+                    scale=scale + 1
+                )
+            )
+
+            # Set leaflet attributes
+            leaflet_node["offset"] = offset
+            leaflet_node["plane"] = leaflets.plane[i]
+
+            # Calculate normalized leaflet rank and relative position
+            norm_leaflet_rank = (i - 1) / nb_leaflets
+            leaflet_relative_pos = leaflets_position[i] / rachis_length
+
+            # Set leaflet geometry attributes based on the Java computeLeaflet method
+            h_angle = angle_axial(leaflet_relative_pos, side, parameters)  # Horizontal angle
+            v_angle = angle_radial(leaflet_relative_pos, leaflets.plane[i], side, parameters)  # Vertical angle
+
+            # Add stiffness with random variation
+            stiffness = parameters["leaflet_stiffness"] + rand(rng) * parameters["leaflet_stiffness_sd"]
+
+            # Set the angles and other attributes
+            leaflet_node["rot_bearer_x"] = v_angle
+            leaflet_node["rot_bearer_z"] = h_angle
+            leaflet_node["stiffness"] = stiffness
+            leaflet_node["tapering"] = 0.5
+            leaflet_node["side"] = side
+            leaflet_node["relative_position"] = leaflet_relative_pos
+            leaflet_node["leaflet_rank"] = norm_leaflet_rank
+
+            # Handle leaflet unfolding for young fronds
+            if leaf_rank < 2
+                if leaf_rank < 1
+                    v_angle = 90.0
+                end
+                h_angle *= leaf_rank * 0.2
+                if leaf_rank < 1
+                    h_angle = 0.0
+                end
+                stiffness = 10000 + (2.0 - leaf_rank) * 20000
+
+                leaflet_node["rot_bearer_x"] = v_angle
+                leaflet_node["rot_bearer_z"] = h_angle
+                leaflet_node["stiffness"] = stiffness
+            end
+
+            # Set leaflet twist
+            leaflet_twist = 10 * side
+            leaflet_node["rot_local_x"] = leaflet_twist
+
+            # Calculate leaflet length and width
+            length = leaflet_max_length * relative_leaflet_length(
+                leaflet_relative_pos,
+                parameters["relative_length_first_leaflet"],
+                parameters["relative_length_last_leaflet"],
+                parameters["relative_position_leaflet_max_length"]
+            )
+
+            width_max = leaflet_max_width * relative_leaflet_width(
+                leaflet_relative_pos,
+                parameters["relative_width_first_leaflet"],
+                parameters["relative_width_last_leaflet"],
+                parameters["relative_position_leaflet_max_width"]
+            )
+
+            leaflet_node["length"] = length
+            leaflet_node["width"] = width_max
+
+            # Calculate beta distribution parameters for leaflet shape
+            xm = linear(leaflet_relative_pos, parameters["leaflet_xm_intercept"], parameters["leaflet_xm_slope"])
+            ym = linear(leaflet_relative_pos, parameters["leaflet_ym_intercept"], parameters["leaflet_ym_slope"])
+
+            # Define leaflet segments (5 segments as in Java)
+            x = [0.01, xm * 9 / 20, xm * 7 / 4, xm + (1 - xm) * 7 / 10, xm + (1 - xm) * 11 / 12, 1.0]
+            y = zeros(length(x) - 1)
+
+            # Calculate y values and create segments
+            for j in 1:(length(x)-1)
+                # Calculate normalized beta distribution value at point x[j]
+                y[j] = beta_distribution_norm(x[j], xm, ym)
+
+                # Create a leaflet segment node
+                segment_node = MultiScaleTreeGraph.Node(
+                    MultiScaleTreeGraph.NodeMTG(
+                        index=index + i * 100 + j,  # Generate unique index for segment
+                        symbol="LeafletSegment",
+                        scale=scale + 2
+                    )
+                )
+
+                # Set segment width and length
+                segment_node["width"] = y[j] * width_max
+                segment_node["length"] = (x[j+1] - x[j]) * length
+
+                # For the last segment (tip), set top width and height to 0
+                if j == length(x) - 2
+                    segment_node["top_width"] = 0.0
+                    segment_node["top_height"] = 0.0
+                end
+
+                # Add segment as a component of the leaflet
+                MultiScaleTreeGraph.add_child!(leaflet_node, segment_node)
+            end
+
+            # Add leaflet as ramification of the rachis section
+            MultiScaleTreeGraph.add_child!(rachis_section, leaflet_node)
+
+            # Store the created leaflet for return
+            push!(created_leaflets, leaflet_node)
+        end
+    end
 
     # Return complete leaflet data including positions
     return (
         group=leaflets.group,
         group_size=leaflets.group_size,
         plane=leaflets.plane,
-        position=leaflets_position
+        position=leaflets_position,
+        nodes=created_leaflets
     )
 end
-
 
 """
     group_leaflets(leaflets_relative_position, leaflets_type_frequency, rng)
@@ -243,7 +382,6 @@ function relative_leaflet_position(relative_rank, shape_coefficient)
     return ((1.0 + shape_coefficient) * (relative_rank^2)) / (1.0 + shape_coefficient * (relative_rank^2))
 end
 
-
 """
     compute_leaflet_type_frequencies(leaflet_frequency_high, leaflet_frequency_low)
 
@@ -317,7 +455,6 @@ function draw_group_size(group, leaflet_type_frequencies, rng)
 
     return size_i
 end
-
 
 """
     shrink_leaflets_in_groups!(positions, leaflets, ratio=2.0)
@@ -419,7 +556,6 @@ function normalize_positions!(positions, rachis_length)
 
     return nothing
 end
-
 
 """
     leaflet_length_at_bpoint(rachis_length, intercept, slope)
@@ -620,7 +756,6 @@ function leaflet_width_max(
     return leaflet_width_at_b / relative_leaflet_width(point_b_relative_position, width_first, width_last, pos_width_max)
 end
 
-
 """
     relative_leaflet_width(x, width_first, width_last, pos_width_max)
 
@@ -659,4 +794,100 @@ function relative_leaflet_width(x, width_first, width_last, pos_width_max)
         return x * (width_last - 1) / (1 - pos_width_max) +
                (1 - pos_width_max * width_last) / (1 - pos_width_max)
     end
+end
+
+"""
+    angle_axial(relative_pos, side, parameters, rng)
+
+Calculate the leaflet insertion angle in the horizontal plane (in degrees).
+
+# Arguments
+- `relative_pos`: Relative position of the leaflet on the rachis [0 to 1].
+- `side`: Side of the leaf (1 for right, -1 for left).
+- `parameters`: Model parameters.
+- `rng`: Random number generator.
+
+# Returns
+- Horizontal insertion angle in degrees.
+"""
+function angle_axial(relative_pos, side, parameters, rng)
+    a = parameters["leaflet_axial_angle_c"]^2
+    b = parameters["leaflet_axial_angle_slope"] * 2.0 * sqrt(a)
+    c = parameters["leaflet_axial_angle_a"]^2 - a - b
+
+    angle = sqrt(a + (b * relative_pos) + (c * relative_pos * relative_pos * relative_pos))
+
+    # Add random variation based on standard deviation percentage
+    angle += normal_deviation_percent_draw(angle, parameters["leaflet_axial_angle_sdp"], rng)
+
+    return angle * side
+end
+
+"""
+    angle_radial_boundaries(rel_pos, a0, a_max, xm=0.5)
+
+Calculate the boundaries of the radial angle based on position along the rachis.
+
+# Arguments
+- `rel_pos`: Relative position on the rachis [0 to 1].
+- `a0`: Radial angle around C point.
+- `a_max`: Maximum value of radial angle (in degrees).
+- `xm`: Relative position on rachis of the maximum radial angle (default: 0.5).
+
+# Returns
+- Radial angle in degrees.
+"""
+function angle_radial_boundaries(rel_pos, a0, a_max, xm=0.5)
+    c1 = (a0 - a_max) / (xm * xm)
+    b1 = -2 * c1 * xm
+
+    c2 = -a_max / ((xm - 1) * (xm - 1))
+    b2 = -2 * c2 * xm
+    a2 = -b2 - c2
+
+    if rel_pos < xm
+        return a0 + b1 * rel_pos + c1 * rel_pos * rel_pos
+    else
+        return a2 + b2 * rel_pos + c2 * rel_pos * rel_pos
+    end
+end
+
+"""
+    angle_radial(relative_pos, leaflet_type, side, parameters)
+
+Calculate the leaflet insertion angle in the vertical plane (in degrees).
+
+# Arguments
+- `relative_pos`: Relative position of the leaflet on the rachis [0 to 1].
+- `leaflet_type`: Type of leaflet (-1=down, 0=medium, 1=up).
+- `side`: Side of the leaf (1 for right, -1 for left).
+- `parameters`: Model parameters.
+
+# Returns
+- Vertical insertion angle in degrees.
+"""
+function angle_radial(relative_pos, leaflet_type, side, parameters)
+    xm = 0.5
+
+    if leaflet_type == 1  # High position
+        a0_sup = parameters["leaflet_radial_high_a0_sup"]
+        a_max_sup = parameters["leaflet_radial_high_amax_sup"]
+        a0_inf = parameters["leaflet_radial_high_a0_inf"]
+        a_max_inf = parameters["leaflet_radial_high_amax_inf"]
+    elseif leaflet_type == -1  # Low position
+        a0_sup = parameters["leaflet_radial_low_a0_sup"]
+        a_max_sup = parameters["leaflet_radial_low_amax_sup"]
+        a0_inf = parameters["leaflet_radial_low_a0_inf"]
+        a_max_inf = parameters["leaflet_radial_low_amax_inf"]
+    else  # Medium position
+        a0_sup = parameters["leaflet_radial_high_a0_inf"]
+        a_max_sup = parameters["leaflet_radial_high_amax_inf"]
+        a0_inf = parameters["leaflet_radial_low_a0_sup"]
+        a_max_inf = parameters["leaflet_radial_low_amax_sup"]
+    end
+
+    angle_max = angle_radial_boundaries(relative_pos, a0_sup, a_max_sup, xm)
+    angle_min = angle_radial_boundaries(relative_pos, a0_inf, a_max_inf, xm)
+
+    return (angle_min + (angle_max - angle_min) * rand(rng)) * side
 end
