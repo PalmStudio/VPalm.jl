@@ -32,9 +32,9 @@ function add_geometry!(mtg, refmesh_cylinder, refmesh_snag)
             # Initialise the position and angles for the petiole to 0.0
             position_section[] = Meshes.Point(0.0, 0.0, 0.0)
             angles .= 0.0
-            add_section_geometry!(node, internode_width, internode_height, snag_rotation, stem_bending, refmesh_cylinder, position_section, angles)
+            add_section_geometry!(node, internode_width, internode_height, snag_rotation, stem_bending, refmesh_cylinder, "PetioleSegment", position_section, angles)
         elseif symbol(node) == "Rachis"
-            add_section_geometry!(node, internode_width, internode_height, snag_rotation, stem_bending, refmesh_cylinder, position_section, angles)
+            add_section_geometry!(node, internode_width, internode_height, snag_rotation, stem_bending, refmesh_cylinder, "RachisSegment", position_section, angles)
             # Note: we use the position and angles of the last petiole section to initialize the rachis
         end
     end

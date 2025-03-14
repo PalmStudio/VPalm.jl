@@ -1,5 +1,6 @@
-function rachis(petiole_node, index, scale, leaf_rank, rachis_length, height_cpoint, width_cpoint, zenithal_cpoint_angle, parameters; rng)
-    rachis_node = Node(petiole_node, NodeMTG("<", "Rachis", index, scale))
+function rachis(unique_mtg_id, petiole_node, index, scale, leaf_rank, rachis_length, height_cpoint, width_cpoint, zenithal_cpoint_angle, parameters; rng)
+    rachis_node = Node(unique_mtg_id[], petiole_node, NodeMTG("<", "Rachis", index, scale))
+    unique_mtg_id[] += 1
 
     nb_segments = parameters["rachis_nb_segments"]
     points_length, points_positions, points_bending, points_deviation, points_torsion, x, y, z = biomechanical_properties_rachis(
@@ -23,7 +24,8 @@ function rachis(petiole_node, index, scale, leaf_rank, rachis_length, height_cpo
     azimuthal_angle_prev = 0.0
     torsion_angle_prev = 0.0
     for p in eachindex(points_positions)
-        rachis_segment_node = Node(last_parent, NodeMTG(p == 1 ? "/" : "<", "RachisSegment", p, 6))
+        rachis_segment_node = Node(unique_mtg_id[], last_parent, NodeMTG(p == 1 ? "/" : "<", "RachisSegment", p, 6))
+        unique_mtg_id[] += 1
         rachis_segment_node.width = rachis_width(p / nb_segments, width_cpoint, parameters["rachis_width_tip"])
         rachis_segment_node.height = rachis_height(p / nb_segments, height_cpoint, parameters["height_rachis_tappering"])
         rachis_segment_node.length = points_length[p]

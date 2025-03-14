@@ -1,7 +1,8 @@
 """
     add_section_geometry!(
         node, internode_width, internode_height, internode_phyllotaxy, stem_bending, 
-        refmesh_cylinder, position_section=Ref(Meshes.Point(0.0, 0.0, 0.0))
+        refmesh_cylinder, position_section=Ref(Meshes.Point(0.0, 0.0, 0.0)), angles=[0.0, 0.0, 0.0],
+        type::String,
     )
 
 Create the petiole/rachis sections geometry based on their dimensions.
@@ -10,17 +11,19 @@ Create the petiole/rachis sections geometry based on their dimensions.
 
 - `node`: the MTG node of the petiole/rachis
 - `internode_width`: the width of the internode on the stipe (m)
-- `internode_height`: the heigth of the internode on the stipe (m)
+- `internode_height`: the height of the internode on the stipe (m)
 - `internode_phyllotaxy`: the phyllotaxy of the internode on the stipe (°)
 - `stem_bending`: the bending of the stipe (°)
 - `refmesh_cylinder`: the reference mesh used for a cylinder (`PlantGeom.RefMesh`)
+- `type::String`: the type of the section (`"PetioleSegment"` or `"RachisSegment"`)
 - `position_section=Ref(Meshes.Point(0.0, 0.0, 0.0))`: the position of the section relative to the first one.
+- `angles=[0.0, 0.0, 0.0]`: the angles of the section relative to the first one.
 """
 function add_section_geometry!(
     node, internode_width, internode_height, internode_phyllotaxy, stem_bending,
-    refmesh_cylinder, position_section=Ref(Meshes.Point(0.0, 0.0, 0.0)), angles=[0.0, 0.0, 0.0]
+    refmesh_cylinder, type::String, position_section=Ref(Meshes.Point(0.0, 0.0, 0.0)), angles=[0.0, 0.0, 0.0],
 )
-    traverse!(node[1]) do node_section
+    traverse!(node[1], symbol=type) do node_section
         angles[1] += node_section.zenithal_angle
         angles[2] += node_section.azimuthal_angle
         angles[3] += node_section.torsion_angle

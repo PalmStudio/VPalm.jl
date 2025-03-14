@@ -5,6 +5,7 @@ import Random
 
 # For managing the MTG:
 import MultiScaleTreeGraph: Node, NodeMTG, traverse!, symbol, reparent!
+import AbstractTrees.PreOrderDFS # For children traversal (not another dependency, MTG already has it)
 
 # IO:
 import YAML, OrderedCollections

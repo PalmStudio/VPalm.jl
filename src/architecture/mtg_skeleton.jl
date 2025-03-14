@@ -31,41 +31,52 @@ function mtg_skeleton(parameters; rng=Random.MersenneTwister(parameters["seed"])
 
     @assert length(parameters["rachis_fresh_weight"]) >= nb_leaves_alive "The number of rachis biomass values should be greater than or equal to the number of leaves alive ($nb_leaves_alive)."
 
+    unique_mtg_id = Ref(1)
     # Plant / Scale 1
     plant = Node(NodeMTG("/", "Plant", 1, 1))
+    unique_mtg_id[] += 1
 
     # Stem (& Roots) / Scale 2
     #roots = Node(plant, NodeMTG("+", "RootSystem", 1, 2))
-    stem = Node(plant, NodeMTG("+", "Stem", 1, 2))
+    stem = Node(unique_mtg_id[], plant, NodeMTG("+", "Stem", 1, 2))
+    unique_mtg_id[] += 1
+
     compute_properties_stem!(stem, parameters, rng)
 
     stem_height = stem[:stem_height]
     stem_diameter = stem[:stem_diameter]
 
     # Phytomer / Scale 3
-    phytomer = Node(stem, NodeMTG("/", "Phytomer", 1, 3))
+    phytomer = Node(unique_mtg_id[], stem, NodeMTG("/", "Phytomer", 1, 3))
+    unique_mtg_id[] += 1
 
     # Internode & Leaf / Scale 4
-    internode = Node(phytomer, NodeMTG("/", "Internode", 1, 4))
+    internode = Node(unique_mtg_id[], phytomer, NodeMTG("/", "Internode", 1, 4))
+    unique_mtg_id[] += 1
     compute_properties_internode!(internode, 1, nb_internodes, nb_leaves_alive, stem_height, stem_diameter, parameters, rng)
-    leaf = Node(internode, NodeMTG("+", "Leaf", 1, 4))
+
+    leaf = Node(unique_mtg_id[], internode, NodeMTG("+", "Leaf", 1, 4))
+    unique_mtg_id[] += 1
     compute_properties_leaf!(leaf, 1, nb_internodes, nb_leaves_alive, parameters, rng)
 
     # Loop on internodes
     for i in 2:nb_internodes
-        phytomer = Node(phytomer, NodeMTG("<", "Phytomer", i, 3))
-        internode = Node(phytomer, NodeMTG("/", "Internode", i, 4))
+        phytomer = Node(unique_mtg_id[], phytomer, NodeMTG("<", "Phytomer", i, 3))
+        unique_mtg_id[] += 1
+        internode = Node(unique_mtg_id[], phytomer, NodeMTG("/", "Internode", i, 4))
+        unique_mtg_id[] += 1
         compute_properties_internode!(internode, i, nb_internodes, nb_leaves_alive, stem_height, stem_diameter, parameters, rng)
-        leaf = Node(internode, NodeMTG("+", "Leaf", i, 4))
+        leaf = Node(unique_mtg_id[], internode, NodeMTG("+", "Leaf", i, 4))
+        unique_mtg_id[] += 1
         compute_properties_leaf!(leaf, i, nb_internodes, nb_leaves_alive, parameters, rng)
         # Loop on present leaves
         if leaf[:is_alive]
             # Build the petiole
-            petiole_node = petiole(leaf, i, 5, leaf.rachis_length, leaf.zenithal_insertion_angle, leaf.zenithal_cpoint_angle, parameters; rng=rng)
+            petiole_node = petiole(unique_mtg_id, leaf, i, 5, leaf.rachis_length, leaf.zenithal_insertion_angle, leaf.zenithal_cpoint_angle, parameters; rng=rng)
             # Build the rachis
-            rachis_node = rachis(petiole_node, i, 5, leaf.rank, leaf.rachis_length, petiole_node.height_cpoint, petiole_node.width_cpoint, leaf.zenithal_cpoint_angle, parameters; rng=rng)
+            rachis_node = rachis(unique_mtg_id, petiole_node, i, 5, leaf.rank, leaf.rachis_length, petiole_node.height_cpoint, petiole_node.width_cpoint, leaf.zenithal_cpoint_angle, parameters; rng=rng)
             # Add the leaflets to the rachis:
-            leaflets(rachis_node, i, 5, leaf.rank, leaf.rachis_length, petiole_node.height_cpoint, petiole_node.width_cpoint, leaf.zenithal_cpoint_angle, parameters; rng=rng)
+            leaflets(unique_mtg_id, rachis_node, i, 5, leaf.rank, leaf.rachis_length, petiole_node.height_cpoint, petiole_node.width_cpoint, leaf.zenithal_cpoint_angle, parameters; rng=rng)
         end
 
         # add leaflets, ls

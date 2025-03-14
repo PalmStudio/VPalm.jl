@@ -159,16 +159,16 @@ biomechanical_model:
   nb_sections: 100 # Number of sections used to discretize the sections with constant form (!= rachis_nb_segments)
   angle_max: 21.0 # maximum flexion and torsion angles allowed between two sections (°)
   iterations: 15 # Number of iterations for the recursive computation
-xm_intercept: 0.175776968972813
-xm_slope: 0.0797694058975581
-ym_intercept: 0.505722242500563
-ym_slope: -0.0251775719709239
-leafletAxialAngleC: 78.2176071812236
-leafletAxialAngleA: 10.4267136372089
-leafletAxialAngleSlope: -4.69087957587579
-leafletAxialAngle_SDP: 8.0576905643349
-leafletStiffness: 1500
-leafletStiffness_SD: 7000
+leaflet_xm_intercept: 0.175776968972813 # Base value for xm (position of maximum width) for leaflets
+leaflet_xm_slope: 0.0797694058975581 # How much xm changes per unit of relative position along the rachis (beta distribution)
+leaflet_ym_intercept: 0.505722242500563 # Base value for the relative width at maximum width position
+leaflet_ym_slope: -0.0251775719709239 # How much this relative width changes per unit of position along the rachis (beta distribution)
+leaflet_axial_angle_c: 78.2176071812236
+leaflet_axial_angle_a: 10.4267136372089
+leaflet_axial_angle_slope: -4.69087957587579
+leaflet_axial_angle_sdp: 8.0576905643349
+leaflet_stiffness: 1500
+leaflet_stiffness_sd: 7000
 leaflet_frequency_high: # Frequency of leaflets of type "+1" (High) along 10 sub-sections of the rachis
   [
     0.219712525667351,
@@ -199,17 +199,17 @@ nbInflorescences: 0
 leaf_base_width: 0.3 # Width of the leaf base (m)
 cpoint_width_intercept: 0.00978257818097089 # Rachis width at the c-point intercept for linear interpolation (m)
 cpoint_width_slope: 0.0119703143572554 # Rachis width at the c-point slope for linear interpolation
-rachis_width_tip: 0.03
+rachis_width_tip: 0.03 # Width at the tip of the rachis (m)
 leaf_base_height: 0.1 # Height of the leaf base (m)
 cpoint_height_width_ratio: 0.567956652697377 # Height to width ratio at the C point
-height_rachis_tappering: -0.934263209088339
-leafletRadialHighA0Sup: 26.2985456005134
-leafletRadialHighAmaxSup: 60.4946916164452
-leafletRadialHighA0Inf: 16.6575840747922
-leafletRadialHighAmaxInf: 9.07640992092111
-leafletRadialLowA0Sup: -7.91385986745935
-leafletRadialLowAmaxSup: -4.82953167742679
-leafletRadialLowA0Inf: -12.2879764202956
-leafletRadialLowAmaxInf: -34.3342144982669
+height_rachis_tappering: -0.934263209088339 # tappering factor for the rachis height
+leaflet_radial_high_a0_sup: 26.2985456005134 # Upper bound of leaflet angle at position 0 for high position leaflets.
+leaflet_radial_high_amax_sup: 60.4946916164452 # Upper bound of maximum angle for high position leaflets.
+leaflet_radial_high_a0_inf: 16.6575840747922 # Lower bound of angle at position 0 for high position leaflets.
+leaflet_radial_high_amax_inf: 9.07640992092111 # Lower bound of maximum angle for high position leaflets.
+leaflet_radial_low_a0_sup: -7.91385986745935 # Upper bound of angle at position 0 for low position leaflets.
+leaflet_radial_low_amax_sup: -4.82953167742679 # Upper bound of maximum angle for low position leaflets.
+leaflet_radial_low_a0_inf: -12.2879764202956 # Lower bound of angle at position 0 for low position leaflets.
+leaflet_radial_low_amax_inf: -34.3342144982669 # Lower bound of maximum angle for low position leaflets.
 elastic_modulus: 2221.67460261657
 shear_modulus: 68.2023880878693

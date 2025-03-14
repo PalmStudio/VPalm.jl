@@ -4,6 +4,7 @@ authors = ["Rémi Vezy <VEZY@users.noreply.github.com> and contributors"]
 version = "0.0.1"
 
 [deps]
+AbstractTrees = "1520ce14-60c1-5f80-bbc7-55ef81b5835c"
 Interpolations = "a98d9a8b-a2ab-59e6-89dd-64a1c18fca59"
 Meshes = "eacbb407-ea5a-433e-ab97-5258b1ca43fa"
 MultiScaleTreeGraph = "dd4a991b-8a45-4075-bede-262ee62d5583"
@@ -17,9 +18,10 @@ Unitful = "1986cc42-f94f-5a68-af5c-568840ba703d"
 YAML = "ddb6d928-2868-570f-bddf-ab3f9cf99eb6"
 
 [compat]
+AbstractTrees = "0.4.5"
 Interpolations = "0.15.1"
 Meshes = "0.52"
-MultiScaleTreeGraph = "0.14"
+MultiScaleTreeGraph = "0.14.2"
 OrderedCollections = "1.6"
 PlantGeom = "0.10"
 PlyIO = "1.2.0"

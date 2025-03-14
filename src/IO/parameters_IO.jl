@@ -39,7 +39,7 @@ function read_parameters(file)
         "stem_diameter_snag", "internode_final_length",
         "leaf_base_width", "cpoint_width_intercept",
         "rachis_width_tip", "leaf_base_height",
-        "rachis_length_reference", "leaflet_length_at_b_intercept"
+        "rachis_length_reference", "leaflet_length_at_b_intercept",
     ]
 
     for param in length_params
