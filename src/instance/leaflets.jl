@@ -66,9 +66,32 @@ function leaflets(rachis_node, index, scale, leaf_rank, rachis_length, height_cp
             norm_leaflet_rank = (i - 1) / nb_leaflets
             leaflet_relative_pos = leaflets_position[i] / rachis_length
 
-            # Set leaflet geometry attributes based on the Java computeLeaflet method
-            h_angle = angle_axial(leaflet_relative_pos, side, parameters)  # Horizontal angle
-            v_angle = angle_radial(leaflet_relative_pos, leaflets.plane[i], side, parameters)  # Vertical angle
+            # Set leaflet geometry attributes
+            # Extract values from parameters to pass to helper functions
+            h_angle = angle_axial(
+                leaflet_relative_pos,
+                side,
+                parameters["leaflet_axial_angle_c"],
+                parameters["leaflet_axial_angle_slope"],
+                parameters["leaflet_axial_angle_a"],
+                parameters["leaflet_axial_angle_sdp"],
+                rng
+            )
+
+            v_angle = angle_radial(
+                leaflet_relative_pos,
+                leaflets.plane[i],
+                side,
+                parameters["leaflet_radial_high_a0_sup"],
+                parameters["leaflet_radial_high_amax_sup"],
+                parameters["leaflet_radial_high_a0_inf"],
+                parameters["leaflet_radial_high_amax_inf"],
+                parameters["leaflet_radial_low_a0_sup"],
+                parameters["leaflet_radial_low_amax_sup"],
+                parameters["leaflet_radial_low_a0_inf"],
+                parameters["leaflet_radial_low_amax_inf"],
+                rng
+            )
 
             # Add stiffness with random variation
             stiffness = parameters["leaflet_stiffness"] + rand(rng) * parameters["leaflet_stiffness_sd"]
@@ -797,28 +820,31 @@ function relative_leaflet_width(x, width_first, width_last, pos_width_max)
 end
 
 """
-    angle_axial(relative_pos, side, parameters, rng)
+    angle_axial(relative_pos, side, angle_c, angle_slope, angle_a, angle_sdp, rng)
 
 Calculate the leaflet insertion angle in the horizontal plane (in degrees).
 
 # Arguments
 - `relative_pos`: Relative position of the leaflet on the rachis [0 to 1].
 - `side`: Side of the leaf (1 for right, -1 for left).
-- `parameters`: Model parameters.
+- `angle_c`: Constant parameter for the axial angle calculation.
+- `angle_slope`: Slope parameter for the axial angle calculation.
+- `angle_a`: Amplitude parameter for the axial angle calculation.
+- `angle_sdp`: Standard deviation percentage for random variation.
 - `rng`: Random number generator.
 
 # Returns
 - Horizontal insertion angle in degrees.
 """
-function angle_axial(relative_pos, side, parameters, rng)
-    a = parameters["leaflet_axial_angle_c"]^2
-    b = parameters["leaflet_axial_angle_slope"] * 2.0 * sqrt(a)
-    c = parameters["leaflet_axial_angle_a"]^2 - a - b
+function angle_axial(relative_pos, side, angle_c, angle_slope, angle_a, angle_sdp, rng)
+    a = angle_c^2
+    b = angle_slope * 2.0 * sqrt(a)
+    c = angle_a^2 - a - b
 
     angle = sqrt(a + (b * relative_pos) + (c * relative_pos * relative_pos * relative_pos))
 
     # Add random variation based on standard deviation percentage
-    angle += normal_deviation_percent_draw(angle, parameters["leaflet_axial_angle_sdp"], rng)
+    angle += normal_deviation_percent_draw(angle, angle_sdp, rng)
 
     return angle * side
 end
@@ -853,7 +879,8 @@ function angle_radial_boundaries(rel_pos, a0, a_max, xm=0.5)
 end
 
 """
-    angle_radial(relative_pos, leaflet_type, side, parameters)
+    angle_radial(relative_pos, leaflet_type, side, high_a0_sup, high_amax_sup, high_a0_inf, high_amax_inf, 
+                 low_a0_sup, low_amax_sup, low_a0_inf, low_amax_inf, rng)
 
 Calculate the leaflet insertion angle in the vertical plane (in degrees).
 
@@ -861,29 +888,38 @@ Calculate the leaflet insertion angle in the vertical plane (in degrees).
 - `relative_pos`: Relative position of the leaflet on the rachis [0 to 1].
 - `leaflet_type`: Type of leaflet (-1=down, 0=medium, 1=up).
 - `side`: Side of the leaf (1 for right, -1 for left).
-- `parameters`: Model parameters.
+- `high_a0_sup`: Upper bound of angle at position 0 for high position leaflets.
+- `high_amax_sup`: Upper bound of maximum angle for high position leaflets.
+- `high_a0_inf`: Lower bound of angle at position 0 for high position leaflets.
+- `high_amax_inf`: Lower bound of maximum angle for high position leaflets.
+- `low_a0_sup`: Upper bound of angle at position 0 for low position leaflets.
+- `low_amax_sup`: Upper bound of maximum angle for low position leaflets.
+- `low_a0_inf`: Lower bound of angle at position 0 for low position leaflets.
+- `low_amax_inf`: Lower bound of maximum angle for low position leaflets.
+- `rng`: Random number generator.
 
 # Returns
 - Vertical insertion angle in degrees.
 """
-function angle_radial(relative_pos, leaflet_type, side, parameters)
+function angle_radial(relative_pos, leaflet_type, side, high_a0_sup, high_amax_sup, high_a0_inf, high_amax_inf,
+    low_a0_sup, low_amax_sup, low_a0_inf, low_amax_inf, rng)
     xm = 0.5
 
     if leaflet_type == 1  # High position
-        a0_sup = parameters["leaflet_radial_high_a0_sup"]
-        a_max_sup = parameters["leaflet_radial_high_amax_sup"]
-        a0_inf = parameters["leaflet_radial_high_a0_inf"]
-        a_max_inf = parameters["leaflet_radial_high_amax_inf"]
+        a0_sup = high_a0_sup
+        a_max_sup = high_amax_sup
+        a0_inf = high_a0_inf
+        a_max_inf = high_amax_inf
     elseif leaflet_type == -1  # Low position
-        a0_sup = parameters["leaflet_radial_low_a0_sup"]
-        a_max_sup = parameters["leaflet_radial_low_amax_sup"]
-        a0_inf = parameters["leaflet_radial_low_a0_inf"]
-        a_max_inf = parameters["leaflet_radial_low_amax_inf"]
+        a0_sup = low_a0_sup
+        a_max_sup = low_amax_sup
+        a0_inf = low_a0_inf
+        a_max_inf = low_amax_inf
     else  # Medium position
-        a0_sup = parameters["leaflet_radial_high_a0_inf"]
-        a_max_sup = parameters["leaflet_radial_high_amax_inf"]
-        a0_inf = parameters["leaflet_radial_low_a0_sup"]
-        a_max_inf = parameters["leaflet_radial_low_amax_sup"]
+        a0_sup = high_a0_inf
+        a_max_sup = high_amax_inf
+        a0_inf = low_a0_sup
+        a_max_inf = low_amax_sup
     end
 
     angle_max = angle_radial_boundaries(relative_pos, a0_sup, a_max_sup, xm)
