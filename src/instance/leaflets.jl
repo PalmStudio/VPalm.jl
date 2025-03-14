@@ -1,32 +1,23 @@
-function leaflets(unique_mtg_id, rachis_node, index, scale, leaf_rank, rachis_length, height_cpoint, width_cpoint, zenithal_cpoint_angle, parameters; rng)
-    nb_leaflets = compute_number_of_leaflets(rachis_length, parameters["leaflets_nb_max"], parameters["leaflets_nb_min"], parameters["leaflets_nb_slope"], parameters["leaflets_nb_inflexion"], parameters["nbLeaflets_SDP"]; rng=rng)
-
-    leaflets_relative_positions = relative_leaflet_position.(collect(1:nb_leaflets) ./ nb_leaflets, parameters["leaflet_position_shape_coefficient"])
-    leaflets_position = leaflets_relative_positions .* rachis_length
-
-    leaflets_type_frequency = compute_leaflet_type_frequencies(parameters["leaflet_frequency_high"], parameters["leaflet_frequency_low"])
-
-    leaflets = group_leaflets(leaflets_relative_positions, leaflets_type_frequency, rng)
-
-    # Re-compute the leaflets positions taking grouping into account (leaflets are closer to each other within a group)
-    shrink_leaflets_in_groups!(leaflets_position, leaflets, parameters["leaflets_between_to_within_group_ratio"])
-
-    # Second pass: Normalize to ensure spreading along the full rachis length (from base to tip):
-    normalize_positions!(leaflets_position, rachis_length)
-
+function create_leaflets_for_side(
+    unique_mtg_id,
+    rachis_node,
+    index,
+    scale,
+    leaf_rank,
+    rachis_length,
+    leaflets_position,
+    leaflets,
+    leaflet_max_length,
+    leaflet_max_width,
+    side,
+    parameters;
+    rng
+)
     nb_rachis_sections = parameters["rachis_nb_segments"]
     rachis_segment_length = rachis_length / nb_rachis_sections
-    nb_petiole_sections = parameters["petiole_nb_segments"]
+    nb_leaflets = length(leaflets_position)
 
-    leaflet_length_at_b = leaflet_length_at_bpoint(rachis_length, parameters["leaflet_length_at_b_intercept"], parameters["leaflet_length_at_b_slope"])
-    leaflet_max_length = leaflet_length_max(leaflet_length_at_b, parameters["relative_position_bpoint"], parameters["relative_position_bpoint_sd"], parameters["relative_length_first_leaflet"], parameters["relative_length_last_leaflet"], parameters["relative_position_leaflet_max_length"], rng)
-    leaflet_width_at_b = leaflet_width_at_bpoint(rachis_length, parameters["leaflet_length_at_b_intercept"], parameters["leaflet_length_at_b_slope"])
-    leaflet_max_width = leaflet_width_max(leaflet_width_at_b, parameters["relative_position_bpoint"], parameters["relative_position_bpoint_sd"], parameters["relative_width_first_leaflet"], parameters["relative_width_last_leaflet"], parameters["relative_position_leaflet_max_width"], rng)
-
-    # In Java: side parameter (left or right side)
-    side = index % 2 == 0 ? 1 : -1 #! left and right side of the leaf. Remove from here, and put the code below into a function
-
-    # Create leaflets and add them to the appropriate rachis sections
+    # Get all rachis section nodes
     rachis_children = collect(PreOrderDFS(rachis_node))
 
     for i in 1:nb_leaflets
@@ -62,7 +53,6 @@ function leaflets(unique_mtg_id, rachis_node, index, scale, leaf_rank, rachis_le
         leaflet_relative_pos = leaflets_position[i] / rachis_length
 
         # Set leaflet geometry attributes
-        # Extract values from parameters to pass to helper functions
         h_angle = angle_axial(
             leaflet_relative_pos,
             side,
@@ -179,6 +169,42 @@ function leaflets(unique_mtg_id, rachis_node, index, scale, leaf_rank, rachis_le
             last_parent = segment_node
         end
     end
+end
+
+function leaflets(unique_mtg_id, rachis_node, index, scale, leaf_rank, rachis_length, height_cpoint, width_cpoint, zenithal_cpoint_angle, parameters; rng)
+    nb_leaflets = compute_number_of_leaflets(rachis_length, parameters["leaflets_nb_max"], parameters["leaflets_nb_min"], parameters["leaflets_nb_slope"], parameters["leaflets_nb_inflexion"], parameters["nbLeaflets_SDP"]; rng=rng)
+
+    leaflets_relative_positions = relative_leaflet_position.(collect(1:nb_leaflets) ./ nb_leaflets, parameters["leaflet_position_shape_coefficient"])
+    leaflets_position = leaflets_relative_positions .* rachis_length
+
+    leaflets_type_frequency = compute_leaflet_type_frequencies(parameters["leaflet_frequency_high"], parameters["leaflet_frequency_low"])
+
+    leaflets = group_leaflets(leaflets_relative_positions, leaflets_type_frequency, rng)
+
+    # Re-compute the leaflets positions taking grouping into account (leaflets are closer to each other within a group)
+    shrink_leaflets_in_groups!(leaflets_position, leaflets, parameters["leaflets_between_to_within_group_ratio"])
+
+    # Second pass: Normalize to ensure spreading along the full rachis length (from base to tip):
+    normalize_positions!(leaflets_position, rachis_length)
+
+    leaflet_length_at_b = leaflet_length_at_bpoint(rachis_length, parameters["leaflet_length_at_b_intercept"], parameters["leaflet_length_at_b_slope"])
+    leaflet_max_length = leaflet_length_max(leaflet_length_at_b, parameters["relative_position_bpoint"], parameters["relative_position_bpoint_sd"], parameters["relative_length_first_leaflet"], parameters["relative_length_last_leaflet"], parameters["relative_position_leaflet_max_length"], rng)
+    leaflet_width_at_b = leaflet_width_at_bpoint(rachis_length, parameters["leaflet_length_at_b_intercept"], parameters["leaflet_length_at_b_slope"])
+    leaflet_max_width = leaflet_width_max(leaflet_width_at_b, parameters["relative_position_bpoint"], parameters["relative_position_bpoint_sd"], parameters["relative_width_first_leaflet"], parameters["relative_width_last_leaflet"], parameters["relative_position_leaflet_max_width"], rng)
+
+    # Create leaflets for right side (side = 1)
+    create_leaflets_for_side(
+        unique_mtg_id, rachis_node, index, scale, leaf_rank, rachis_length,
+        leaflets_position, leaflets, leaflet_max_length, leaflet_max_width,
+        1, parameters, rng=rng
+    )
+
+    # Create leaflets for left side (side = -1)
+    create_leaflets_for_side(
+        unique_mtg_id, rachis_node, index + nb_leaflets, scale, leaf_rank, rachis_length,
+        leaflets_position, leaflets, leaflet_max_length, leaflet_max_width,
+        -1, parameters, rng=rng
+    )
 
     # Return complete leaflet data including positions
     return (
