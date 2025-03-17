@@ -1,7 +1,6 @@
-function create_leaflets_for_side(
+function create_leaflets_for_side!(
     unique_mtg_id,
     rachis_node,
-    index,
     scale,
     leaf_rank,
     rachis_length,
@@ -26,31 +25,16 @@ function create_leaflets_for_side(
         offset = leaflets_position[i] - (rachis_segment_length * rachis_segment)
         # Find the corresponding rachis section node
         rachis_section_node = rachis_children[rachis_segment+1]
-        # Create a new leaflet node
-        leaflet_node = Node(
-            unique_mtg_id[],
-            rachis_section_node,
-            NodeMTG(
-                "+",
-                "Leaflet",
-                i,
-                scale
-            )
-        )
-        unique_mtg_id[] += 1
-        # Set leaflet attributes
-        leaflet_node.offset = offset
-        leaflet_node.plane = leaflets.plane[i]
-        leaflet_node.side = side
+
         # Calculate normalized leaflet rank and relative position
         norm_leaflet_rank = (i - 1) / nb_leaflets
         leaflet_relative_pos = leaflets_position[i] / rachis_length
 
-        # Create the leaflet with calculated parameters
-        create_single_leaflet(
+        # Create a single leaflet and add it as a child to the rachis section
+        leaflet_node = create_single_leaflet(
             unique_mtg_id,
-            leaflet_node,
-            scale + 1,
+            i,                     # Index for node identification
+            scale,                 # Scale for the leaflet (rachis section scale + 1)
             leaf_rank,
             leaflet_relative_pos,
             norm_leaflet_rank,
@@ -59,22 +43,26 @@ function create_leaflets_for_side(
             leaflet_max_length,
             leaflet_max_width,
             parameters,
+            offset=offset,         # Offset from start of rachis segment
             rng=rng
         )
+
+        addchild!(rachis_section_node, leaflet_node)
     end
 end
 
 """
-    create_single_leaflet(unique_mtg_id, parent_node, scale, leaf_rank, leaflet_relative_pos, 
+    create_single_leaflet(unique_mtg_id, parent_node, index, scale, leaf_rank, leaflet_relative_pos, 
                          norm_leaflet_rank, plane, side, leaflet_max_length, leaflet_max_width, 
-                         parameters; rng=Random.MersenneTwister(1234))
+                         parameters; offset=0.0, rng=Random.MersenneTwister(1234))
 
 Create a single leaflet with properly computed angles and segments.
 
 # Arguments
 - `unique_mtg_id`: Reference to the unique ID counter
-- `parent_node`: Parent node to attach the leaflet to
-- `scale`: MTG scale level for the leaflet segments
+- `parent_node`: Optional parent node to attach the leaflet to (can be nothing for standalone leaflets)
+- `index`: Index for the leaflet node (for identification in MTG)
+- `scale`: MTG scale level for the leaflet
 - `leaf_rank`: Rank of the leaf (affects unfolding for young leaves)
 - `leaflet_relative_pos`: Relative position of leaflet on rachis (0 to 1)
 - `norm_leaflet_rank`: Normalized rank of the leaflet
@@ -83,6 +71,7 @@ Create a single leaflet with properly computed angles and segments.
 - `leaflet_max_length`: Maximum leaflet length
 - `leaflet_max_width`: Maximum leaflet width
 - `parameters`: Model parameters
+- `offset`: Offset from the start of parent node (when applicable)
 - `rng`: Random number generator
 
 # Returns
@@ -90,7 +79,7 @@ Create a single leaflet with properly computed angles and segments.
 """
 function create_single_leaflet(
     unique_mtg_id,
-    parent_node,
+    index,
     scale,
     leaf_rank,
     leaflet_relative_pos,
@@ -100,8 +89,29 @@ function create_single_leaflet(
     leaflet_max_length,
     leaflet_max_width,
     parameters;
+    offset=0.0,
     rng=Random.MersenneTwister(1234)
 )
+    # Create a new leaflet node
+    leaflet_node = Node(
+        unique_mtg_id[],
+        parent_node,  # Can be nothing for standalone leaflets
+        NodeMTG(
+            "+",
+            "Leaflet",
+            index,
+            scale
+        )
+    )
+    unique_mtg_id[] += 1
+
+    # Set leaflet attributes
+    if !isnothing(offset)
+        leaflet_node.offset = offset
+    end
+    leaflet_node.plane = plane
+    leaflet_node.side = side
+
     # Calculate insertion angles
     h_angle = angle_axial(
         leaflet_relative_pos,
@@ -131,9 +141,9 @@ function create_single_leaflet(
     stiffness = parameters["leaflet_stiffness"] + rand(rng) * parameters["leaflet_stiffness_sd"]
 
     # Set leaflet properties
-    parent_node["side"] = side
-    parent_node["relative_position"] = leaflet_relative_pos
-    parent_node["leaflet_rank"] = norm_leaflet_rank
+    leaflet_node["side"] = side
+    leaflet_node["relative_position"] = leaflet_relative_pos
+    leaflet_node["leaflet_rank"] = norm_leaflet_rank
 
     # Handle leaflet unfolding for young fronds
     if leaf_rank < 2
@@ -148,14 +158,14 @@ function create_single_leaflet(
     end
 
     # Set the angles and other attributes
-    parent_node["rot_bearer_x"] = v_angle
-    parent_node["rot_bearer_z"] = h_angle
-    parent_node["stiffness"] = stiffness
-    parent_node["tapering"] = 0.5
+    leaflet_node["rot_bearer_x"] = v_angle
+    leaflet_node["rot_bearer_z"] = h_angle
+    leaflet_node["stiffness"] = stiffness
+    leaflet_node["tapering"] = 0.5
 
     # Set leaflet twist
     leaflet_twist = 10 * side
-    parent_node["rot_local_x"] = leaflet_twist
+    leaflet_node["rot_local_x"] = leaflet_twist
 
     # Calculate leaflet length and width
     leaflet_length = leaflet_max_length * relative_leaflet_length(
@@ -170,14 +180,14 @@ function create_single_leaflet(
         parameters["relative_width_last_leaflet"],
         parameters["relative_position_leaflet_max_width"]
     )
-    parent_node["length"] = leaflet_length
-    parent_node["width"] = width_max
+    leaflet_node["length"] = leaflet_length
+    leaflet_node["width"] = width_max
 
     # Create leaflet segments with proper bending
     create_leaflet_segments(
         unique_mtg_id,
-        parent_node,
-        scale,
+        leaflet_node,
+        scale + 1,  # Segments are at scale + 1
         leaflet_length,
         width_max,
         stiffness,
@@ -187,7 +197,7 @@ function create_single_leaflet(
         rng=rng
     )
 
-    return parent_node
+    return leaflet_node
 end
 
 """
@@ -326,14 +336,14 @@ function leaflets(unique_mtg_id, rachis_node, index, scale, leaf_rank, rachis_le
     leaflet_max_width = leaflet_width_max(leaflet_width_at_b, parameters["relative_position_bpoint"], parameters["relative_position_bpoint_sd"], parameters["relative_width_first_leaflet"], parameters["relative_width_last_leaflet"], parameters["relative_position_leaflet_max_width"], rng)
 
     # Create leaflets for right side (side = 1)
-    create_leaflets_for_side(
-        unique_mtg_id, rachis_node, index, scale, leaf_rank, rachis_length, parameters["rachis_nb_segments"],
+    create_leaflets_for_side!(
+        unique_mtg_id, rachis_node, scale, leaf_rank, rachis_length, parameters["rachis_nb_segments"],
         leaflets_position, leaflets, leaflet_max_length, leaflet_max_width, 1, parameters, rng=rng
     )
 
     # Create leaflets for left side (side = -1)
-    create_leaflets_for_side(
-        unique_mtg_id, rachis_node, index + nb_leaflets, scale, leaf_rank, rachis_length, parameters["rachis_nb_segments"],
+    create_leaflets_for_side!(
+        unique_mtg_id, rachis_node, scale, leaf_rank, rachis_length, parameters["rachis_nb_segments"],
         leaflets_position, leaflets, leaflet_max_length, leaflet_max_width, -1, parameters, rng=rng
     )
 
@@ -1073,4 +1083,60 @@ function angle_radial(relative_pos, leaflet_type, side, high_a0_sup, high_amax_s
     angle_min = angle_radial_boundaries(relative_pos, a0_inf, a_max_inf, xm)
 
     return (angle_min + (angle_max - angle_min) * rand(rng)) * side
+end
+
+"""
+    create_test_leaflet(parameters; 
+                      leaf_rank=10.0, 
+                      rel_position=0.5, 
+                      plane=1, 
+                      side=1, 
+                      length=1.0, 
+                      width=0.1, 
+                      seed=1234)
+
+Create a single test leaflet with the specified parameters, useful for testing and visualization.
+
+# Arguments
+- `parameters`: Model parameters dictionary
+- `leaf_rank`: Rank of the leaf (affects unfolding for young leaves), default is 10.0
+- `rel_position`: Relative position along the rachis (0 to 1), default is 0.5
+- `plane`: Plane type (1=high, 0=medium, -1=low), default is 1
+- `side`: Side (1=right, -1=left), default is 1
+- `length`: Maximum length of the leaflet in meters, default is 1.0
+- `width`: Maximum width of the leaflet in meters, default is 0.1
+- `seed`: Random seed, default is 1234
+
+# Returns
+- The created leaflet node
+"""
+function create_test_leaflet(
+    parameters;
+    leaf_rank=10.0,
+    rel_position=0.5,
+    plane=1,
+    side=1,
+    length=1.0,
+    width=0.1,
+    seed=1234
+)
+    unique_mtg_id = Ref(1)
+    rng = Random.MersenneTwister(seed)
+
+    return create_single_leaflet(
+        unique_mtg_id,
+        nothing,        # No parent - standalone leaflet
+        1,              # Index 1
+        2,              # Scale 2 (typical for leaflets)
+        leaf_rank,
+        rel_position,
+        rel_position,   # Using rel_position as norm_leaflet_rank for simplicity
+        plane,
+        side,
+        length,
+        width,
+        parameters,
+        offset=nothing,  # No offset needed for standalone
+        rng=rng
+    )
 end
