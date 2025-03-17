@@ -16,21 +16,16 @@ function create_leaflets_for_side(
 )
     rachis_segment_length = rachis_length / nb_rachis_sections
     nb_leaflets = length(leaflets_position)
-
     # Get all rachis section nodes
     rachis_children = collect(PreOrderDFS(rachis_node))
-
     for i in 1:nb_leaflets
         # Find the rachis segment this leaflet belongs to
         rachis_segment = floor(Int, leaflets_position[i] / rachis_segment_length)
         rachis_segment = min(rachis_segment, nb_rachis_sections - 1)
-
         # Calculate offset from the segment start
         offset = leaflets_position[i] - (rachis_segment_length * rachis_segment)
-
         # Find the corresponding rachis section node
         rachis_section_node = rachis_children[rachis_segment+1]
-
         # Create a new leaflet node
         leaflet_node = Node(
             unique_mtg_id[],
@@ -43,149 +38,269 @@ function create_leaflets_for_side(
             )
         )
         unique_mtg_id[] += 1
-
         # Set leaflet attributes
         leaflet_node.offset = offset
         leaflet_node.plane = leaflets.plane[i]
         leaflet_node.side = side
-
         # Calculate normalized leaflet rank and relative position
         norm_leaflet_rank = (i - 1) / nb_leaflets
         leaflet_relative_pos = leaflets_position[i] / rachis_length
 
-        # Set leaflet geometry attributes
-        h_angle = angle_axial(
+        # Create the leaflet with calculated parameters
+        create_single_leaflet(
+            unique_mtg_id,
+            leaflet_node,
+            scale + 1,
+            leaf_rank,
             leaflet_relative_pos,
-            side,
-            parameters["leaflet_axial_angle_c"],
-            parameters["leaflet_axial_angle_slope"],
-            parameters["leaflet_axial_angle_a"],
-            parameters["leaflet_axial_angle_sdp"],
-            rng
-        )
-
-        v_angle = angle_radial(
-            leaflet_relative_pos,
+            norm_leaflet_rank,
             leaflets.plane[i],
             side,
-            parameters["leaflet_radial_high_a0_sup"],
-            parameters["leaflet_radial_high_amax_sup"],
-            parameters["leaflet_radial_high_a0_inf"],
-            parameters["leaflet_radial_high_amax_inf"],
-            parameters["leaflet_radial_low_a0_sup"],
-            parameters["leaflet_radial_low_amax_sup"],
-            parameters["leaflet_radial_low_a0_inf"],
-            parameters["leaflet_radial_low_amax_inf"],
-            rng
+            leaflet_max_length,
+            leaflet_max_width,
+            parameters,
+            rng=rng
         )
+    end
+end
 
-        # Add stiffness with random variation
-        stiffness = parameters["leaflet_stiffness"] + rand(rng) * parameters["leaflet_stiffness_sd"]
+"""
+    create_single_leaflet(unique_mtg_id, parent_node, scale, leaf_rank, leaflet_relative_pos, 
+                         norm_leaflet_rank, plane, side, leaflet_max_length, leaflet_max_width, 
+                         parameters; rng=Random.MersenneTwister(1234))
 
-        # Set the angles and other attributes
-        leaflet_node["side"] = side
-        leaflet_node["relative_position"] = leaflet_relative_pos
-        leaflet_node["leaflet_rank"] = norm_leaflet_rank
+Create a single leaflet with properly computed angles and segments.
 
-        # Handle leaflet unfolding for young fronds
-        if leaf_rank < 2
-            if leaf_rank < 1
-                v_angle = 90.0
-            end
-            h_angle *= leaf_rank * 0.2
-            if leaf_rank < 1
-                h_angle = 0.0
-            end
-            stiffness = 10000 + (2.0 - leaf_rank) * 20000
+# Arguments
+- `unique_mtg_id`: Reference to the unique ID counter
+- `parent_node`: Parent node to attach the leaflet to
+- `scale`: MTG scale level for the leaflet segments
+- `leaf_rank`: Rank of the leaf (affects unfolding for young leaves)
+- `leaflet_relative_pos`: Relative position of leaflet on rachis (0 to 1)
+- `norm_leaflet_rank`: Normalized rank of the leaflet
+- `plane`: Plane type of leaflet (1=high, 0=medium, -1=low)
+- `side`: Side of the leaf (1=right, -1=left)
+- `leaflet_max_length`: Maximum leaflet length
+- `leaflet_max_width`: Maximum leaflet width
+- `parameters`: Model parameters
+- `rng`: Random number generator
+
+# Returns
+- The created leaflet node
+"""
+function create_single_leaflet(
+    unique_mtg_id,
+    parent_node,
+    scale,
+    leaf_rank,
+    leaflet_relative_pos,
+    norm_leaflet_rank,
+    plane,
+    side,
+    leaflet_max_length,
+    leaflet_max_width,
+    parameters;
+    rng=Random.MersenneTwister(1234)
+)
+    # Calculate insertion angles
+    h_angle = angle_axial(
+        leaflet_relative_pos,
+        side,
+        parameters["leaflet_axial_angle_c"],
+        parameters["leaflet_axial_angle_slope"],
+        parameters["leaflet_axial_angle_a"],
+        parameters["leaflet_axial_angle_sdp"],
+        rng
+    )
+    v_angle = angle_radial(
+        leaflet_relative_pos,
+        plane,
+        side,
+        parameters["leaflet_radial_high_a0_sup"],
+        parameters["leaflet_radial_high_amax_sup"],
+        parameters["leaflet_radial_high_a0_inf"],
+        parameters["leaflet_radial_high_amax_inf"],
+        parameters["leaflet_radial_low_a0_sup"],
+        parameters["leaflet_radial_low_amax_sup"],
+        parameters["leaflet_radial_low_a0_inf"],
+        parameters["leaflet_radial_low_amax_inf"],
+        rng
+    )
+
+    # Add stiffness with random variation
+    stiffness = parameters["leaflet_stiffness"] + rand(rng) * parameters["leaflet_stiffness_sd"]
+
+    # Set leaflet properties
+    parent_node["side"] = side
+    parent_node["relative_position"] = leaflet_relative_pos
+    parent_node["leaflet_rank"] = norm_leaflet_rank
+
+    # Handle leaflet unfolding for young fronds
+    if leaf_rank < 2
+        if leaf_rank < 1
+            v_angle = 90.0
         end
-
-        leaflet_node["rot_bearer_x"] = v_angle
-        leaflet_node["rot_bearer_z"] = h_angle
-        leaflet_node["stiffness"] = stiffness
-        leaflet_node["tapering"] = 0.5
-
-        # Set leaflet twist
-        leaflet_twist = 10 * side
-        leaflet_node["rot_local_x"] = leaflet_twist
-
-        # Calculate leaflet length and width
-        leaflet_length = leaflet_max_length * relative_leaflet_length(
-            leaflet_relative_pos,
-            parameters["relative_length_first_leaflet"],
-            parameters["relative_length_last_leaflet"],
-            parameters["relative_position_leaflet_max_length"]
-        )
-
-        width_max = leaflet_max_width * relative_leaflet_width(
-            leaflet_relative_pos,
-            parameters["relative_width_first_leaflet"],
-            parameters["relative_width_last_leaflet"],
-            parameters["relative_position_leaflet_max_width"]
-        )
-
-        leaflet_node["length"] = leaflet_length
-        leaflet_node["width"] = width_max
-
-        # Calculate beta distribution parameters for leaflet shape
-        xm = linear(leaflet_relative_pos, parameters["leaflet_xm_intercept"], parameters["leaflet_xm_slope"])
-        ym = linear(leaflet_relative_pos, parameters["leaflet_ym_intercept"], parameters["leaflet_ym_slope"])
-
-        # Define leaflet segments (5 segments as in Java)
-        x = [0.01, xm * 9 / 20, xm * 7 / 4, xm + (1 - xm) * 7 / 10, xm + (1 - xm) * 11 / 12, 1.0]
-        y = zeros(length(x) - 1)
-
-        # Create a PiecewiseFunction equivalent (as set of control points)
-        control_points_x = Vector{Float64}(undef, length(x))
-        control_points_y = Vector{Float64}(undef, length(x))
-
-        for j in 1:(length(x)-1)
-            y[j] = beta_distribution_norm(x[j], xm, ym)
-            control_points_x[j] = x[j]
-            control_points_y[j] = y[j]
-            # Add the last point to ensure the function goes to zero at x=1
-            if j == length(x) - 2
-                control_points_x[j+1] = 1.0
-                control_points_y[j+1] = 0.0
-            end
+        h_angle *= leaf_rank * 0.2
+        if leaf_rank < 1
+            h_angle = 0.0
         end
+        stiffness = 10000 + (2.0 - leaf_rank) * 20000
+    end
 
-        # Calculate scaling factor as in the Java version
-        beta_distribution_area = beta_distribution_norm_integral(xm, ym)
-        piecewise_function_area = piecewise_function_area(control_points_x, control_points_y)
-        scaling_factor = beta_distribution_area / piecewise_function_area
+    # Set the angles and other attributes
+    parent_node["rot_bearer_x"] = v_angle
+    parent_node["rot_bearer_z"] = h_angle
+    parent_node["stiffness"] = stiffness
+    parent_node["tapering"] = 0.5
 
-        last_parent = leaflet_node
-        # Calculate y values and create segments
-        scale_leaflet_segments = scale + 1
-        for j in 1:(length(x)-1)
-            # Create a leaflet segment node
-            segment_node = Node(
-                unique_mtg_id[],
-                last_parent,
-                NodeMTG(
-                    j == 1 ? "/" : "<",
-                    "LeafletSegment",
-                    j,
-                    scale_leaflet_segments
-                )
+    # Set leaflet twist
+    leaflet_twist = 10 * side
+    parent_node["rot_local_x"] = leaflet_twist
+
+    # Calculate leaflet length and width
+    leaflet_length = leaflet_max_length * relative_leaflet_length(
+        leaflet_relative_pos,
+        parameters["relative_length_first_leaflet"],
+        parameters["relative_length_last_leaflet"],
+        parameters["relative_position_leaflet_max_length"]
+    )
+    width_max = leaflet_max_width * relative_leaflet_width(
+        leaflet_relative_pos,
+        parameters["relative_width_first_leaflet"],
+        parameters["relative_width_last_leaflet"],
+        parameters["relative_position_leaflet_max_width"]
+    )
+    parent_node["length"] = leaflet_length
+    parent_node["width"] = width_max
+
+    # Create leaflet segments with proper bending
+    create_leaflet_segments(
+        unique_mtg_id,
+        parent_node,
+        scale,
+        leaflet_length,
+        width_max,
+        stiffness,
+        0.5,  # tapering
+        leaflet_relative_pos,
+        parameters,
+        rng=rng
+    )
+
+    return parent_node
+end
+
+"""
+    create_leaflet_segments(unique_mtg_id, leaflet_node, scale, leaflet_length, width_max, 
+                           stiffness, tapering, leaflet_relative_pos, parameters; rng)
+
+Create the segments that make up a leaflet with proper bending.
+
+# Arguments
+- `unique_mtg_id`: Reference to the unique ID counter
+- `leaflet_node`: Parent leaflet node
+- `scale`: MTG scale for the segments
+- `leaflet_length`: Total length of the leaflet
+- `width_max`: Maximum width of the leaflet
+- `stiffness`: Stiffness of the leaflet (Young's modulus)
+- `tapering`: Tapering factor
+- `leaflet_relative_pos`: Relative position of the leaflet on the rachis
+- `parameters`: Model parameters
+- `rng`: Random number generator
+
+# Returns
+- Nothing
+"""
+function create_leaflet_segments(
+    unique_mtg_id,
+    leaflet_node,
+    scale,
+    leaflet_length,
+    width_max,
+    stiffness,
+    tapering,
+    leaflet_relative_pos,
+    parameters;
+    rng=Random.MersenneTwister(1234)
+)
+    # Calculate beta distribution parameters for leaflet shape
+    xm = linear(leaflet_relative_pos, parameters["leaflet_xm_intercept"], parameters["leaflet_xm_slope"])
+    ym = linear(leaflet_relative_pos, parameters["leaflet_ym_intercept"], parameters["leaflet_ym_slope"])
+
+    # Define leaflet segments (5 segments as in Java)
+    x = [0.01, xm * 9 / 20, xm * 7 / 4, xm + (1 - xm) * 7 / 10, xm + (1 - xm) * 11 / 12, 1.0]
+    y = zeros(length(x) - 1)
+
+    # Create a PiecewiseFunction equivalent (as set of control points)
+    control_points_x = Vector{Float64}(undef, length(x))
+    control_points_y = Vector{Float64}(undef, length(x))
+    for j in 1:(length(x)-1)
+        y[j] = beta_distribution_norm(x[j], xm, ym)
+        control_points_x[j] = x[j]
+        control_points_y[j] = y[j]
+        # Add the last point to ensure the function goes to zero at x=1
+        if j == length(x) - 2
+            control_points_x[j+1] = 1.0
+            control_points_y[j+1] = 0.0
+        end
+    end
+
+    # Calculate scaling factor as in the Java version
+    beta_distribution_area = beta_distribution_norm_integral(xm, ym)
+    piecewise_function_area = piecewise_function_area(control_points_x, control_points_y)
+    scaling_factor = beta_distribution_area / piecewise_function_area
+
+    # Calculate bending angles for each segment based on Young's modulus model
+    # Convert stiffness to young modulus
+    v_angle_rad = deg2rad(leaflet_node["rot_bearer_x"])
+
+    # Calculate segment angles
+    segment_angles = calculate_segment_angles(
+        stiffness,
+        v_angle_rad,
+        leaflet_length,
+        tapering,
+        x
+    )
+
+    last_parent = leaflet_node
+
+    # Calculate y values and create segments
+    for j in 1:(length(x)-1)
+        # Create a leaflet segment node
+        segment_node = Node(
+            unique_mtg_id[],
+            last_parent,
+            NodeMTG(
+                j == 1 ? "/" : "<",
+                "LeafletSegment",
+                j,
+                scale
             )
-            unique_mtg_id[] += 1
+        )
+        unique_mtg_id[] += 1
 
-            # Apply scaling factor as in Java version
-            y[j] *= scaling_factor
+        y[j] *= scaling_factor
 
-            # Set segment width and length
-            segment_node["width"] = y[j] * width_max
-            segment_node["length"] = (x[j+1] - x[j]) * leaflet_length
+        # Set segment width and length
+        segment_node["width"] = y[j] * width_max
+        segment_node["length"] = (x[j+1] - x[j]) * leaflet_length
 
-            # For the last segment (tip), set top width and height to 0
-            if j == length(x) - 2
-                segment_node["top_width"] = 0.0
-                segment_node["top_height"] = 0.0
-            end
-
-            last_parent = segment_node
+        # Apply the bending angle
+        # Need to determine direction based on the side of the leaflet on the rachis
+        bend_angle = rad2deg(segment_angles[j])
+        if leaflet_node["side"] < 0  # Left side
+            bend_angle *= -1
         end
+        segment_node["stiffness_angle"] = bend_angle
+
+        # For the last segment (tip), set top width and height to 0
+        if j == length(x) - 2
+            segment_node["top_width"] = 0.0
+            segment_node["top_height"] = 0.0
+        end
+
+        last_parent = segment_node
     end
 end
 
@@ -422,7 +537,7 @@ function compute_number_of_leaflets(rachis_final_length, nb_max, nb_min, nb_slop
 end
 
 """
-    relative_leaflet_position(relative_rank, coef_dispo)
+    relative_leaflet_position(relative_rank, shape_coefficient)
 
 Compute the relative leaflet position on the rachis.
 
@@ -873,8 +988,7 @@ Calculate the leaflet insertion angle in the horizontal plane (in degrees).
 function angle_axial(relative_pos, side, angle_c, angle_slope, angle_a, angle_sdp, rng)
     a = angle_c^2
     b = angle_slope * 2.0 * sqrt(a)
-    c = angle_a^2 - a - b
-
+    c = (angle_a^2) - a - b
     angle = sqrt(a + (b * relative_pos) + (c * relative_pos * relative_pos * relative_pos))
 
     # Add random variation based on standard deviation percentage
@@ -938,7 +1052,6 @@ Calculate the leaflet insertion angle in the vertical plane (in degrees).
 function angle_radial(relative_pos, leaflet_type, side, high_a0_sup, high_amax_sup, high_a0_inf, high_amax_inf,
     low_a0_sup, low_amax_sup, low_a0_inf, low_amax_inf, rng)
     xm = 0.5
-
     if leaflet_type == 1  # High position
         a0_sup = high_a0_sup
         a_max_sup = high_amax_sup
