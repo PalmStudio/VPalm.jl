@@ -124,7 +124,7 @@ function biomechanical_properties_rachis(
     distance_application = fill(0.0u"m", npoints) # Application distance for forces (if needed)
 
     leaflet_length_at_b = leaflet_length_at_bpoint(rachis_length, leaflet_length_at_b_intercept, leaflet_length_at_b_slope)
-    leaflet_max_length = leaflet_length_max(leaflet_length_at_b, relative_position_bpoint, relative_position_bpoint_sd, relative_length_first_leaflet, relative_length_last_leaflet, relative_position_leaflet_max_length, rng)
+    leaflet_max_length = leaflet_length_max(leaflet_length_at_b, relative_position_bpoint, relative_length_first_leaflet, relative_length_last_leaflet, relative_position_leaflet_max_length, relative_position_bpoint_sd, rng)
 
     # Parameters to compute rachis width from rachis height:
     ratioPointC = 0.5220

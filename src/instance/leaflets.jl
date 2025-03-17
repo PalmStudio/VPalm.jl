@@ -95,7 +95,6 @@ function create_single_leaflet(
     # Create a new leaflet node
     leaflet_node = Node(
         unique_mtg_id[],
-        parent_node,  # Can be nothing for standalone leaflets
         NodeMTG(
             "+",
             "Leaflet",
@@ -331,9 +330,9 @@ function leaflets(unique_mtg_id, rachis_node, index, scale, leaf_rank, rachis_le
     normalize_positions!(leaflets_position, rachis_length)
 
     leaflet_length_at_b = leaflet_length_at_bpoint(rachis_length, parameters["leaflet_length_at_b_intercept"], parameters["leaflet_length_at_b_slope"])
-    leaflet_max_length = leaflet_length_max(leaflet_length_at_b, parameters["relative_position_bpoint"], parameters["relative_position_bpoint_sd"], parameters["relative_length_first_leaflet"], parameters["relative_length_last_leaflet"], parameters["relative_position_leaflet_max_length"], rng)
+    leaflet_max_length = leaflet_length_max(leaflet_length_at_b, parameters["relative_position_bpoint"], parameters["relative_length_first_leaflet"], parameters["relative_length_last_leaflet"], parameters["relative_position_leaflet_max_length"], parameters["relative_position_bpoint_sd"], rng)
     leaflet_width_at_b = leaflet_width_at_bpoint(rachis_length, parameters["leaflet_length_at_b_intercept"], parameters["leaflet_length_at_b_slope"])
-    leaflet_max_width = leaflet_width_max(leaflet_width_at_b, parameters["relative_position_bpoint"], parameters["relative_position_bpoint_sd"], parameters["relative_width_first_leaflet"], parameters["relative_width_last_leaflet"], parameters["relative_position_leaflet_max_width"], rng)
+    leaflet_max_width = leaflet_width_max(leaflet_width_at_b, parameters["relative_position_bpoint"], parameters["relative_width_first_leaflet"], parameters["relative_width_last_leaflet"], parameters["relative_position_leaflet_max_width"], parameters["relative_position_bpoint_sd"], rng)
 
     # Create leaflets for right side (side = 1)
     create_leaflets_for_side!(
@@ -772,10 +771,10 @@ end
     leaflet_length_max(
         leaflet_length_at_b, 
         relative_position_bpoint, 
-        relative_position_bpoint_sd, 
         relative_length_first_leaflet, 
         relative_length_last_leaflet, 
         relative_position_leaflet_max_length, 
+        relative_position_bpoint_sd, 
         rng
     )
 
@@ -785,10 +784,10 @@ Calculate the maximum leaflet length for the rachis, used to scale the relative 
 
 - `leaflet_length_at_b`: Length of leaflets at the B point on the rachis (m).
 - `relative_position_bpoint`: Relative position of the B point along the rachis (0 to 1).
-- `relative_position_bpoint_sd`: Standard deviation for stochastic variation in B point position.
 - `relative_length_first_leaflet`: Relative length of the first leaflet at rachis base [0 to 1].
 - `relative_length_last_leaflet`: Relative length of the last leaflet at rachis tip [0 to 1].
 - `relative_position_leaflet_max_length`: Relative position where leaflets reach maximum length [0 to 1].
+- `relative_position_bpoint_sd`: Standard deviation for stochastic variation in B point position.
 - `rng`: Random number generator.
 
 # Details
@@ -819,13 +818,15 @@ between individual palms or fronds.
 
 The maximum leaflet length for the rachis (m).
 """
-function leaflet_length_max(leaflet_length_at_b, relative_position_bpoint, relative_position_bpoint_sd, relative_length_first_leaflet, relative_length_last_leaflet, relative_position_leaflet_max_length, rng)
+function leaflet_length_max(leaflet_length_at_b, relative_position_bpoint, relative_length_first_leaflet, relative_length_last_leaflet, relative_position_leaflet_max_length, relative_position_bpoint_sd, rng)
     relative_position_bpoint = relative_position_bpoint + normal_deviation_draw(relative_position_bpoint_sd, rng)
 
-    if relative_position_bpoint < 0 || relative_position_bpoint > 1
-        error("Relative position bpoint must be between 0 and 1.")
-    end
+    return leaflet_length_max(leaflet_length_at_b, relative_position_bpoint, relative_length_first_leaflet, relative_length_last_leaflet, relative_position_leaflet_max_length)
+end
 
+
+function leaflet_length_max(leaflet_length_at_b, relative_position_bpoint, relative_length_first_leaflet, relative_length_last_leaflet, relative_position_leaflet_max_length)
+    @assert relative_position_bpoint >= 0 && relative_position_bpoint <= 1 "Relative position bpoint must be between 0 and 1."
     @assert leaflet_length_at_b > zero(leaflet_length_at_b) "Leaflet length at b must be positive."
 
     return leaflet_length_at_b / relative_leaflet_length(relative_position_bpoint, relative_length_first_leaflet, relative_length_last_leaflet, relative_position_leaflet_max_length)
@@ -883,11 +884,19 @@ end
     leaflet_width_max(
         leaflet_width_at_b,
         relative_position_bpoint,
-        relative_position_bpoint_sd,
         width_first,
         width_last,
         pos_width_max,
+        relative_position_bpoint_sd,
         rng
+    )
+
+    leaflet_width_max(
+        leaflet_width_at_b,
+        relative_position_bpoint,
+        width_first,
+        width_last,
+        pos_width_max,
     )
 
 Calculate the maximum leaflet width for the rachis, used to scale the width profile.
@@ -896,11 +905,11 @@ Calculate the maximum leaflet width for the rachis, used to scale the width prof
 
 - `leaflet_width_at_b`: Width of leaflets at the B point on the rachis (m).
 - `relative_position_bpoint`: Mean relative position of the B point along the rachis [0 to 1].
-- `relative_position_bpoint_sd`: Standard deviation for stochastic variation in B point position.
 - `width_first`: Relative width of the first leaflet at rachis base [0 to 1].
 - `width_last`: Relative width of the last leaflet at rachis tip [0 to 1].
 - `pos_width_max`: Relative position where leaflets reach maximum width [0 to 1].
-- `rng`: Random number generator.
+- `relative_position_bpoint_sd`: Standard deviation for stochastic variation in B point position (optional).
+- `rng`: Random number generator (optional). 
 
 # Details
 
@@ -928,14 +937,25 @@ The maximum leaflet width for the rachis (m).
 function leaflet_width_max(
     leaflet_width_at_b,
     relative_position_bpoint,
-    relative_position_bpoint_sd,
     width_first,
     width_last,
     pos_width_max,
+    relative_position_bpoint_sd,
     rng
 )
-    point_b_relative_position = relative_position_bpoint + normal_deviation_draw(relative_position_bpoint_sd, rng)
-    return leaflet_width_at_b / relative_leaflet_width(point_b_relative_position, width_first, width_last, pos_width_max)
+    relative_position_bpoint = relative_position_bpoint + normal_deviation_draw(relative_position_bpoint_sd, rng)
+    return leaflet_width_max(leaflet_width_at_b, relative_position_bpoint, width_first, width_last, pos_width_max)
+end
+
+
+function leaflet_width_max(
+    leaflet_width_at_b,
+    relative_position_bpoint,
+    width_first,
+    width_last,
+    pos_width_max,
+)
+    return leaflet_width_at_b / relative_leaflet_width(relative_position_bpoint, width_first, width_last, pos_width_max)
 end
 
 """
@@ -1083,60 +1103,4 @@ function angle_radial(relative_pos, leaflet_type, side, high_a0_sup, high_amax_s
     angle_min = angle_radial_boundaries(relative_pos, a0_inf, a_max_inf, xm)
 
     return (angle_min + (angle_max - angle_min) * rand(rng)) * side
-end
-
-"""
-    create_test_leaflet(parameters; 
-                      leaf_rank=10.0, 
-                      rel_position=0.5, 
-                      plane=1, 
-                      side=1, 
-                      length=1.0, 
-                      width=0.1, 
-                      seed=1234)
-
-Create a single test leaflet with the specified parameters, useful for testing and visualization.
-
-# Arguments
-- `parameters`: Model parameters dictionary
-- `leaf_rank`: Rank of the leaf (affects unfolding for young leaves), default is 10.0
-- `rel_position`: Relative position along the rachis (0 to 1), default is 0.5
-- `plane`: Plane type (1=high, 0=medium, -1=low), default is 1
-- `side`: Side (1=right, -1=left), default is 1
-- `length`: Maximum length of the leaflet in meters, default is 1.0
-- `width`: Maximum width of the leaflet in meters, default is 0.1
-- `seed`: Random seed, default is 1234
-
-# Returns
-- The created leaflet node
-"""
-function create_test_leaflet(
-    parameters;
-    leaf_rank=10.0,
-    rel_position=0.5,
-    plane=1,
-    side=1,
-    length=1.0,
-    width=0.1,
-    seed=1234
-)
-    unique_mtg_id = Ref(1)
-    rng = Random.MersenneTwister(seed)
-
-    return create_single_leaflet(
-        unique_mtg_id,
-        nothing,        # No parent - standalone leaflet
-        1,              # Index 1
-        2,              # Scale 2 (typical for leaflets)
-        leaf_rank,
-        rel_position,
-        rel_position,   # Using rel_position as norm_leaflet_rank for simplicity
-        plane,
-        side,
-        length,
-        width,
-        parameters,
-        offset=nothing,  # No offset needed for standalone
-        rng=rng
-    )
 end
