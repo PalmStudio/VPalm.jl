@@ -96,14 +96,14 @@ function internode_length(i, Nbl, sh, R, N, l_0)
     d = l_0 - (Nbl + N) * c
 
     if i <= N
-        length = a * i + b
+        internode_l = a * i + b
     elseif i < (N + Nbl - R)
-        length = l
+        internode_l = l
     else
-        length = c * i + d
+        internode_l = c * i + d
     end
 
-    return length
+    return internode_l
 end
 
 """
