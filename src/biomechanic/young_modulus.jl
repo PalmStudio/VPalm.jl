@@ -12,26 +12,27 @@ Calculate the maximal deformation angle of a beam.
 # Returns
 - The final angle from vertical at the cantilever extremity (in radians)
 """
-function final_angle(young_modulus, z_angle, length, tapering)
+function final_angle(young_modulus, z_angle, beam_length, tapering)
     # Evaluation
     cos_theta = cos(z_angle)
     young = 1.0 / sqrt(young_modulus)
-    h = length / tapering
+    h = beam_length / tapering
 
     coeff = young * h * sqrt(abs(cos_theta))
 
     # Initial deflection estimate
-    deflection = if z_angle > 1.553 && z_angle < 1.588
-        young * young * h * h / 2.0
+    deflection = if 1.553 < z_angle < 1.588
+        ustrip(young * young * h * h / 2.0)
     else
-        sin(z_angle) * (1.0 - cos(coeff)) / cos(coeff) / abs(cos_theta)
+        coeff_nounit = ustrip(coeff)
+        sin(z_angle) * (1.0 - cos(coeff_nounit)) / cos(coeff_nounit) / abs(cos_theta)
     end
 
     # Integration to find the actual deflection
     a_min = 0.0
     a_max = π - z_angle
     threshold = π / 180.0
-    precision = length / 10.0
+    precision = beam_length / 10.0
 
     while (a_max - a_min) > threshold
         deflection = (a_max + a_min) / 2.0
@@ -91,53 +92,14 @@ function local_flexion(current_angle, final_angle, young_modulus, tapering, rela
 end
 
 """
-    calculate_bent_leaflet_curve(young_modulus, z_angle, length, tapering, num_sections=100)
-
-Calculate the curved shape of a bent leaflet using the Young's modulus model.
-
-# Arguments
-- `young_modulus`: Value of Young's modulus
-- `z_angle`: Initial angle from vertical in radians
-- `length`: Length of the beam
-- `tapering`: Tapering factor of the beam
-- `num_sections`: Number of sections to calculate (default: 100)
-
-# Returns
-- A tuple of two arrays (x_coordinates, y_coordinates) representing the curved shape
-"""
-function calculate_bent_leaflet_curve(young_modulus, z_angle, length, tapering, num_sections=100)
-    total_deflection = final_angle(young_modulus, z_angle, length, tapering)
-
-    x_coords = zeros(num_sections + 1)
-    y_coords = zeros(num_sections + 1)
-
-    current_angle = z_angle
-    section_length = length / num_sections
-    curvilinear_length = 0.0
-
-    for s in 1:num_sections
-        curvilinear_length += section_length
-        current_angle += local_flexion(
-            current_angle, total_deflection, young_modulus, tapering,
-            curvilinear_length / length
-        )
-
-        x_coords[s+1] = x_coords[s] + section_length * sin(current_angle)
-        y_coords[s+1] = y_coords[s] + section_length * cos(current_angle)
-    end
-
-    return (x_coords, y_coords)
-end
-
-"""
-    calculate_segment_angles(young_modulus, initial_angle, length, tapering, segment_positions)
+    calculate_segment_angles(young_modulus, initial_angle, leaflet_length, tapering, segment_positions)
 
 Calculate the angles for each segment of a bent leaflet based on the Young's modulus model.
 
 # Arguments
 - `young_modulus`: Value of Young's modulus
 - `initial_angle`: Initial angle from vertical in radians
-- `length`: Total length of the leaflet
+- `leaflet_length`: Total length of the leaflet
 - `tapering`: Tapering factor
 - `segment_positions`: Array of segment boundary positions (normalized 0-1)
 

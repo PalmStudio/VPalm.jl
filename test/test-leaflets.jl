@@ -58,19 +58,39 @@ end
 end
 
 @testset "Make a leaflet" begin
-
-    create_single_leaflet(
+    parameters_ = copy(parameters)
+    parameters_["leaflet_stiffness_sd"] = 0.0
+    parameters_["leaflet_axial_angle_sdp"] = 0.0
+    leaflet = VPalm.create_single_leaflet(
         Ref(1),
         1,              # Index 1
         1,              # Scale 2 (typical for leaflets)
-        10,
-        0.5,
-        0.5,
-        1,
-        1,
-        1.0,
-        0.2,
-        offset=0.0,  # No offset needed for standalone
+        10,             # Rank 10
+        0.5,            # Relative position
+        0.5,            # Normalized leaflet rank
+        1,              # Plane (low:-1, planar: 0 or high:1)
+        1,              # Side of the rachis (1 or -1)
+        0.7483089246613868u"m", # Leaflet maximum length
+        0.05821782360344443u"m", # Leaflet maximum width
+        parameters_,     # Parameters
+        offset=0.0,     # No offset needed for standalone
         rng=rng
     )
+
+
+    @test length(leaflet) == 6 # One node for the leaflet, 5 for the leaflet segments
+    @test symbol(leaflet) == "Leaflet"
+    @test symbol(leaflet[1]) == "LeafletSegment"
+    @test leaflet.leaflet_rank == 0.5
+    @test leaflet.length ≈ 0.7471756197471424u"m"
+    @test leaflet.offset == 0.0
+    @test leaflet.plane == 1
+    @test leaflet.relative_position == 0.5
+    # @test leaflet.rot_bearer_x ≈ 38.10350146807654 # This one has randomness baked into it
+    @test leaflet.rot_bearer_z ≈ 71.35581494643947
+    @test leaflet.side == 1
+    @test leaflet.width ≈ 0.04985922542234243u"m"
+    @test leaflet.rot_local_x == 10.0
+    @test leaflet.stiffness ≈ 1500.0
+    @test leaflet.tapering == 0.5
 end

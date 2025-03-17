@@ -85,6 +85,16 @@ function read_parameters(file)
         p["shear_modulus"] = add_unit(p["shear_modulus"], u"MPa")
     end
 
+    pressure_params = [
+        "elastic_modulus", "shear_modulus", "leaflet_stiffness", "leaflet_stiffness_sd"
+    ]
+
+    for param in pressure_params
+        if haskey(p, param)
+            p[param] = add_unit(p[param], u"MPa")
+        end
+    end
+
     # Apply units to biomechanical model parameters
     if haskey(p, "biomechanical_model")
         if haskey(p["biomechanical_model"], "angle_max")

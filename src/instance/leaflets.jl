@@ -100,7 +100,8 @@ function create_single_leaflet(
             "Leaflet",
             index,
             scale
-        )
+        ),
+        Dict{Symbol,Any}()
     )
     unique_mtg_id[] += 1
 
@@ -153,7 +154,7 @@ function create_single_leaflet(
         if leaf_rank < 1
             h_angle = 0.0
         end
-        stiffness = 10000 + (2.0 - leaf_rank) * 20000
+        stiffness = 10000u"MPa" + (2.0 - leaf_rank) * 20000u"MPa"
     end
 
     # Set the angles and other attributes
@@ -256,21 +257,22 @@ function create_leaflet_segments(
 
     # Calculate scaling factor as in the Java version
     beta_distribution_area = beta_distribution_norm_integral(xm, ym)
-    piecewise_function_area = piecewise_function_area(control_points_x, control_points_y)
-    scaling_factor = beta_distribution_area / piecewise_function_area
+    piecewise_area = piecewise_linear_area(control_points_x, control_points_y)
+    scaling_factor = beta_distribution_area / piecewise_area
 
     # Calculate bending angles for each segment based on Young's modulus model
-    # Convert stiffness to young modulus
     v_angle_rad = deg2rad(leaflet_node["rot_bearer_x"])
 
     # Calculate segment angles
     segment_angles = calculate_segment_angles(
-        stiffness,
+        ustrip(stiffness),
         v_angle_rad,
-        leaflet_length,
+        ustrip(leaflet_length),
         tapering,
         x
     )
+    # Note: we must stip the units because this biomechanical model is not strictly based on physics, but rather a simplified model
+    # that produces visually plausible beam bending without requiring comprehensive physical parameters.
 
     last_parent = leaflet_node
 
