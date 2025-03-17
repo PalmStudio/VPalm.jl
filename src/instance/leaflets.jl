@@ -5,6 +5,7 @@ function create_leaflets_for_side(
     scale,
     leaf_rank,
     rachis_length,
+    nb_rachis_sections,
     leaflets_position,
     leaflets,
     leaflet_max_length,
@@ -13,7 +14,6 @@ function create_leaflets_for_side(
     parameters;
     rng
 )
-    nb_rachis_sections = parameters["rachis_nb_segments"]
     rachis_segment_length = rachis_length / nb_rachis_sections
     nb_leaflets = length(leaflets_position)
 
@@ -38,15 +38,16 @@ function create_leaflets_for_side(
             NodeMTG(
                 "+",
                 "Leaflet",
-                index + i,  # Generate unique index
+                i,
                 scale
             )
         )
         unique_mtg_id[] += 1
 
         # Set leaflet attributes
-        leaflet_node["offset"] = offset
-        leaflet_node["plane"] = leaflets.plane[i]
+        leaflet_node.offset = offset
+        leaflet_node.plane = leaflets.plane[i]
+        leaflet_node.side = side
 
         # Calculate normalized leaflet rank and relative position
         norm_leaflet_rank = (i - 1) / nb_leaflets
@@ -150,7 +151,7 @@ function create_leaflets_for_side(
                 NodeMTG(
                     j == 1 ? "/" : "<",
                     "LeafletSegment",
-                    index + i * 100 + j,  # Generate unique index for segment
+                    j,
                     scale_leaflet_segments
                 )
             )
@@ -194,16 +195,14 @@ function leaflets(unique_mtg_id, rachis_node, index, scale, leaf_rank, rachis_le
 
     # Create leaflets for right side (side = 1)
     create_leaflets_for_side(
-        unique_mtg_id, rachis_node, index, scale, leaf_rank, rachis_length,
-        leaflets_position, leaflets, leaflet_max_length, leaflet_max_width,
-        1, parameters, rng=rng
+        unique_mtg_id, rachis_node, index, scale, leaf_rank, rachis_length, parameters["rachis_nb_segments"],
+        leaflets_position, leaflets, leaflet_max_length, leaflet_max_width, 1, parameters, rng=rng
     )
 
     # Create leaflets for left side (side = -1)
     create_leaflets_for_side(
-        unique_mtg_id, rachis_node, index + nb_leaflets, scale, leaf_rank, rachis_length,
-        leaflets_position, leaflets, leaflet_max_length, leaflet_max_width,
-        -1, parameters, rng=rng
+        unique_mtg_id, rachis_node, index + nb_leaflets, scale, leaf_rank, rachis_length, parameters["rachis_nb_segments"],
+        leaflets_position, leaflets, leaflet_max_length, leaflet_max_width, -1, parameters, rng=rng
     )
 
     # Return complete leaflet data including positions
