@@ -113,6 +113,7 @@ end
     beta_distribution_norm(x, xm, ym)
 
 Calculate the normalized beta distribution value at point x.
+This is the exact implementation from the Java version.
 
 # Arguments
 - `x`: Position [0 to 1].
@@ -127,6 +128,55 @@ function beta_distribution_norm(x, xm, ym)
         return 0.0
     end
 
-    # Bell curve approximation
-    return ym * (x / xm) * ((1 - x) / (1 - xm)) * 4
+    # Direct port of the Java implementation
+    q = ((1 - xm) * log(ym * xm * (1 - xm)) + (2 * xm - 1) * log(xm)) /
+        (xm * log(xm) + (1 - xm) * log(1 - xm))
+    p = (1 - 2 * xm + q * xm) / (1 - xm)
+
+    return (1 / ym) * (x^(p - 1)) * ((1 - x)^(q - 1))
+end
+
+"""
+    beta_distribution_norm_integral(xm, ym)
+
+Calculate the integral (area) of the normalized beta distribution.
+Equivalent to betaDistributionNormIntegral in the Java version.
+
+# Arguments
+- `xm`: Mode of the beta distribution.
+- `ym`: Value of the function at the mode.
+
+# Returns
+- Approximate area under the beta distribution curve.
+"""
+function beta_distribution_norm_integral(xm, ym)
+    area = 0.0
+    # Use 100 points for numerical integration as in Java version
+    for i in 1:100
+        x = i / 100.0
+        area += beta_distribution_norm(x, xm, ym)
+    end
+    return area / 100.0
+end
+
+"""
+    piecewise_function_area(x, y)
+
+Calculate the area under a piecewise linear function.
+Equivalent to PiecewiseFunctionArea in the Java version.
+
+# Arguments
+- `x`: Array of x-coordinates of the control points.
+- `y`: Array of y-coordinates of the control points.
+
+# Returns
+- Area under the piecewise linear function.
+"""
+function piecewise_function_area(x, y)
+    area = 0.0
+    for i in 2:length(x)
+        # Trapezoidal rule for area calculation
+        area += (x[i] - x[i-1]) * (y[i] + y[i-1]) / 2.0
+    end
+    return area
 end

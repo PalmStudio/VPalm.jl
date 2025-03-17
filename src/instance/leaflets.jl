@@ -83,10 +83,6 @@ function create_leaflets_for_side(
         stiffness = parameters["leaflet_stiffness"] + rand(rng) * parameters["leaflet_stiffness_sd"]
 
         # Set the angles and other attributes
-        leaflet_node["rot_bearer_x"] = v_angle
-        leaflet_node["rot_bearer_z"] = h_angle
-        leaflet_node["stiffness"] = stiffness
-        leaflet_node["tapering"] = 0.5
         leaflet_node["side"] = side
         leaflet_node["relative_position"] = leaflet_relative_pos
         leaflet_node["leaflet_rank"] = norm_leaflet_rank
@@ -101,11 +97,12 @@ function create_leaflets_for_side(
                 h_angle = 0.0
             end
             stiffness = 10000 + (2.0 - leaf_rank) * 20000
-
-            leaflet_node["rot_bearer_x"] = v_angle
-            leaflet_node["rot_bearer_z"] = h_angle
-            leaflet_node["stiffness"] = stiffness
         end
+
+        leaflet_node["rot_bearer_x"] = v_angle
+        leaflet_node["rot_bearer_z"] = h_angle
+        leaflet_node["stiffness"] = stiffness
+        leaflet_node["tapering"] = 0.5
 
         # Set leaflet twist
         leaflet_twist = 10 * side
@@ -137,13 +134,30 @@ function create_leaflets_for_side(
         x = [0.01, xm * 9 / 20, xm * 7 / 4, xm + (1 - xm) * 7 / 10, xm + (1 - xm) * 11 / 12, 1.0]
         y = zeros(length(x) - 1)
 
+        # Create a PiecewiseFunction equivalent (as set of control points)
+        control_points_x = Vector{Float64}(undef, length(x))
+        control_points_y = Vector{Float64}(undef, length(x))
+
+        for j in 1:(length(x)-1)
+            y[j] = beta_distribution_norm(x[j], xm, ym)
+            control_points_x[j] = x[j]
+            control_points_y[j] = y[j]
+            # Add the last point to ensure the function goes to zero at x=1
+            if j == length(x) - 2
+                control_points_x[j+1] = 1.0
+                control_points_y[j+1] = 0.0
+            end
+        end
+
+        # Calculate scaling factor as in the Java version
+        beta_distribution_area = beta_distribution_norm_integral(xm, ym)
+        piecewise_function_area = piecewise_function_area(control_points_x, control_points_y)
+        scaling_factor = beta_distribution_area / piecewise_function_area
+
         last_parent = leaflet_node
         # Calculate y values and create segments
         scale_leaflet_segments = scale + 1
         for j in 1:(length(x)-1)
-            # Calculate normalized beta distribution value at point x[j]
-            y[j] = beta_distribution_norm(x[j], xm, ym)
-
             # Create a leaflet segment node
             segment_node = Node(
                 unique_mtg_id[],
@@ -156,6 +170,9 @@ function create_leaflets_for_side(
                 )
             )
             unique_mtg_id[] += 1
+
+            # Apply scaling factor as in Java version
+            y[j] *= scaling_factor
 
             # Set segment width and length
             segment_node["width"] = y[j] * width_max
