@@ -38,7 +38,8 @@ rng = Random.MersenneTwister(1)
     zenithal_cpoint_angle = VPalm.c_point_angle(leaf_rank, parameters["cpoint_decli_intercept"], parameters["cpoint_decli_slope"], parameters["cpoint_angle_SDP"])
 
     mtg = Node(NodeMTG("/", "Plant", 1, 1))
-    petiole_node = VPalm.petiole(2, mtg, 1, 5, rachis_length, zenithal_insertion_angle, zenithal_cpoint_angle, parameters; rng=rng)
+    unique_id = Ref(2)
+    petiole_node = VPalm.petiole(unique_id, mtg, 1, 5, rachis_length, zenithal_insertion_angle, zenithal_cpoint_angle, parameters; rng=rng)
     df_petiole_sections = DataFrame(petiole_node[1], [:width, :height, :length, :zenithal_angle, :azimuthal_angle])
 
     # All petiole sections have the same length:
