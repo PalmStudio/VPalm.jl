@@ -78,6 +78,12 @@ end
     )
 
 
+    segment_position = leaflet[1].segment_boundaries * leaflet.length
+    # Compute the length of each segment from each end position and previous segment end position:
+    segment_length = diff([0.0u"m"; segment_position])
+    @test sum(segment_length) ≈ leaflet.length
+    @test sum(descendants(leaflet, :length)) ≈ leaflet.length
+
     @test length(leaflet) == 6 # One node for the leaflet, 5 for the leaflet segments
     @test symbol(leaflet) == "Leaflet"
     @test symbol(leaflet[1]) == "LeafletSegment"

@@ -128,7 +128,6 @@ function beta_distribution_norm(x, xm, ym)
         return 0.0
     end
 
-    # Direct port of the Java implementation
     q = ((1 - xm) * log(ym * xm * (1 - xm)) + (2 * xm - 1) * log(xm)) /
         (xm * log(xm) + (1 - xm) * log(1 - xm))
     p = (1 - 2 * xm + q * xm) / (1 - xm)

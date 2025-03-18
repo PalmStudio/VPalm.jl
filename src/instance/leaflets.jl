@@ -27,8 +27,8 @@ Create leaflets for one side of the palm frond rachis.
 - `nb_rachis_sections`: Number of segments dividing the rachis
 - `leaflets_position`: Array of positions along the rachis for each leaflet
 - `leaflets`: NamedTuple with leaflet grouping information (group, group_size, plane)
-- `leaflet_max_length`: Maximum length of leaflets
-- `leaflet_max_width`: Maximum width of leaflets
+- `leaflet_max_length`: Maximum length of leaflets (length of the longest leaflet)
+- `leaflet_max_width`: Maximum width of leaflets (width of the widest leaflet)
 - `side`: Side of rachis (1=right, -1=left)
 - `parameters`: Model parameters
 - `rng`: Random number generator
@@ -79,7 +79,6 @@ function create_leaflets_for_side!(
         # Create a single leaflet and add it as a child to the rachis section
         leaflet_node = create_single_leaflet(
             unique_mtg_id,
-            rachis_section_node,   # Parent node
             i,                     # Index for node identification
             scale,                 # Scale for the leaflet
             leaf_rank,
@@ -101,7 +100,6 @@ end
 """
     create_single_leaflet(
         unique_mtg_id,
-        parent_node,
         index,
         scale,
         leaf_rank,
@@ -121,7 +119,6 @@ Create a single leaflet with properly computed angles, dimensions and segments.
 # Arguments
 
 - `unique_mtg_id`: Reference to the unique ID counter
-- `parent_node`: Optional parent node to attach the leaflet to (can be nothing for standalone leaflets)
 - `index`: Index for the leaflet node (for identification in MTG)
 - `scale`: MTG scale level for the leaflet
 - `leaf_rank`: Rank of the leaf (affects unfolding for young leaves)
@@ -129,8 +126,8 @@ Create a single leaflet with properly computed angles, dimensions and segments.
 - `norm_leaflet_rank`: Normalized rank of the leaflet (0 to 1)
 - `plane`: Plane type of leaflet (1=high/upward, 0=medium/horizontal, -1=low/downward)
 - `side`: Side of the leaf (1=right, -1=left)
-- `leaflet_max_length`: Maximum leaflet length in meters
-- `leaflet_max_width`: Maximum leaflet width in meters
+- `leaflet_max_length`: Maximum leaflet length in meters (length of the longest leaflet)
+- `leaflet_max_width`: Maximum leaflet width in meters (width of the widest leaflet)
 - `parameters`: Model parameters dictionary
 - `offset`: Offset from the start of parent node (when applicable)
 - `rng`: Random number generator
@@ -141,7 +138,6 @@ The created leaflet node with all its segment children
 """
 function create_single_leaflet(
     unique_mtg_id,
-    parent_node,
     index,
     scale,
     leaf_rank,
@@ -158,20 +154,13 @@ function create_single_leaflet(
     # Create a new leaflet node with unique ID
     leaflet_node = Node(
         unique_mtg_id[],
-        parent_node,  # Can be nothing for standalone leaflets
-        NodeMTG(
-            "+",  # The leaflet branches onto the rachis
-            "Leaflet",
-            index,
-            scale
-        )
+        NodeMTG("+", "Leaflet", index, scale),
+        Dict{Symbol,Any}()
     )
     unique_mtg_id[] += 1
 
     # Set basic leaflet attributes
-    if !isnothing(offset)
-        leaflet_node.offset = offset
-    end
+    leaflet_node.offset = offset
     leaflet_node.plane = plane  # Controls vertical orientation type
     leaflet_node.side = side    # Controls which side of rachis
 
@@ -233,13 +222,14 @@ function create_single_leaflet(
     leaflet_twist = 10 * side
     leaflet_node["twist_angle"] = leaflet_twist
 
-    # Calculate actual leaflet length and width based on relative position along rachis
+    # Calculate actual leaflet length and width based on relative position along rachis and length of the longest leaflet
     leaflet_length = leaflet_max_length * relative_leaflet_length(
         leaflet_relative_pos,
         parameters["relative_length_first_leaflet"],
         parameters["relative_length_last_leaflet"],
         parameters["relative_position_leaflet_max_length"]
     )
+    # Same for width
     width_max = leaflet_max_width * relative_leaflet_width(
         leaflet_relative_pos,
         parameters["relative_width_first_leaflet"],
@@ -316,7 +306,7 @@ function create_leaflet_segments!(
     # Define leaflet segment boundaries along length (5 segments as in Java)
     # These carefully positioned segments create a more realistic leaflet shape
     segment_boundaries = [
-        0.01,                                                   # Start (slightly offset from base)
+        0.01,                                                  # Start, slightly offset from base to get non-zero width and angles
         position_max_width * 9 / 20,                           # First segment boundary (before max width)
         position_max_width * 7 / 4,                            # Second boundary (after max width)
         position_max_width + (1 - position_max_width) * 7 / 10, # Third boundary
@@ -346,7 +336,7 @@ function create_leaflet_segments!(
     # Calculate scaling factor to ensure correct area proportion
     # This makes the piecewise linear approximation match the theoretical beta distribution area
     beta_distribution_area = beta_distribution_norm_integral(position_max_width, width_at_max)
-    piecewise_function_area = piecewise_function_area(control_points_x, control_points_y)
+    piecewise_function_area = piecewise_linear_area(control_points_x, control_points_y)
     scaling_factor = beta_distribution_area / piecewise_function_area
 
     # Convert vertical insertion angle to radians for bending calculations
@@ -365,8 +355,11 @@ function create_leaflet_segments!(
     # Start with leaflet node as the parent of first segment
     last_parent = leaflet_node
 
+    # Force the first segment to be at the base of the leaflet
+    segment_boundaries[1] = 0.0
+
     # Create each leaflet segment with appropriate dimensions and bending
-    for j in 1:(length(segment_boundaries)-1)
+    for j in 1:length(segment_boundaries)-1
         # Create a leaflet segment node connected to previous segment
         segment_node = Node(
             unique_mtg_id[],
@@ -386,6 +379,7 @@ function create_leaflet_segments!(
         # Set segment width and length
         segment_node["width"] = segment_widths[j] * width_max
         segment_node["length"] = (segment_boundaries[j+1] - segment_boundaries[j]) * leaflet_length
+        segment_node["segment_boundaries"] = segment_boundaries
 
         # Apply the bending angle based on biomechanical model
         # Direction depends on which side of the rachis the leaflet is on
