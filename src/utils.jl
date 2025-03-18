@@ -160,7 +160,7 @@ function beta_distribution_norm_integral(xm, ym)
 end
 
 """
-    piecewise_function_area(x, y)
+    piecewise_linear_area(x, y)
 
 Calculate the area under a piecewise linear function.
 Equivalent to PiecewiseFunctionArea in the Java version.
@@ -172,7 +172,7 @@ Equivalent to PiecewiseFunctionArea in the Java version.
 # Returns
 - Area under the piecewise linear function.
 """
-function piecewise_function_area(x, y)
+function piecewise_linear_area(x, y)
     area = 0.0
     for i in 2:length(x)
         # Trapezoidal rule for area calculation
