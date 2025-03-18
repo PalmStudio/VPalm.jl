@@ -28,14 +28,13 @@ include("IO/parameters_IO.jl")
 # Entry point:
 include("architecture/mtg_skeleton.jl")
 
-# Biomechanical model
-
-include("biomechanic/xyz_dist_angles.jl")
-include("biomechanic/inertia_flex_rota.jl")
-include("biomechanic/interpolate_points.jl")
-include("biomechanic/bend.jl")
-include("biomechanic/unbend.jl")
-include("biomechanic/young_modulus.jl")
+# Biomechanical models
+include("biomechanics/complete/xyz_dist_angles.jl")
+include("biomechanics/complete/inertia_flex_rota.jl")
+include("biomechanics/complete/interpolate_points.jl")
+include("biomechanics/complete/bend.jl")
+include("biomechanics/complete/unbend.jl")
+include("biomechanics/simplified/young_modulus.jl")
 
 # Allometries:
 include("allometries/stem.jl")
