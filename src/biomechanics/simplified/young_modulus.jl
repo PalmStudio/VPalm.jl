@@ -107,6 +107,8 @@ Calculate the angles for each segment of a bent leaflet based on the Young's mod
 - Array of segment angles in radians
 """
 function calculate_segment_angles(young_modulus, initial_angle, leaflet_length, tapering, segment_positions)
+    @assert length(segment_positions) > 1 "`segment_positions` must contain more than one element."
+
     total_deflection = final_angle(young_modulus, initial_angle, leaflet_length, tapering)
 
     # Calculate angles at each segment boundary
