@@ -90,7 +90,7 @@ end
     @test leaflet.rot_bearer_z ≈ 71.35581494643947
     @test leaflet.side == 1
     @test leaflet.width ≈ 0.04985922542234243u"m"
-    @test leaflet.rot_local_x == 10.0
+    @test leaflet.twist_angle == 10.0
     @test leaflet.stiffness ≈ 1500.0
     @test leaflet.tapering == 0.5
 end
