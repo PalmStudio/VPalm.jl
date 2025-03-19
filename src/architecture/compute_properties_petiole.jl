@@ -98,12 +98,11 @@ The `petiole_node` should have the following attributes:
 - `section_insertion_angle`: the zenithal angle of insertion between the petioles sections (°)
 - `azimuthal_angle`: the azimuthal angle at the insertion (°)
 """
-function compute_properties_petiole_section!(petiole_node, section_node, index, nb_sections)
+function compute_properties_petiole_section!(petiole_node, section_node, index, nb_sections, segment_insertion_angle)
     petiole_section = properties_petiole_section(
         index, nb_sections, petiole_node.width_base, petiole_node.height_base,
         petiole_node.width_cpoint, petiole_node.height_cpoint, petiole_node.section_length,
-        petiole_node.zenithal_insertion_angle, petiole_node.section_insertion_angle,
-        petiole_node.azimuthal_angle
+        segment_insertion_angle, petiole_node.azimuthal_angle
     )
 
     section_node.width = petiole_section.width
@@ -149,17 +148,17 @@ A vector of dimensions for each section, given as a named tuple:
 function properties_petiole_section(
     index, nb_sections, width_base, height_base,
     width_cpoint, height_cpoint, petiole_section_length,
-    petiole_insertion_angle, petiole_section_insertion_angle,
+    segment_insertion_angle,
     azimuthal_angle
 )
     relative_position = index / nb_sections
 
+    zenithal_angle = segment_insertion_angle
+
     if index == 1
-        zenithal_angle = petiole_insertion_angle
         section_width = width_base
         section_height = height_base
     else
-        zenithal_angle = petiole_section_insertion_angle
         section_width = petiole_width(relative_position, width_base, width_cpoint)
         section_height = petiole_height(relative_position, height_base, height_cpoint)
     end

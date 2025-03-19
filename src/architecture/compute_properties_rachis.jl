@@ -165,6 +165,7 @@ function biomechanical_properties_rachis(
     points = Vector{typeof(Meshes.Point(0.0, 0.0, 0.0))}(undef, npoints)
     for n in eachindex(distances)
         # Note: zenithal_cpoint_angle is in degrees, so we use cosd instead of cos
+        # zenithal_cpoint_angle is at 0° when vertical (along the Z axis), or 90° when horizontal (along the X axis)
         position_ref = Meshes.Point(0.0u"m", 0.0u"m", distances[n])
         points[n] = Meshes.Rotate(RotY(deg2rad(zenithal_cpoint_angle)))(position_ref)
     end
