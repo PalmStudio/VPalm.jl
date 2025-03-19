@@ -9,7 +9,7 @@ function rachis(unique_mtg_id, petiole_node, index, scale, leaf_rank, rachis_len
         rachis_length,
         parameters["leaflet_length_at_b_intercept"], parameters["leaflet_length_at_b_slope"], parameters["relative_position_bpoint"],
         parameters["relative_position_bpoint_sd"], parameters["relative_length_first_leaflet"], parameters["relative_length_last_leaflet"], parameters["relative_position_leaflet_max_length"],
-        parameters["rachis_fresh_weight"][leaf_rank] / 1000.0, # Expected in kg
+        parameters["rachis_fresh_weight"][leaf_rank], # Expected in kg
         #! change the way we index in the rachis_fresh_weight vector, because we have values for the spears too in here, so rank <= 0
         leaf_rank, height_cpoint, zenithal_cpoint_angle, nb_segments,
         parameters["height_rachis_tappering"],
