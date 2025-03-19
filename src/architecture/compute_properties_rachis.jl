@@ -166,7 +166,7 @@ function biomechanical_properties_rachis(
     for n in eachindex(distances)
         # Note: zenithal_cpoint_angle is in degrees, so we use cosd instead of cos
         position_ref = Meshes.Point(0.0u"m", 0.0u"m", distances[n])
-        points[n] = Meshes.Rotate(RotY(-deg2rad(zenithal_cpoint_angle - 90.0)))(position_ref)
+        points[n] = Meshes.Rotate(RotY(deg2rad(zenithal_cpoint_angle)))(position_ref)
     end
 
     step = rachis_length / (nb_sections - 1)
