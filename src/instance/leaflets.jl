@@ -196,7 +196,6 @@ function create_single_leaflet(
     stiffness = parameters["leaflet_stiffness"] + rand(rng) * parameters["leaflet_stiffness_sd"]
 
     # Set leaflet attribute data
-    leaflet_node["side"] = side
     leaflet_node["relative_position"] = leaflet_relative_pos
     leaflet_node["leaflet_rank"] = norm_leaflet_rank
 
@@ -213,14 +212,14 @@ function create_single_leaflet(
     end
 
     # Set the angles and other mechanical attributes
-    leaflet_node["rot_bearer_x"] = v_angle
-    leaflet_node["rot_bearer_z"] = h_angle
+    leaflet_node["zenithal_angle"] = v_angle # defaultRotBearerXAttribute
+    leaflet_node["azimuthal_angle"] = h_angle # defaultRotBearerZAttribute
     leaflet_node["stiffness"] = stiffness
     leaflet_node["tapering"] = 0.5  # Default tapering factor
 
     # Set leaflet twist (rotation around its own axis)
     leaflet_twist = 10 * side
-    leaflet_node["twist_angle"] = leaflet_twist
+    leaflet_node["torsion_angle"] = leaflet_twist # defaultRotLocalXAttribute
 
     # Calculate actual leaflet length and width based on relative position along rachis and length of the longest leaflet
     leaflet_length = leaflet_max_length * relative_leaflet_length(
@@ -340,7 +339,7 @@ function create_leaflet_segments!(
     scaling_factor = beta_distribution_area / piecewise_function_area
 
     # Convert vertical insertion angle to radians for bending calculations
-    initial_angle_rad = deg2rad(leaflet_node["rot_bearer_x"])
+    initial_angle_rad = deg2rad(leaflet_node["zenithal_angle"])
 
     # Calculate bending angles for each segment using Young's modulus model
     # This simulates how the leaflet bends under its own weight based on stiffness
@@ -387,7 +386,7 @@ function create_leaflet_segments!(
         if leaflet_node["side"] < 0  # Left side
             bend_angle *= -1  # Mirror angle for left side leaflets
         end
-        segment_node["stiffness_angle"] = bend_angle
+        segment_node["zenithal_angle"] = bend_angle # Stiffness angle
 
         # For the last segment (tip), set top width and height to 0 for proper tapering to a point
         if j == length(segment_boundaries) - 2
