@@ -31,7 +31,7 @@ Use of the biomechanical model to compute the properties of the rachis.
 - `zenithal_cpoint_angle`: zenithal angle of the C point (°)
 - `nb_sections`: number of sections to compute the bending
 - `height_rachis_tappering`: tappering factor for the rachis height
-- `points`: number of points to compute the bending
+- `npoints_computed`: number of points to compute the bending
 - `iterations`: number of iterations to compute the bending
 - `angle_max`: maximum angle to compute the bending (°)
 - `rng`: the random number generator
@@ -60,7 +60,7 @@ function biomechanical_properties_rachis(
     relative_position_bpoint_sd, relative_length_first_leaflet, relative_length_last_leaflet, relative_position_leaflet_max_length,
     rachis_fresh_weight, rank, height_cpoint, zenithal_cpoint_angle, nb_sections,
     height_rachis_tappering,
-    points, iterations, angle_max,
+    npoints_computed, iterations, angle_max,
     rng
 )
 
@@ -162,20 +162,28 @@ function biomechanical_properties_rachis(
     y = fill(0.0u"m", 5)
     z = fill(0.0u"m", 5)
 
+    points = Vector{typeof(Meshes.Point(0.0, 0.0, 0.0))}(undef, npoints)
     for n in eachindex(distances)
-        x[n] = cosd(zenithal_cpoint_angle) * distances[n] # Note: zenithal_cpoint_angle is in degrees, so we use cosd instead of cos
-        z[n] = sind(zenithal_cpoint_angle) * distances[n]
+        # Note: zenithal_cpoint_angle is in degrees, so we use cosd instead of cos
+        position_ref = Meshes.Point(0.0u"m", 0.0u"m", distances[n])
+        points[n] = Meshes.Rotate(RotY(-deg2rad(zenithal_cpoint_angle - 90.0)))(position_ref)
     end
 
     step = rachis_length / (nb_sections - 1)
-    # @show type width_bend height_bend initial_torsion_vec x y z mass mass_right mass_left distance_application elastic_modulus shear_modulus
+    # @show type width_bend height_bend initial_torsion_vec x y z mass mass_right mass_left distance_application elastic_modulus shear_modulus step npoints iterations
     # error("stop here")
+
+    # extract the points coordinates to give to bend:
+    x = [Meshes.coords(p).x for p in points]
+    y = [Meshes.coords(p).y for p in points]
+    z = [Meshes.coords(p).z for p in points]
+    #! Update bend so we can pass the points directly
 
     # Call the bend function, which returns a vector of arrays:
     # bending -> { PtsX, PtsY, PtsZ, PtsDist, PtsAglXY, PtsAglXZ, PtsAglTor }
     bending = bend(
         type, width_bend, height_bend, initial_torsion_vec, x, y, z, mass, mass_right, mass_left,
-        distance_application, elastic_modulus, shear_modulus, step, points, iterations;
+        distance_application, elastic_modulus, shear_modulus, step, npoints_computed, iterations;
         verbose=false, all_points=true, angle_max=angle_max
     )
 
@@ -185,6 +193,7 @@ function biomechanical_properties_rachis(
     y_coordinates = [Meshes.coords(p).y for p in bending.points]
     z_coordinates = [Meshes.coords(p).z for p in bending.points]
 
+    #! update this function to return the points directly
     return (
         length=fill(step, length(x_coordinates)), points_positions=bending.length, bending=points_bending, deviation=bending.angle_xz, torsion=bending.torsion,
         x=x_coordinates, y=y_coordinates, z=z_coordinates
