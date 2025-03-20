@@ -22,6 +22,7 @@ import Unitful: @u_str, ustrip, unit, NoUnits, uconvert, Quantity
 # For the biomechanical model
 import Interpolations: linear_interpolation
 
+include("units.jl")
 include("utils.jl")
 include("IO/parameters_IO.jl")
 
@@ -53,8 +54,10 @@ include("architecture/compute_properties_rachis.jl")
 include("geometry/read_ply.jl")
 include("geometry/snag.jl")
 include("geometry/cylinder.jl")
+include("geometry/plane.jl")
 include("geometry/add_geometry.jl")
 include("geometry/sections.jl")
+include("geometry/leaflets.jl")
 
 # Instance (create an organ with architecture + geometry)
 include("instance/petiole.jl")
