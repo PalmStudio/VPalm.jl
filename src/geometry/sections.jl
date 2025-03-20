@@ -21,7 +21,7 @@ Create the petiole/rachis sections geometry based on their dimensions.
 """
 function add_section_geometry!(
     node, refmesh_cylinder, internode_width=0.0u"m", internode_height=0.0u"m", internode_phyllotaxy=0.0u"°", stem_bending=0.0u"°",
-    type::String=nothing, position_section=Ref(Meshes.Point(0.0, 0.0, 0.0)), angles=[0.0u"°", 0.0u"°", 0.0u"°"],
+    type=nothing, position_section=Ref(Meshes.Point(0.0, 0.0, 0.0)), angles=[0.0u"°", 0.0u"°", 0.0u"°"],
 )
 
     # Check units and convert to meters and degrees:

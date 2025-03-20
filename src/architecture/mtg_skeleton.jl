@@ -72,7 +72,8 @@ function mtg_skeleton(parameters; rng=Random.MersenneTwister(parameters["seed"])
         # Loop on present leaves
         if leaf[:is_alive]
             # Build the petiole
-            petiole_node = petiole(unique_mtg_id, leaf, i, 5, leaf.rachis_length, leaf.zenithal_insertion_angle, leaf.zenithal_cpoint_angle, parameters; rng=rng)
+            petiole_node = petiole(unique_mtg_id, i, 5, leaf.rachis_length, leaf.zenithal_insertion_angle, leaf.zenithal_cpoint_angle, parameters; rng=rng)
+            addchild!(leaf, petiole_node)
             # Build the rachis
             rachis_node = rachis(unique_mtg_id, petiole_node, i, 5, leaf.rank, leaf.rachis_length, petiole_node.height_cpoint, petiole_node.width_cpoint, leaf.zenithal_cpoint_angle, parameters; rng=rng)
             # Add the leaflets to the rachis:

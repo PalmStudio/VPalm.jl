@@ -56,16 +56,16 @@ function compute_properties_petiole!(
 
     petiole = petiole_allometries(petiole_rachis_ratio_mean, petiole_rachis_ratio_sd, rachis_length, width_base, height_base, cpoint_width_intercept, cpoint_width_slope, cpoint_height_width_ratio, rng)
 
-    petiole_node[:length] = petiole.length
-    petiole_node[:azimuthal_angle] = petiole.azimuthal_angle
-    petiole_node[:width_base] = petiole.width_base
-    petiole_node[:height_base] = petiole.height_base
-    petiole_node[:width_cpoint] = petiole.width_cpoint
-    petiole_node[:height_cpoint] = petiole.height_cpoint
-    petiole_node[:zenithal_insertion_angle] = insertion_angle
-    petiole_node[:zenithal_cpoint_angle] = zenithal_cpoint_angle
-    petiole_node[:section_length] = petiole.length / nb_sections
-    petiole_node[:section_insertion_angle] = (zenithal_cpoint_angle - insertion_angle) / nb_sections
+    petiole_node.length = petiole.length
+    petiole_node.azimuthal_angle = petiole.azimuthal_angle
+    petiole_node.width_base = petiole.width_base
+    petiole_node.height_base = petiole.height_base
+    petiole_node.width_cpoint = petiole.width_cpoint
+    petiole_node.height_cpoint = petiole.height_cpoint
+    petiole_node.zenithal_insertion_angle = insertion_angle
+    petiole_node.zenithal_cpoint_angle = zenithal_cpoint_angle
+    petiole_node.section_length = petiole.length / nb_sections
+    petiole_node.section_insertion_angle = (zenithal_cpoint_angle - insertion_angle) / nb_sections
 
     return nothing
 end

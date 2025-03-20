@@ -22,8 +22,8 @@ Make a leaf petiole.
     - "petiole_rachis_ratio_sd": its standard deviation
     - "petiole_nb_segments": the number of segments used to discretize the petiole
 """
-function petiole(unique_mtg_id, parent_node::Node, index, scale, rachis_length, zenithal_insertion_angle, zenithal_cpoint_angle, parameters; rng=Random.MersenneTwister(1))
-    petiole_node = Node(unique_mtg_id[], parent_node, NodeMTG("/", "Petiole", index, scale))
+function petiole(unique_mtg_id, index, scale, rachis_length, zenithal_insertion_angle, zenithal_cpoint_angle, parameters; rng=Random.MersenneTwister(1))
+    petiole_node = Node(unique_mtg_id[], NodeMTG("/", "Petiole", index, scale), Dict{String,Any}())
     unique_mtg_id[] += 1
     compute_properties_petiole!(
         petiole_node,
