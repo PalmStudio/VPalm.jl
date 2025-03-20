@@ -75,7 +75,7 @@ function compute_properties_leaf!(node, index, nb_internodes, nb_leaves_alive, p
                 c_point_angle(leaf_rank, parameters["cpoint_decli_intercept"], parameters["cpoint_decli_slope"], parameters["cpoint_angle_SDP"]; rng=rng),
                 node[:zenithal_insertion_angle]
             )
-        #! RV: I add this new thing were the zenithal cpoint angle cannot be lower than the insertion angle:
+        # RV: I add this new thing were the zenithal cpoint angle cannot be lower than the insertion angle. Note that the angle is relative to the vertical (z)
         # I do that because it would be weird if a leaf was going upward.
     end
 

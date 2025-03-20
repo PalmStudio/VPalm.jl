@@ -52,7 +52,7 @@ function read_parameters(file)
     # Apply angle units (degrees)
     angle_params = [
         "phyllotactic_angle_mean", "phyllotactic_angle_sd",
-        "leaf_max_angle", "leaf_inflection_angle",
+        "leaf_max_angle",
         "cpoint_decli_intercept",
         "cpoint_angle_SDP", "rachis_twist_initial_angle",
         "rachis_twist_initial_angle_sdp", "laminaAngle",

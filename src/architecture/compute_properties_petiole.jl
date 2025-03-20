@@ -165,7 +165,7 @@ function properties_petiole_section(
         zenithal_angle = petiole_section_insertion_angle
     end
 
-    deviation_angle = index == 2 ? azimuthal_angle : 0.0
+    deviation_angle = index == 2 ? azimuthal_angle : zero(typeof(azimuthal_angle))
 
     return (; width=section_width, height=section_height, length=petiole_section_length, zenithal_angle=zenithal_angle, azimuthal_angle=deviation_angle, torsion_angle=0.0)
 end
