@@ -35,7 +35,7 @@ rng = Random.MersenneTwister(1)
 
     rachis_length = VPalm.rachis_expansion(leaf_rank, parameters["rachis_final_lengths"][id])
     petiole_deviation_angle = VPalm.normal_deviation_draw(5, rng)
-    zenithal_cpoint_angle = VPalm.c_point_angle(leaf_rank, parameters["cpoint_decli_intercept"], parameters["cpoint_decli_slope"], parameters["cpoint_angle_SDP"])
+    zenithal_cpoint_angle = VPalm.c_point_angle(leaf_rank, parameters["cpoint_decli_intercept"], parameters["cpoint_decli_slope"], 0.0)
 
     mtg = Node(NodeMTG("/", "Plant", 1, 1))
     unique_id = Ref(2)
@@ -48,18 +48,17 @@ rng = Random.MersenneTwister(1)
     @test df_petiole_sections.width[end] == petiole_node.width_cpoint
     @test df_petiole_sections.height[1] == petiole_node.height_base
     @test df_petiole_sections.height[end] == petiole_node.height_cpoint
-    @test df_petiole_sections.zenithal_angle[1] == petiole_node.zenithal_insertion_angle
+    @test df_petiole_sections.zenithal_angle[1] ≈ 1.9024108875561778
+    @test petiole_node.zenithal_insertion_angle ≈ 0.2225360840971297
 
-    # The first petiole section always inserts with a 0.0 angle
-    @test df_petiole_sections.azimuthal_angle[1] == 0.0
-    # The second one may have a deviation though:
-    @test df_petiole_sections.azimuthal_angle[2] == petiole_node.azimuthal_angle
+    # The first petiole section always inserts with a given azimuthal angle:
+    @test df_petiole_sections.azimuthal_angle[1] == petiole_node.azimuthal_angle
     # And all subsequent sections are inserted as is on the second one:
-    @test all(df_petiole_sections.azimuthal_angle[3:end] .== 0.0)
+    @test all(df_petiole_sections.azimuthal_angle[2:end] .== 0.0)
 
     # The sum of all angles of the sections of the petiole is equal to the angle at C point, which is the 
     # angle at the tip of the petiole
-    @test sum(df_petiole_sections.zenithal_angle) ≈ petiole_node.zenithal_cpoint_angle
+    @test sum(df_petiole_sections.zenithal_angle[2:end]) ≈ petiole_node.zenithal_cpoint_angle - petiole_node.zenithal_insertion_angle
 
     # The length of all segments in the petiole is equal to the petiole length:
     @test sum(df_petiole_sections.length) ≈ petiole_node.length

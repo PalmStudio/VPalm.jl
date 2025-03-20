@@ -36,13 +36,12 @@ function petiole(unique_mtg_id, parent_node::Node, index, scale, rachis_length, 
     )
 
     last_parent = petiole_node
-    segment_insertion_angle = Ref(copy(petiole_node.zenithal_insertion_angle))
-
+    # segment_insertion_angle = Ref(copy(petiole_node.zenithal_insertion_angle))
     for p in 1:parameters["petiole_nb_segments"]
         petiole_segment_node = Node(unique_mtg_id[], last_parent, NodeMTG(p == 1 ? "/" : "<", "PetioleSegment", p, 6))
         unique_mtg_id[] += 1
-        compute_properties_petiole_section!(petiole_node, petiole_segment_node, p, parameters["petiole_nb_segments"], segment_insertion_angle[])
-        segment_insertion_angle[] += petiole_node[:section_insertion_angle]
+        compute_properties_petiole_section!(petiole_node, petiole_segment_node, p, parameters["petiole_nb_segments"])
+        # segment_insertion_angle[] += petiole_node[:section_insertion_angle]
         last_parent = petiole_segment_node
     end
 

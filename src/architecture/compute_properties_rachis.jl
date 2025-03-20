@@ -171,8 +171,6 @@ function biomechanical_properties_rachis(
     end
 
     step = rachis_length / (nb_sections - 1)
-    # @show type width_bend height_bend initial_torsion_vec x y z mass mass_right mass_left distance_application elastic_modulus shear_modulus step npoints iterations
-    # error("stop here")
 
     # extract the points coordinates to give to bend:
     x = [Meshes.coords(p).x for p in points]

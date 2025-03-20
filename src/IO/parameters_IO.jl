@@ -53,7 +53,7 @@ function read_parameters(file)
     angle_params = [
         "phyllotactic_angle_mean", "phyllotactic_angle_sd",
         "leaf_max_angle", "leaf_inflection_angle",
-        "cpoint_decli_intercept", "cpoint_decli_slope",
+        "cpoint_decli_intercept",
         "cpoint_angle_SDP", "rachis_twist_initial_angle",
         "rachis_twist_initial_angle_sdp", "laminaAngle",
         "leafletAxialAngleC", "leafletAxialAngleA",

@@ -36,7 +36,7 @@ The height at the C point is computed as the product of the width at the C point
 function petiole_allometries(petiole_rachis_ratio_mean, petiole_rachis_ratio_sd, rachis_length, width_base, height_base, cpoint_width_intercept, cpoint_width_slope, cpoint_height_width_ratio, rng)
     petiole_rachis_length_ratio = mean_and_sd(petiole_rachis_ratio_mean, petiole_rachis_ratio_sd; rng=rng)
     petiole_length = petiole_rachis_length_ratio * rachis_length
-    insertion_deviation_angle = normal_deviation_draw(5.0, rng)
+    insertion_deviation_angle = normal_deviation_draw(5.0u"°", rng) #! this should be a parameter. And we should be able to remove the randomness with an option.
     width_cpoint = width_at_cpoint(rachis_length, cpoint_width_intercept, cpoint_width_slope)
     height_cpoint = cpoint_height_width_ratio * width_cpoint
     #! These should be allometries relative to leaf length, because tiny leaves don't have big bases:
@@ -62,7 +62,7 @@ end
 
 
 """
-    c_point_angle(leaf_rank, cpoint_decli_intercept, cpoint_decli_slope, cpoint_angle_SDP)
+    c_point_angle(leaf_rank, cpoint_decli_intercept, cpoint_decli_slope, cpoint_angle_SDP; rng)
 
 Compute the angle at the C point of the leaf.
 
@@ -72,14 +72,17 @@ Compute the angle at the C point of the leaf.
 - `cpoint_decli_intercept`: Intercept of the linear relationship between leaf rank and C point declination
 - `cpoint_decli_slope`: Slope of the linear relationship
 - `cpoint_angle_SDP`: Standard deviation of the C point angle
+- `rng`: Random number generator
 
 # Returns
 
 The zenithal angle at the C point of the leaf (°)
 """
-function c_point_angle(leaf_rank, cpoint_decli_intercept, cpoint_decli_slope, cpoint_angle_SDP)
-    angle = linear(leaf_rank, cpoint_decli_intercept, cpoint_decli_slope) |> normal_deviation_draw |> abs
-    return leaf_rank < 3 ? 0.5 * angle : angle
+function c_point_angle(leaf_rank, cpoint_decli_intercept, cpoint_decli_slope, cpoint_angle_SDP; rng=Random.MersenneTwister(1))
+    angle = linear(leaf_rank, cpoint_decli_intercept, cpoint_decli_slope)
+    angle += normal_deviation_draw(cpoint_angle_SDP, rng) |> abs
+    angle = leaf_rank < 3 ? 0.5 * angle : angle
+    return add_unit(angle, unit(cpoint_decli_intercept))
 end
 
 """
