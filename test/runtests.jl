@@ -23,6 +23,10 @@ using Unitful, Meshes
         include("test-parameters_IO.jl")
     end
 
+    @testset "Units" begin
+        include("test-check_units.jl")
+    end
+
     @testset "Stem allometries" begin
         include("test-stem.jl")
     end
