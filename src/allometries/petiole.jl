@@ -82,7 +82,7 @@ function c_point_angle(leaf_rank, cpoint_decli_intercept, cpoint_decli_slope, cp
     angle = linear(leaf_rank, cpoint_decli_intercept, cpoint_decli_slope)
     angle += normal_deviation_draw(cpoint_angle_SDP, rng) |> abs
     angle = leaf_rank < 3 ? 0.5 * angle : angle
-    return add_unit(angle, unit(cpoint_decli_intercept))
+    return angle * unit(cpoint_decli_intercept)
 end
 
 """
