@@ -22,9 +22,10 @@ petiole_length = 10
 mass = 5.0u"g"
 @check_unit mass u"kg"   # Will convert g to kg
 """
-macro check_unit(variable, expected_unit, verbose=true)
-    var_name = string(variable)
+macro check_unit(variable, expected_unit, verbose=true, param_name=nothing)
+    in_var_name = string(variable)
     return quote
+        local var_name = isnothing($(esc(param_name))) ? $(in_var_name) : $(esc(param_name))
         local var = $(esc(variable))
         local exp_unit = $(esc(expected_unit))
         local is_verbose = $(esc(verbose))
@@ -33,7 +34,7 @@ macro check_unit(variable, expected_unit, verbose=true)
         if unit(var) == NoUnits
             # No units found, assign default
             if is_verbose
-                @warn "The `$($(var_name))` argument should have units, using $(exp_unit) as default."
+                @warn "The `$(var_name)` argument should have units, using $(exp_unit) as default."
             end
             var = var * exp_unit
         else
@@ -41,7 +42,7 @@ macro check_unit(variable, expected_unit, verbose=true)
             try
                 var = uconvert(exp_unit, var)
             catch e
-                error("Cannot convert $($(var_name)) from $(unit(var)) to $(exp_unit)")
+                error("Cannot convert $(var_name) from $(unit(var)) to $(exp_unit)")
             end
         end
 
