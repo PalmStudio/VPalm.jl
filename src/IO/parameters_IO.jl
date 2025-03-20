@@ -1,11 +1,12 @@
 """
-    read_parameters(file)
+    read_parameters(file; verbose=true)
 
 Reads a parameter file and returns the contents as an ordered dictionary.
 
 # Arguments
 
 - `file`: The path to the parameter file.
+- `verbose`: Whether to show warnings for units (default: true)
 
 # Returns
 
@@ -18,7 +19,7 @@ file = joinpath(dirname(dirname(pathof(VPalm))),"test","files","parameter_file.y
 read_parameters(file)
 ```
 """
-function read_parameters(file)
+function read_parameters(file; verbose=true)
     p = YAML.load_file(file; dicttype=OrderedCollections.OrderedDict{String,Any})
 
     # Convert integer parameters
@@ -44,7 +45,7 @@ function read_parameters(file)
 
     for param in length_params
         if haskey(p, param)
-            new_param = add_unit(p[param], u"m")
+            new_param = @check_unit p[param] u"m" verbose param
             p[param] = new_param
         end
     end
@@ -62,32 +63,27 @@ function read_parameters(file)
 
     for param in angle_params
         if haskey(p, param)
-            p[param] = @check_unit p[param] u"°"
+            p[param] = @check_unit p[param] u"°" verbose param
         end
     end
 
     # Apply mass units for rachis_fresh_weight (kg)
     if haskey(p, "rachis_fresh_weight")
-        for (i, rachis_fw_g) in enumerate(p["rachis_fresh_weight"])
-            rachis_fw_g = @check_unit rachis_fw_g u"g"
-            p["rachis_fresh_weight"][i] = uconvert(u"kg", rachis_fw_g)
-        end
+        p["rachis_fresh_weight"] = uconvert.(u"kg", [@check_unit rachis_fw u"g" verbose "rachis_fresh_weight" for rachis_fw in p["rachis_fresh_weight"]])
     end
 
     # Apply length units for rachis_final_lengths (m)
     if haskey(p, "rachis_final_lengths")
-        for (i, rachis_length) in enumerate(p["rachis_final_lengths"])
-            p["rachis_final_lengths"][i] = @check_unit rachis_length u"m"
-        end
+        p["rachis_final_lengths"] = [@check_unit rachis_length u"m" verbose "rachis_final_lengths" for rachis_length in p["rachis_final_lengths"]]
     end
 
     # Apply pressure units (MPa) for elastic and shear modulus
     if haskey(p, "elastic_modulus")
-        p["elastic_modulus"] = @check_unit p["elastic_modulus"] u"MPa"
+        p["elastic_modulus"] = @check_unit p["elastic_modulus"] u"MPa" verbose "elastic_modulus"
     end
 
     if haskey(p, "shear_modulus")
-        p["shear_modulus"] = @check_unit p["shear_modulus"] u"MPa"
+        p["shear_modulus"] = @check_unit p["shear_modulus"] u"MPa" verbose "shear_modulus"
     end
 
     pressure_params = [
@@ -96,14 +92,14 @@ function read_parameters(file)
 
     for param in pressure_params
         if haskey(p, param)
-            p[param] = @check_unit p[param] u"MPa"
+            p[param] = @check_unit p[param] u"MPa" verbose param
         end
     end
 
     # Apply units to biomechanical model parameters
     if haskey(p, "biomechanical_model")
         if haskey(p["biomechanical_model"], "angle_max")
-            p["biomechanical_model"]["angle_max"] = @check_unit p["biomechanical_model"]["angle_max"] u"°"
+            p["biomechanical_model"]["angle_max"] = @check_unit p["biomechanical_model"]["angle_max"] u"°" verbose "angle_max"
         end
     end
 
