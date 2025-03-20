@@ -62,27 +62,32 @@ function read_parameters(file)
 
     for param in angle_params
         if haskey(p, param)
-            p[param] = add_unit(p[param], u"°")
+            p[param] = @check_unit p[param] u"°"
         end
     end
 
     # Apply mass units for rachis_fresh_weight (kg)
     if haskey(p, "rachis_fresh_weight")
-        p["rachis_fresh_weight"] = add_unit.(p["rachis_fresh_weight"], u"g") |> x -> uconvert.(u"kg", x)
+        for (i, rachis_fw_g) in enumerate(p["rachis_fresh_weight"])
+            rachis_fw_g = @check_unit rachis_fw_g u"g"
+            p["rachis_fresh_weight"][i] = uconvert(u"kg", rachis_fw_g)
+        end
     end
 
     # Apply length units for rachis_final_lengths (m)
     if haskey(p, "rachis_final_lengths")
-        p["rachis_final_lengths"] = add_unit.(p["rachis_final_lengths"], u"m")
+        for (i, rachis_length) in enumerate(p["rachis_final_lengths"])
+            p["rachis_final_lengths"][i] = @check_unit rachis_length u"m"
+        end
     end
 
     # Apply pressure units (MPa) for elastic and shear modulus
     if haskey(p, "elastic_modulus")
-        p["elastic_modulus"] = add_unit(p["elastic_modulus"], u"MPa")
+        p["elastic_modulus"] = @check_unit p["elastic_modulus"] u"MPa"
     end
 
     if haskey(p, "shear_modulus")
-        p["shear_modulus"] = add_unit(p["shear_modulus"], u"MPa")
+        p["shear_modulus"] = @check_unit p["shear_modulus"] u"MPa"
     end
 
     pressure_params = [
@@ -91,14 +96,14 @@ function read_parameters(file)
 
     for param in pressure_params
         if haskey(p, param)
-            p[param] = add_unit(p[param], u"MPa")
+            p[param] = @check_unit p[param] u"MPa"
         end
     end
 
     # Apply units to biomechanical model parameters
     if haskey(p, "biomechanical_model")
         if haskey(p["biomechanical_model"], "angle_max")
-            p["biomechanical_model"]["angle_max"] = add_unit(p["biomechanical_model"]["angle_max"], u"°")
+            p["biomechanical_model"]["angle_max"] = @check_unit p["biomechanical_model"]["angle_max"] u"°"
         end
     end
 
@@ -106,27 +111,6 @@ function read_parameters(file)
     @assert p["nb_leaves_mean"] > 0
     return p
 end
-
-"""
-    add_unit(value, unit)
-
-Add a unit to a value if it doesn't already have one.
-
-# Arguments
-- `value`: The value to add units to.
-- `unit`: The unit to add.
-
-# Returns
-- The value with the unit attached.
-"""
-function add_unit(value, new_unit)
-    if unit(value) == NoUnits
-        return value * new_unit
-    else
-        return value
-    end
-end
-
 
 """
     write_parameters(file, params)
