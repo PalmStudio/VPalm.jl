@@ -67,7 +67,7 @@ function compute_properties_internode!(node, index, nb_internodes, nb_leaves_ali
     )
 
     node[:rank] = nb_internodes - index + 1
-    node[:Orthotropy] = 0.05
+    node[:Orthotropy] = 0.05u"°"
     node[:XEuler] = VPalm.phyllotactic_angle(
         parameters["phyllotactic_angle_mean"],
         parameters["phyllotactic_angle_sd"]; rng=rng

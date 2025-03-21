@@ -52,6 +52,5 @@ function compute_properties_stem!(node, parameters, rng)
         parameters["stem_diameter_residual"],
         parameters["stem_diameter_snag"]; rng=rng
     )
-
     return nothing
 end

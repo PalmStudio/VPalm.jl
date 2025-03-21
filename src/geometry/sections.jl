@@ -54,8 +54,8 @@ function add_section_geometry!(
             Meshes.Rotate(RotZ(-π / 2)) → # orient the reference cylinder to face X forward
             # Positioning along the stem:
             Meshes.Translate(internode_width, zero(internode_width), internode_height) →
-            Meshes.Rotate(RotZ(internode_phyllotaxy)) →
-            Meshes.Rotate(RotY(stem_bending))
+            Meshes.Rotate(RotZ(deg2rad(internode_phyllotaxy))) →
+            Meshes.Rotate(RotY(deg2rad(stem_bending)))
 
         node_section.geometry = PlantGeom.Geometry(ref_mesh=refmesh_cylinder, transformation=mesh_transformation)
 

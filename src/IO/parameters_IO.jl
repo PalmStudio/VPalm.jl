@@ -45,14 +45,14 @@ function read_parameters(file; verbose=true)
 
     for param in length_params
         if haskey(p, param)
-            new_param = @check_unit p[param] u"m" verbose param
-            p[param] = new_param
+            p[param] = @check_unit p[param] u"m" verbose param
         end
     end
 
     # Apply angle units (degrees)
     angle_params = [
         "phyllotactic_angle_mean", "phyllotactic_angle_sd",
+        "stem_bending_mean", "stem_bending_sd",
         "leaf_max_angle",
         "cpoint_decli_intercept",
         "cpoint_angle_SDP", "rachis_twist_initial_angle",
@@ -78,14 +78,6 @@ function read_parameters(file; verbose=true)
     end
 
     # Apply pressure units (MPa) for elastic and shear modulus
-    if haskey(p, "elastic_modulus")
-        p["elastic_modulus"] = @check_unit p["elastic_modulus"] u"MPa" verbose "elastic_modulus"
-    end
-
-    if haskey(p, "shear_modulus")
-        p["shear_modulus"] = @check_unit p["shear_modulus"] u"MPa" verbose "shear_modulus"
-    end
-
     pressure_params = [
         "elastic_modulus", "shear_modulus", "leaflet_stiffness", "leaflet_stiffness_sd"
     ]
