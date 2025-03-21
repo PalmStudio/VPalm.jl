@@ -6,8 +6,8 @@
         relative_position_bpoint_sd, relative_length_first_leaflet, relative_length_last_leaflet, relative_position_leaflet_max_length,
         rachis_fresh_weight, rank, height_cpoint, zenithal_cpoint_angle, nb_sections,
         height_rachis_tappering,
-        points, iterations, angle_max,
-        rng
+        points, iterations, angle_max;
+        verbose, rng
     )
 
 Use of the biomechanical model to compute the properties of the rachis.
@@ -25,7 +25,7 @@ Use of the biomechanical model to compute the properties of the rachis.
 - `relative_length_first_leaflet`: relative length of the first leaflet on the rachis (0 to 1)
 - `relative_length_last_leaflet`: relative length of the last leaflet on the rachis (0 to 1)
 - `relative_position_leaflet_max_length`: relative position of the longest leaflet on the rachis (0.111 to 0.999)
-- `rachis_fresh_weight`: fresh weight of the rachis (g)
+- `rachis_fresh_weight`: fresh weight of the rachis (kg)
 - `rank`: rank of the rachis
 - `height_cpoint`: height of the C point (m)
 - `zenithal_cpoint_angle`: zenithal angle of the C point (°)
@@ -34,6 +34,7 @@ Use of the biomechanical model to compute the properties of the rachis.
 - `npoints_computed`: number of points to compute the bending
 - `iterations`: number of iterations to compute the bending
 - `angle_max`: maximum angle to compute the bending (°)
+- `verbose`: display information about the computation (e.g. checks on the units)
 - `rng`: the random number generator
 
 # Returns
@@ -59,38 +60,20 @@ function biomechanical_properties_rachis(
     leaflet_length_at_b_intercept, leaflet_length_at_b_slope, relative_position_bpoint,
     relative_position_bpoint_sd, relative_length_first_leaflet, relative_length_last_leaflet, relative_position_leaflet_max_length,
     rachis_fresh_weight, rank, height_cpoint, zenithal_cpoint_angle, nb_sections,
-    height_rachis_tappering,
-    npoints_computed, iterations, angle_max,
-    rng
+    height_rachis_tappering, npoints_computed, iterations, angle_max;
+    verbose, rng
 )
 
-    if unit(rachis_length) == NoUnits
-        @warn "The `rachis_length` argument should have units, using meters as default."
-        rachis_length = rachis_length * u"m"
-    else
-        rachis_length = uconvert(u"m", rachis_length)
-    end
-
-    if unit(leaflet_length_at_b_intercept) == NoUnits
-        @warn "The `leaflet_length_at_b_intercept` argument should have units, using meters as default."
-        leaflet_length_at_b_intercept = leaflet_length_at_b_intercept * u"m"
-    else
-        leaflet_length_at_b_intercept = uconvert(u"m", leaflet_length_at_b_intercept)
-    end
-
-    if unit(rachis_fresh_weight) == NoUnits
-        @warn "The `rachis_fresh_weight` argument should have units, using kilograms as default."
-        rachis_fresh_weight = rachis_fresh_weight * u"kg"
-    else
-        rachis_fresh_weight = uconvert(u"kg", rachis_fresh_weight)
-    end
-
-    if unit(height_cpoint) == NoUnits
-        @warn "The `height_cpoint` argument should have units, using meters as default."
-        height_cpoint = height_cpoint * u"m"
-    else
-        height_cpoint = uconvert(u"m", height_cpoint)
-    end
+    rachis_twist_initial_angle = @check_unit rachis_twist_initial_angle u"°" verbose
+    rachis_twist_initial_angle_sdp = @check_unit rachis_twist_initial_angle_sdp u"°" verbose
+    elastic_modulus = @check_unit elastic_modulus u"MPa" verbose
+    shear_modulus = @check_unit shear_modulus u"MPa" verbose
+    rachis_length = @check_unit rachis_length u"m" verbose
+    leaflet_length_at_b_intercept = @check_unit leaflet_length_at_b_intercept u"m" verbose
+    rachis_fresh_weight = @check_unit rachis_fresh_weight u"kg" verbose
+    height_cpoint = @check_unit height_cpoint u"m" verbose
+    zenithal_cpoint_angle = @check_unit zenithal_cpoint_angle u"°" verbose
+    angle_max = @check_unit angle_max u"°" verbose
 
     # Frond section types (e.g., rectangle, ellipsoid, etc.)
     type = [1, 2, 3, 4, 5]
