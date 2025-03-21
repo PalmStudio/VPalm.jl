@@ -1,5 +1,5 @@
-function rachis(unique_mtg_id, petiole_node, index, scale, leaf_rank, rachis_length, height_cpoint, width_cpoint, zenithal_cpoint_angle, parameters; rng)
-    rachis_node = Node(unique_mtg_id[], petiole_node, NodeMTG("<", "Rachis", index, scale))
+function rachis(unique_mtg_id, index, scale, leaf_rank, rachis_length, height_cpoint, width_cpoint, zenithal_cpoint_angle, parameters; rng)
+    rachis_node = Node(unique_mtg_id[], NodeMTG("<", "Rachis", index, scale), Dict{Symbol,Any}())
     unique_mtg_id[] += 1
 
     nb_segments = parameters["rachis_nb_segments"]
@@ -15,8 +15,8 @@ function rachis(unique_mtg_id, petiole_node, index, scale, leaf_rank, rachis_len
         parameters["height_rachis_tappering"],
         parameters["biomechanical_model"]["nb_sections"],
         parameters["biomechanical_model"]["iterations"],
-        deg2rad(parameters["biomechanical_model"]["angle_max"]),
-        rng
+        deg2rad(parameters["biomechanical_model"]["angle_max"]);
+        verbose=true, rng=rng
     )
 
     last_parent = rachis_node
