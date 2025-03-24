@@ -133,7 +133,7 @@ function biomechanical_properties_rachis(
 
         if rank < 3
             distance_application[i] = 1e-8u"m"
-            initial_torsion_vec[i] = 0.0
+            initial_torsion_vec[i] = 0.0u"°"
         end
 
         height_bend[i] = rachis_height(relative_position_remarkable_points[i], height_cpoint, height_rachis_tappering)

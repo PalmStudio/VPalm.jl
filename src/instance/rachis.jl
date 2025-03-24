@@ -19,10 +19,11 @@ function rachis(unique_mtg_id, index, scale, leaf_rank, rachis_length, height_cp
         verbose=true, rng=rng
     )
 
+    @show points_bending points_deviation points_torsion
     last_parent = rachis_node
     zenithal_angle_prev = -zenithal_cpoint_angle
-    azimuthal_angle_prev = 0.0
-    torsion_angle_prev = 0.0
+    azimuthal_angle_prev = 0.0u"°"
+    torsion_angle_prev = 0.0u"°"
     for p in eachindex(points_positions)
         rachis_segment_node = Node(unique_mtg_id[], last_parent, NodeMTG(p == 1 ? "/" : "<", "RachisSegment", p, 6))
         unique_mtg_id[] += 1
@@ -31,12 +32,14 @@ function rachis(unique_mtg_id, index, scale, leaf_rank, rachis_length, height_cp
         rachis_segment_node.length = points_length[p]
 
         rachis_segment_node.zenithal_angle = points_bending[p] - zenithal_angle_prev
+        # @show zenithal_angle_prev points_bending[p]
         rachis_segment_node.zenithal_angle_bending = points_bending[p]
         zenithal_angle_prev = points_bending[p]
         rachis_segment_node.azimuthal_angle = points_deviation[p] - azimuthal_angle_prev
         azimuthal_angle_prev = points_deviation[p]
         rachis_segment_node.torsion_angle = points_torsion[p] - torsion_angle_prev
         torsion_angle_prev = points_torsion[p]
+
         rachis_segment_node.x = x[p]
         rachis_segment_node.y = y[p]
         rachis_segment_node.z = z[p]

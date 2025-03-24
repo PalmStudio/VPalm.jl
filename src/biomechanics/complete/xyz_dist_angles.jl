@@ -46,7 +46,7 @@ function xyz_to_dist_and_angles(points::AbstractVector{P}) where {P<:Meshes.Poin
         vangle_xz[iter] = atan(p2p1[2], p2p1[1])
     end
 
-    return (dist_p2p1=dist_p2p1, vangle_xy=vangle_xy, vangle_xz=vangle_xz)
+    return (dist_p2p1=dist_p2p1, vangle_xy=vangle_xy * u"rad", vangle_xz=vangle_xz * u"rad")
 end
 
 """

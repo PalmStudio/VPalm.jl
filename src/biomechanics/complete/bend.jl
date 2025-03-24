@@ -50,74 +50,50 @@ The bending and torsion are applied to the sections of the rachis defined by 5 s
 function bend(type, width_bend, height_bend, init_torsion, x, y, z, mass_rachis, mass_leaflets_right, mass_leaflets_left,
     distance_application, elastic_modulus, shear_modulus, step, npoints, nsegments;
     all_points=false,
-    angle_max=deg2rad(21),
+    angle_max=deg2rad(21u"°"),
     force=true,
     verbose=true
 )
 
     @assert length(type) == length(width_bend) == length(height_bend) == length(init_torsion) == length(x) == length(y) == length(z) == length(mass_rachis) == length(mass_leaflets_right) == length(mass_leaflets_left) == length(distance_application) "All arguments should have the same length."
 
-    if unit(step) == NoUnits
-        @warn "The `step` argument should have units, using meters as default."
-        step = step * u"m"
-    else
-        step = uconvert(u"m", step)
+    # Number of experimental points
+    npoints_exp = length(x)  # Assuming x, y, z have the same length
+
+    if length(elastic_modulus) != npoints_exp
+        if length(elastic_modulus) == 1
+            elastic_modulus = fill(elastic_modulus, npoints_exp)
+        else
+            error("`elastic_modulus` argument should be of length 1 or equal to `npoints_exp`")
+        end
     end
 
-    if unit(mass_leaflets_right[1]) == NoUnits
-        @warn "The `mass_leaflets_right` argument should have units, using kilograms as default."
-        mass_leaflets_right = mass_leaflets_right * u"kg"
-    else
-        mass_leaflets_right = uconvert.(u"kg", mass_leaflets_right)
+    if length(shear_modulus) != npoints_exp
+        if length(shear_modulus) == 1
+            shear_modulus = fill(shear_modulus, npoints_exp)
+        else
+            error("`shear_modulus` argument should be of length 1 or equal to `npoints_exp`")
+        end
     end
 
-    if unit(mass_leaflets_left[1]) == NoUnits
-        @warn "The `mass_leaflets_left` argument should have units, using kilograms as default."
-        mass_leaflets_left = mass_leaflets_left * u"kg"
-    else
-        mass_leaflets_left = uconvert.(u"kg", mass_leaflets_left)
-    end
-
-    if unit(mass_rachis[1]) == NoUnits
-        @warn "The `mass_rachis` argument should have units, using kilograms as default."
-        mass_rachis = mass_rachis * u"kg"
-    else
-        mass_rachis = uconvert.(u"kg", mass_rachis)
-    end
-
-    if unit(width_bend[1]) == NoUnits
-        @warn "The `width_bend` argument should have units, using meters as default."
-        width_bend = width_bend * u"m"
-    else
-        width_bend = uconvert.(u"m", width_bend)
-    end
-
-    if unit(height_bend[1]) == NoUnits
-        @warn "The `height_bend` argument should have units, using meters as default."
-        height_bend = height_bend * u"m"
-    else
-        height_bend = uconvert.(u"m", height_bend)
-    end
-
-    if unit(distance_application[1]) == NoUnits
-        @warn "The `distance_application` argument should have units, using meters as default."
-        distance_application = distance_application * u"m"
-    else
-        distance_application = uconvert.(u"m", distance_application)
-    end
+    step = @check_unit step u"m"
+    mass_leaflets_right = [@check_unit m u"kg" for m in mass_leaflets_right]
+    mass_leaflets_left = [@check_unit m u"kg" for m in mass_leaflets_left]
+    mass_rachis = [@check_unit m u"kg" for m in mass_rachis]
+    width_bend = [@check_unit w u"m" for w in width_bend]
+    height_bend = [@check_unit h u"m" for h in height_bend]
+    distance_application = [@check_unit d u"m" for d in distance_application]
+    elastic_modulus = [@check_unit e u"MPa" for e in elastic_modulus]
+    shear_modulus = [@check_unit s u"MPa" for s in shear_modulus]
 
     # use coordinates x,y,z to make points:
     points = [Meshes.Point(x[i], y[i], z[i]) for i in eachindex(x)]
     gravity = 9.8u"m/s^2"
 
-    # Number of experimental points
-    npoints_exp = length(x)  # Assuming x, y, z have the same length
-
     # Distances and angles of each segment P2P1
     vdist_p2p1, = xyz_to_dist_and_angles(points)
     zero_m = zero(eltype(vdist_p2p1))
     dist_lineique = [zero_m; cumsum(vdist_p2p1)] # For interpolation
-    dist_lineique_nounit = ustrip(dist_lineique)
     dist_totale = last(dist_lineique)
 
     # The distances of the segments cannot be zero. The origin point (0,0,0) cannot be in the data
@@ -137,36 +113,6 @@ function bend(type, width_bend, height_bend, init_torsion, x, y, z, mass_rachis,
     vec_dist = collect((0:(nlin-1)) .* step)
     vec_dist[end] = dist_totale
     # Note: we force vec_dist[end] to dist_lineique[end] to avoid any rounding error
-
-    if length(elastic_modulus) != npoints_exp
-        if length(elastic_modulus) == 1
-            elastic_modulus = fill(elastic_modulus, npoints_exp)
-        else
-            error("`elastic_modulus` argument should be of length 1 or equal to `npoints_exp`")
-        end
-    end
-
-    if unit(elastic_modulus[1]) == NoUnits
-        @warn "The `elastic_modulus` argument should have units, using MPa as default."
-        elastic_modulus = elastic_modulus * u"MPa"
-    else
-        elastic_modulus = uconvert.(u"MPa", elastic_modulus)
-    end
-
-    if length(shear_modulus) != npoints_exp
-        if length(shear_modulus) == 1
-            shear_modulus = fill(shear_modulus, npoints_exp)
-        else
-            error("`shear_modulus` argument should be of length 1 or equal to `npoints_exp`")
-        end
-    end
-
-    if unit(shear_modulus[1]) == NoUnits
-        @warn "The `shear_modulus` argument should have units, using MPa as default."
-        shear_modulus = shear_modulus * u"MPa"
-    else
-        shear_modulus = uconvert.(u"MPa", shear_modulus)
-    end
 
     vec_moe = uconvert.(u"Pa", linear_interpolation(dist_lineique, [elastic_modulus[1]; elastic_modulus])(vec_dist)) # Should be in Pa
     vec_g = uconvert.(u"Pa", linear_interpolation(dist_lineique, [shear_modulus[1]; shear_modulus])(vec_dist)) # Should be in Pa
@@ -228,6 +174,7 @@ function bend(type, width_bend, height_bend, init_torsion, x, y, z, mass_rachis,
 
         vec_moment = -cumsum(vec_shear[nlin:-1:1] .* step)
         vec_moment = vec_moment[nlin:-1:1]
+
         # Classic calculation of the deflection (distance delta)
         fct = vec_moment ./ (vec_moe .* vec_inertie_flex)
 
