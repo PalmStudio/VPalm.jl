@@ -19,7 +19,7 @@ file = joinpath(dirname(dirname(pathof(VPalm))),"test","files","parameter_file.y
 read_parameters(file)
 ```
 """
-function read_parameters(file; verbose=true)
+function read_parameters(file; verbose=false)
     p = YAML.load_file(file; dicttype=OrderedCollections.OrderedDict{String,Any})
 
     # Convert integer parameters

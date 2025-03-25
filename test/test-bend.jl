@@ -18,8 +18,8 @@ ref = CSV.read(joinpath(@__DIR__, "files/6_EW01.22_17_kanan_unbent_bend.csv"), D
     @test length(df.type) == length(df.width) == length(df.height) == length(df.torsion) == length(df.x) == length(df.y) == length(df.z) == length(df.mass) == length(df.mass_right) == length(df.mass_left) == length(df.distance_application)
     # Call the function
     out = VPalm.bend(
-        df.type, df.width, df.height, df.torsion, df.x, df.y, df.z, df.mass, df.mass_right, df.mass_left,
-        df.distance_application, elastic_modulus, shear_modulus, pas, Ncalc, Nboucle;
+        df.type, df.width * u"m", df.height * u"m", df.torsion * u"°", df.x * u"m", df.y * u"m", df.z * u"m", df.mass * u"kg", df.mass_right * u"kg", df.mass_left * u"kg",
+        df.distance_application * u"m", elastic_modulus, shear_modulus, pas, Ncalc, Nboucle;
         verbose=false
     )
 
@@ -30,9 +30,9 @@ ref = CSV.read(joinpath(@__DIR__, "files/6_EW01.22_17_kanan_unbent_bend.csv"), D
     end
     @test only(unique(unit.(out.length))) == u"m"
     @test ref.length * u"m" ≈ out.length atol = atol_length
-    @test ref.angle_xy ≈ out.angle_xy atol = 1e-2
-    @test ref.angle_xz ≈ out.angle_xz atol = 1e-2
-    @test ref.torsion ≈ out.torsion atol = 1e-2
+    @test [ref.angle_xy[2]; ref.angle_xy[2:end]] * u"°" ≈ out.angle_xy atol = 1e-2
+    @test [ref.angle_xz[2]; ref.angle_xz[2:end]] * u"°" ≈ out.angle_xz atol = 1e-2
+    @test [ref.torsion[2]; ref.torsion[2:end]] * u"°" ≈ out.torsion atol = 1e-2
 end
 
 @testset "unbend" begin
