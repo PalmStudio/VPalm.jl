@@ -22,7 +22,6 @@ function add_section_geometry!(
     node, refmesh_cylinder, internode_width=0.0u"m", internode_height=0.0u"m", internode_phyllotaxy=0.0u"°", stem_bending=0.0u"°",
     type=nothing, position_section=Ref(Meshes.Point(0.0, 0.0, 0.0))
 )
-
     # Check units and convert to meters and degrees:
     internode_width = @check_unit internode_width u"m"
     internode_height = @check_unit internode_height u"m"
@@ -45,7 +44,7 @@ function add_section_geometry!(
 
 
         mesh_transformation =
-            Meshes.Scale(ustrip(node_section.width) / 2.0, ustrip(node_section.height) / 2.0, ustrip(node_section.length)) →
+            Meshes.Scale(ustrip(node_section.height) / 2.0, ustrip(node_section.width) / 2.0, ustrip(node_section.length)) →
             Meshes.Rotate(base_orientation) →  # Orient cylinder along X first
             Meshes.Rotate(rot) →
             Meshes.Translate(Meshes.to(position_section[])...) →
