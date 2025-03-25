@@ -37,10 +37,9 @@ function add_geometry!(mtg, refmesh_cylinder, refmesh_snag, ref_mesh_plane)
         elseif symbol(node) == "Petiole"
             # Initialise the position and angles for the petiole to 0.0
             position_section[] = Meshes.Point(0.0, 0.0, 0.0)
-            angles .= 0.0u"°"
-            add_section_geometry!(node, refmesh_cylinder, internode_width, internode_height, snag_rotation, stem_bending, "PetioleSegment", position_section, angles)
+            add_section_geometry2!(node, refmesh_cylinder, internode_width, internode_height, snag_rotation, stem_bending, "PetioleSegment", position_section)
         elseif symbol(node) == "Rachis"
-            add_section_geometry!(node, refmesh_cylinder, internode_width, internode_height, snag_rotation, stem_bending, "RachisSegment", position_section, angles)
+            add_section_geometry2!(node, refmesh_cylinder, internode_width, internode_height, snag_rotation, stem_bending, "RachisSegment", position_section)
             # Note: we use the position and angles of the last petiole section to initialize the rachis
         elseif symbol(node) == "Leaflet"
             # Get the rachis segment position and orientation (to which the leaflet is attached to)

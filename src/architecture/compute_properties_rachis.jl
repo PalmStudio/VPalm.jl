@@ -147,7 +147,6 @@ function biomechanical_properties_rachis(
 
     points = Vector{typeof(Meshes.Point(0.0, 0.0, 0.0))}(undef, npoints)
     for n in eachindex(distances)
-        # Note: zenithal_cpoint_angle is in degrees, so we use cosd instead of cos
         # zenithal_cpoint_angle is at 0° when vertical (along the Z axis), or 90° when horizontal (along the X axis)
         position_ref = Meshes.Point(0.0u"m", 0.0u"m", distances[n])
         points[n] = Meshes.Rotate(RotY(deg2rad(zenithal_cpoint_angle)))(position_ref)
@@ -169,15 +168,15 @@ function biomechanical_properties_rachis(
         verbose=false, all_points=true, angle_max=angle_max
     )
 
-    points_bending = .-bending.angle_xy
-    points_bending[1] = -zenithal_cpoint_angle         # Initialize the first angle as the angle at C point
+    # points_bending = .-bending.angle_xy
+    # points_bending[1] = -zenithal_cpoint_angle         # Initialize the first angle as the angle at C point
     x_coordinates = [Meshes.coords(p).x for p in bending.points]
     y_coordinates = [Meshes.coords(p).y for p in bending.points]
     z_coordinates = [Meshes.coords(p).z for p in bending.points]
 
     #! update this function to return the points directly
     return (
-        length=fill(step, length(x_coordinates)), points_positions=bending.length, bending=points_bending, deviation=bending.angle_xz, torsion=bending.torsion,
+        length=fill(step, length(x_coordinates)), points_positions=bending.length, bending=bending.angle_xy, deviation=bending.angle_xz, torsion=bending.torsion,
         x=x_coordinates, y=y_coordinates, z=z_coordinates
     )
 end

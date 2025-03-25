@@ -19,27 +19,21 @@ function rachis(unique_mtg_id, index, scale, leaf_rank, rachis_length, height_cp
         verbose=true, rng=rng
     )
 
-    @show points_bending points_deviation points_torsion
     last_parent = rachis_node
-    zenithal_angle_prev = -zenithal_cpoint_angle
-    azimuthal_angle_prev = 0.0u"°"
-    torsion_angle_prev = 0.0u"°"
+    # Computing the increment in angles between each segment (local) instead of the global angles:
+    # rachis_segment_bendings = [0.0u"°"; diff(points_bending)]
+    # rachis_segment_deviations = [0.0u"°"; diff(points_deviation)]
+    # rachis_segment_torsions = [0.0u"°"; diff(points_torsion)]
+
     for p in eachindex(points_positions)
         rachis_segment_node = Node(unique_mtg_id[], last_parent, NodeMTG(p == 1 ? "/" : "<", "RachisSegment", p, 6))
         unique_mtg_id[] += 1
         rachis_segment_node.width = rachis_width(p / nb_segments, width_cpoint, parameters["rachis_width_tip"])
         rachis_segment_node.height = rachis_height(p / nb_segments, height_cpoint, parameters["height_rachis_tappering"])
         rachis_segment_node.length = points_length[p]
-
-        rachis_segment_node.zenithal_angle = points_bending[p] - zenithal_angle_prev
-        # @show zenithal_angle_prev points_bending[p]
-        rachis_segment_node.zenithal_angle_bending = points_bending[p]
-        zenithal_angle_prev = points_bending[p]
-        rachis_segment_node.azimuthal_angle = points_deviation[p] - azimuthal_angle_prev
-        azimuthal_angle_prev = points_deviation[p]
-        rachis_segment_node.torsion_angle = points_torsion[p] - torsion_angle_prev
-        torsion_angle_prev = points_torsion[p]
-
+        rachis_segment_node.zenithal_angle_global = points_bending[p]
+        rachis_segment_node.azimuthal_angle_global = points_deviation[p]
+        rachis_segment_node.torsion_angle_global = points_torsion[p]
         rachis_segment_node.x = x[p]
         rachis_segment_node.y = y[p]
         rachis_segment_node.z = z[p]
@@ -49,10 +43,9 @@ function rachis(unique_mtg_id, index, scale, leaf_rank, rachis_length, height_cp
 
     # We force the last node to take the angles values of its parent node, because the biomechanical model can give
     # weird values at the boundaries:
-    last_parent.zenithal_angle = parent(last_parent).zenithal_angle
-    last_parent.azimuthal_angle = parent(last_parent).azimuthal_angle
-    last_parent.torsion_angle = parent(last_parent).torsion_angle
+    last_parent.zenithal_angle_global = parent(last_parent).zenithal_angle_global
+    last_parent.azimuthal_angle_global = parent(last_parent).azimuthal_angle_global
+    last_parent.torsion_angle_global = parent(last_parent).torsion_angle_global
 
     return rachis_node
 end
-

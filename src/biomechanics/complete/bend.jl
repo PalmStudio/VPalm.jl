@@ -301,6 +301,8 @@ function bend(type, width_bend, height_bend, init_torsion, x, y, z, mass_rachis,
     pts_agl_tor = rad2deg.(som_cum_vec_agl_tor[i_discret_pts_exp])
 
     pts_dist, pts_agl_xy, pts_agl_xz = xyz_to_dist_and_angles(vec_points[i_discret_pts_exp])
+    pts_agl_xy[1] = pts_agl_xy[2]
+    pts_agl_xz[1] = pts_agl_xz[2]
 
     return (points=vec_points[i_discret_pts_exp], length=pts_dist, angle_xy=rad2deg.(pts_agl_xy), angle_xz=rad2deg.(pts_agl_xz), torsion=pts_agl_tor)
 end

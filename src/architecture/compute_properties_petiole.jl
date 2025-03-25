@@ -62,10 +62,10 @@ function compute_properties_petiole!(
     petiole_node.height_base = petiole.height_base
     petiole_node.width_cpoint = petiole.width_cpoint
     petiole_node.height_cpoint = petiole.height_cpoint
-    petiole_node.zenithal_insertion_angle = insertion_angle
-    petiole_node.zenithal_cpoint_angle = zenithal_cpoint_angle
+    petiole_node.zenithal_insertion_angle = 90.0u"°" - insertion_angle
+    petiole_node.zenithal_cpoint_angle = 90.0u"°" - zenithal_cpoint_angle
     petiole_node.section_length = petiole.length / nb_sections
-    petiole_node.section_insertion_angle = (zenithal_cpoint_angle - insertion_angle) / nb_sections
+    petiole_node.section_insertion_angle = (petiole_node.zenithal_cpoint_angle - petiole_node.zenithal_insertion_angle) / nb_sections
 
     return nothing
 end
@@ -82,6 +82,7 @@ Compute the dimension of a petiole section based on the dimensions of the petiol
 - `section_node`: the MTG Node of the section to be computed
 - `index`: the index of the section on the petiole, from 1 at the base to `nb_sections`.
 - `nb_sections`: the number of sections discretizing the petiole
+- `section_insertion_angle`: the zenithal angle of the petioles sections (global angle, °)
 
 # Returns
 The section node updated with dimensional properties.
@@ -98,19 +99,19 @@ The `petiole_node` should have the following attributes:
 - `section_insertion_angle`: the zenithal angle of insertion between the petioles sections (°)
 - `azimuthal_angle`: the azimuthal angle at the insertion (°)
 """
-function compute_properties_petiole_section!(petiole_node, section_node, index, nb_sections)
+function compute_properties_petiole_section!(petiole_node, section_node, index, nb_sections, section_insertion_angle)
     petiole_section = properties_petiole_section(
         index, nb_sections, petiole_node.width_base, petiole_node.height_base,
         petiole_node.width_cpoint, petiole_node.height_cpoint, petiole_node.section_length,
-        petiole_node.zenithal_insertion_angle, petiole_node.section_insertion_angle, petiole_node.azimuthal_angle
+        section_insertion_angle, petiole_node.azimuthal_angle
     )
 
     section_node.width = petiole_section.width
     section_node.height = petiole_section.height
     section_node.length = petiole_section.length
-    section_node.zenithal_angle = petiole_section.zenithal_angle
-    section_node.azimuthal_angle = petiole_section.azimuthal_angle
-    section_node.torsion_angle = petiole_section.torsion_angle
+    section_node.zenithal_angle_global = petiole_section.zenithal_angle
+    section_node.azimuthal_angle_global = petiole_section.azimuthal_angle
+    section_node.torsion_angle_global = petiole_section.torsion_angle
 
     return nothing
 end
@@ -144,28 +145,25 @@ A vector of dimensions for each section, given as a named tuple:
 - width: width of the section (m)
 - height: height of the section (m)
 - length: length of the section (m)
-- zenithal_angle_local: zenithal angle of the section (local angle, relative to the previous, °)
-- azimuthal_angle_local: azimuthal angle of the section (local angle, relative to the previous, °)
+- zenithal_angle: zenithal angle of the section (global angle, °)
+- azimuthal_angle: azimuthal angle of the section (global angle, °)
+- torsion_angle: torsion angle of the section (°)
 """
 function properties_petiole_section(
     index, nb_sections, width_base, height_base,
     width_cpoint, height_cpoint, petiole_section_length,
-    petiole_insertion_angle, petiole_section_insertion_angle,
-    azimuthal_angle
+    section_insertion_angle, azimuthal_angle
 )
     relative_position = index / nb_sections
 
     if index == 1
         section_width = width_base
         section_height = height_base
-        zenithal_angle = petiole_insertion_angle + petiole_section_insertion_angle
     else
         section_width = petiole_width(relative_position, width_base, width_cpoint)
         section_height = petiole_height(relative_position, height_base, height_cpoint)
-        zenithal_angle = petiole_section_insertion_angle
     end
+    deviation_angle = index > 1 ? azimuthal_angle : zero(typeof(azimuthal_angle))
 
-    deviation_angle = index == 2 ? azimuthal_angle : zero(typeof(azimuthal_angle))
-
-    return (; width=section_width, height=section_height, length=petiole_section_length, zenithal_angle=zenithal_angle, azimuthal_angle=deviation_angle, torsion_angle=0.0)
+    return (; width=section_width, height=section_height, length=petiole_section_length, zenithal_angle=section_insertion_angle, azimuthal_angle=deviation_angle, torsion_angle=0.0u"°")
 end
