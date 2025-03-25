@@ -6,7 +6,6 @@ Compute the properties of a leaf node.
 - is_alive: is the leaf alive or dead (snag)?
 - zenithal_insertion_angle: the zenithal insertion angle of the leaf (rad)
 - rachis_length: the length of the rachis (m)
-- petiole_deviation_angle: the deviation angle of the petiole (rad)
 - zenithal_cpoint_angle: the zenithal angle at C-point (rad)
 
 # Arguments
@@ -26,7 +25,6 @@ The leaf dimensions are computed based on the dimensions of the stem and the par
 - is_alive: is the leaf alive or dead (snag)?
 - zenithal_insertion_angle: the zenithal insertion angle of the leaf (rad). Uses the `VPalm.leaf_insertion_angle` function.
 - rachis_length: the length of the rachis (m). Uses the `rachis_expansion` function.
-- petiole_deviation_angle: the deviation angle of the petiole (rad). Computed using a normal deviation draw.
 - zenithal_cpoint_angle: the zenithal angle at C-point (rad). Uses the `c_point_angle` function.
 
 # Examples
@@ -68,7 +66,6 @@ function compute_properties_leaf!(node, index, nb_internodes, nb_leaves_alive, p
         )
         #! important: we use leaf rank to index into the vector of leaf lengths but we should use another index here
         node[:rachis_length] = rachis_expansion(leaf_rank, parameters["rachis_final_lengths"][leaf_rank])
-        node[:petiole_deviation_angle] = normal_deviation_draw(5.0, rng) #! make this a parameter!!!
 
         node[:zenithal_cpoint_angle] =
             max(
