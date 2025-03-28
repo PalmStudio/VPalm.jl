@@ -27,7 +27,6 @@ function mtg_skeleton(parameters; rng=Random.MersenneTwister(parameters["seed"])
     nb_internodes = parameters["nb_leaves_emitted"] + parameters["nb_internodes_before_planting"] # The number of internodes emitted since the seed
     nb_leaves_alive = floor(Int, mean_and_sd(parameters["nb_leaves_mean"], parameters["nb_leaves_sd"]; rng=rng))
     nb_leaves_alive = min(nb_leaves_alive, nb_internodes)
-    nb_petiole_segments = parameters["petiole_nb_segments"]
 
     @assert length(parameters["rachis_fresh_weight"]) >= nb_leaves_alive "The number of rachis biomass values should be greater than or equal to the number of leaves alive ($nb_leaves_alive)."
 
