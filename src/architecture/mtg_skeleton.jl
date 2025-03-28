@@ -56,7 +56,10 @@ function mtg_skeleton(parameters; rng=Random.MersenneTwister(parameters["seed"])
 
     leaf = Node(unique_mtg_id[], internode, NodeMTG("+", "Leaf", 1, 4))
     unique_mtg_id[] += 1
-    compute_properties_leaf!(leaf, 1, nb_internodes, nb_leaves_alive, parameters, rng)
+    leaf[:rank] = compute_leaf_rank(nb_internodes, 1)
+    # Is the leaf alive of dead (snag)?
+    leaf[:is_alive] = leaf[:rank] <= nb_leaves_alive
+    compute_properties_leaf!(leaf, nb_internodes, leaf[:is_alive], parameters, rng)
 
     # Loop on internodes
     for i in 2:nb_internodes #! start at 1, and move the code above below with an if statement for the link
@@ -67,7 +70,9 @@ function mtg_skeleton(parameters; rng=Random.MersenneTwister(parameters["seed"])
         compute_properties_internode!(internode, i, nb_internodes, nb_leaves_alive, stem_height, stem_diameter, parameters, rng)
         leaf = Node(unique_mtg_id[], internode, NodeMTG("+", "Leaf", i, 4))
         unique_mtg_id[] += 1
-        compute_properties_leaf!(leaf, i, nb_internodes, nb_leaves_alive, parameters, rng)
+        leaf[:rank] = compute_leaf_rank(nb_internodes, i)
+        leaf[:is_alive] = leaf[:rank] <= nb_leaves_alive
+        compute_properties_leaf!(leaf, i, nb_internodes, leaf[:is_alive], rng)
         # Loop on present leaves
         if leaf[:is_alive]
             # Build the petiole

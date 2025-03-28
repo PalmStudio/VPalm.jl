@@ -1,18 +1,17 @@
 """
     compute_properties_leaf!(node, index, nb_internodes, nb_leaves_alive, parameters, rng)
 
-Compute the properties of a leaf node.
-- rank: the rank of the leaf
-- is_alive: is the leaf alive or dead (snag)?
+Compute the properties of a leaf node:
+
 - zenithal_insertion_angle: the zenithal insertion angle of the leaf (rad)
 - rachis_length: the length of the rachis (m)
 - zenithal_cpoint_angle: the zenithal angle at C-point (rad)
 
 # Arguments
+
 - `node`: the leaf node
-- `index`: the index of the leaf
-- `nb_internodes`: the total number of internodes
-- `nb_leaves_alive`: the number of leaves currently alive
+- `leaf_rank`: the rank of the leaf
+- `is_alive`: is the leaf alive or dead (snag)?
 - `parameters`: the parameters of the model
 - `rng`: the random number generator
 
@@ -20,14 +19,14 @@ Compute the properties of a leaf node.
 The leaf node updated with properties.
 
 # Details
+
 The leaf dimensions are computed based on the dimensions of the stem and the parameters of the model:
-- rank: rank of the leaf (based on the number of internodes and the index of the leaf)
-- is_alive: is the leaf alive or dead (snag)?
 - zenithal_insertion_angle: the zenithal insertion angle of the leaf (rad). Uses the `VPalm.leaf_insertion_angle` function.
 - rachis_length: the length of the rachis (m). Uses the `rachis_expansion` function.
 - zenithal_cpoint_angle: the zenithal angle at C-point (rad). Uses the `c_point_angle` function.
 
 # Examples
+
 ```julia
 file = joinpath(dirname(dirname(pathof(VPalm))), "test", "files", "parameter_file.yml")
 parameters = read_parameters(file)
@@ -49,14 +48,7 @@ leaf = Node(internode, NodeMTG("+", "Leaf", 1, 4))
 compute_properties_leaf!(leaf, 1, nb_internodes, nb_leaves_alive, parameters, rng)
 ```
 """
-function compute_properties_leaf!(node, index, nb_internodes, nb_leaves_alive, parameters, rng)
-    leaf_rank = nb_internodes - index + 1
-    node[:rank] = leaf_rank
-
-    # Is the leaf alive of dead (snag)?
-    is_alive = leaf_rank <= nb_leaves_alive
-    node[:is_alive] = is_alive
-
+function compute_properties_leaf!(node, leaf_rank, is_alive, parameters, rng)
     if is_alive
         node[:zenithal_insertion_angle] = VPalm.leaf_insertion_angle(
             leaf_rank,

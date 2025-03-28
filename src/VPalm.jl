@@ -43,6 +43,7 @@ include("allometries/leaf.jl")
 include("allometries/petiole.jl")
 
 # Architecture:
+include("architecture/leaf_rank.jl")
 include("architecture/compute_properties_stem.jl")
 include("architecture/compute_properties_internode.jl")
 include("architecture/compute_properties_leaf.jl")
