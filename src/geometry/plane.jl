@@ -12,10 +12,10 @@ function plane()
     # Create a simple rectangle in the XZ plane
     # With vertices at corners, centered at origin
     vertices = [
-        Meshes.Point(-0.5, 0.0, 0.0),  # Left bottom
-        Meshes.Point(0.5, 0.0, 0.0),   # Right bottom
-        Meshes.Point(0.5, 0.0, 1.0),   # Right top
-        Meshes.Point(-0.5, 0.0, 1.0)   # Left top
+        Meshes.Point(0.0, 0.0, -0.5),  # Left bottom
+        Meshes.Point(1.0, 0.0, -0.5),   # Right bottom
+        Meshes.Point(1.0, 0.0, 0.5),   # Right top
+        Meshes.Point(0.0, 0.0, 0.5)   # Left top
     ]
 
     # Create triangular faces

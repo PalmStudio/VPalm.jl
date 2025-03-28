@@ -56,7 +56,7 @@ function read_parameters(file; verbose=false)
         "leaf_max_angle",
         "cpoint_decli_intercept",
         "cpoint_angle_SDP", "rachis_twist_initial_angle",
-        "rachis_twist_initial_angle_sdp", "laminaAngle",
+        "rachis_twist_initial_angle_sdp", "leaflet_lamina_angle",
         "leafletAxialAngleC", "leafletAxialAngleA",
         "leafletAxialAngleSlope", "leafletAxialAngle_SDP",
         "leaflet_axial_angle_c", "leaflet_axial_angle_a",

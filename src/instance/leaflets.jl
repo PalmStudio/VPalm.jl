@@ -164,8 +164,9 @@ function create_single_leaflet(
     leaflet_node.plane = plane  # Controls vertical orientation type
     leaflet_node.side = side    # Controls which side of rachis
 
-    # Calculate insertion angles based on position and plane
-    # Horizontal angle (axial/Z) is mainly determined by position along rachis
+    # Calculate azimuthal angle of the leaflet insertion based on position and side of the leaflet
+    # It is mainly determined by position along rachis. The angle is relative to the rachis direction,
+    # i.e. 0.0 puts a leaflet parallel to the rachis, 90.0 makes it perpendicular.
     h_angle = leaflet_azimuthal_angle(
         leaflet_relative_pos,
         side,
@@ -216,10 +217,12 @@ function create_single_leaflet(
     leaflet_node["azimuthal_angle"] = h_angle # defaultRotBearerZAttribute
     leaflet_node["stiffness"] = stiffness
     leaflet_node["tapering"] = 0.5  # Default tapering factor
+    # V-shape of the leaflet:
+    leaflet_node["lamina_angle"] = parameters["leaflet_lamina_angle"]
 
     # Set leaflet twist (rotation around its own axis)
-    leaflet_twist = 10 * side
-    leaflet_node["torsion_angle"] = leaflet_twist # defaultRotLocalXAttribute
+    leaflet_twist = 10.0 * side
+    leaflet_node["torsion_angle"] = leaflet_twist * u"°"# defaultRotLocalXAttribute
 
     # Calculate actual leaflet length and width based on relative position along rachis and length of the longest leaflet
     leaflet_length = leaflet_max_length * relative_leaflet_length(
@@ -348,7 +351,7 @@ function create_leaflet_segments!(
     # Start with leaflet node as the parent of first segment
     last_parent = leaflet_node
 
-    # Force the first segment to be at the base of the leaflet
+    # Force the first segment to be at the base of the leaflet (relative value)
     segment_boundaries[1] = 0.0
 
     # Create each leaflet segment with appropriate dimensions and bending
@@ -412,7 +415,7 @@ function leaflets(unique_mtg_id, rachis_node, index, scale, leaf_rank, rachis_le
 
     leaflet_length_at_b = leaflet_length_at_bpoint(rachis_length, parameters["leaflet_length_at_b_intercept"], parameters["leaflet_length_at_b_slope"])
     leaflet_max_length = leaflet_length_max(leaflet_length_at_b, parameters["relative_position_bpoint"], parameters["relative_length_first_leaflet"], parameters["relative_length_last_leaflet"], parameters["relative_position_leaflet_max_length"], parameters["relative_position_bpoint_sd"], rng)
-    leaflet_width_at_b = leaflet_width_at_bpoint(rachis_length, parameters["leaflet_length_at_b_intercept"], parameters["leaflet_length_at_b_slope"])
+    leaflet_width_at_b = leaflet_width_at_bpoint(rachis_length, parameters["leaflet_width_at_b_intercept"], parameters["leaflet_width_at_b_slope"])
     leaflet_max_width = leaflet_width_max(leaflet_width_at_b, parameters["relative_position_bpoint"], parameters["relative_width_first_leaflet"], parameters["relative_width_last_leaflet"], parameters["relative_position_leaflet_max_width"], parameters["relative_position_bpoint_sd"], rng)
 
     # Create leaflets for right side (side = 1)
@@ -1097,11 +1100,11 @@ Calculate the leaflet insertion angle in the horizontal plane (in degrees).
 - Horizontal insertion angle in degrees.
 """
 function leaflet_azimuthal_angle(relative_pos, side, angle_c, angle_slope, angle_a, angle_sdp, rng)
-    a = angle_c^2
+    a = ustrip(angle_c)^2
     b = angle_slope * 2.0 * sqrt(a)
-    c = (angle_a^2) - a - b
+    c = ustrip(angle_a)^2 - a - b
 
-    eq = a + (b * relative_pos) + (c * relative_pos * relative_pos * relative_pos)
+    eq = a + b * relative_pos + c * relative_pos^3
     eq < 0.0 && (eq = 0.0)
     angle = sqrt(eq)
 
@@ -1126,6 +1129,8 @@ Calculate the boundaries of the radial angle based on position along the rachis.
 - Radial angle in degrees.
 """
 function leaflet_zenithal_angle_boundaries(rel_pos, a0, a_max, xm=0.5)
+    a0 = ustrip(a0)
+    a_max = ustrip(a_max)
     c1 = (a0 - a_max) / (xm * xm)
     b1 = -2 * c1 * xm
 
