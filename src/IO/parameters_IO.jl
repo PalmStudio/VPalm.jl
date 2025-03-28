@@ -58,7 +58,9 @@ function read_parameters(file; verbose=false)
         "cpoint_angle_SDP", "rachis_twist_initial_angle",
         "rachis_twist_initial_angle_sdp", "laminaAngle",
         "leafletAxialAngleC", "leafletAxialAngleA",
-        "leafletAxialAngleSlope", "leafletAxialAngle_SDP"
+        "leafletAxialAngleSlope", "leafletAxialAngle_SDP",
+        "leaflet_axial_angle_c", "leaflet_axial_angle_a",
+        "leaflet_axial_angle_sdp"
     ]
 
     for param in angle_params
