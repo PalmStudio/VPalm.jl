@@ -1,6 +1,8 @@
 function add_geometry!(mtg, refmesh_cylinder, refmesh_snag, ref_mesh_plane)
     stem_diameter = mtg[1].stem_diameter
     stem_bending = mtg[1].stem_bending
+    isnothing(stem_diameter) && (stem_diameter = 0.0u"m")
+    isnothing(stem_bending) && (stem_bending = 0.0u"°")
     internode_width = stem_diameter
     snag_insertion_angle = deg2rad(-35.0u"°") # deg2rad(-20.0 - 35.0)
     internode_height = 0.0u"m"
@@ -9,7 +11,6 @@ function add_geometry!(mtg, refmesh_cylinder, refmesh_snag, ref_mesh_plane)
     snag_height = 0.15u"m"
     snag_length = 3.0u"m"
     position_section = Ref(Meshes.Point(0.0, 0.0, 0.0))
-    angles = [0.0u"°", 0.0u"°", 0.0u"°"]
 
     traverse!(mtg, symbol=["Internode", "Leaf", "Petiole", "Rachis", "Leaflet"]) do node
         if symbol(node) == "Internode"
@@ -35,26 +36,25 @@ function add_geometry!(mtg, refmesh_cylinder, refmesh_snag, ref_mesh_plane)
                 nothing
             end
         elseif symbol(node) == "Petiole"
-            # Initialise the position and angles for the petiole to 0.0
+            # Initialise the position for the petiole to 0.0
             position_section[] = Meshes.Point(0.0, 0.0, 0.0)
             add_section_geometry!(node, refmesh_cylinder, internode_width, internode_height, snag_rotation, stem_bending, "PetioleSegment", position_section)
         elseif symbol(node) == "Rachis"
             add_section_geometry!(node, refmesh_cylinder, internode_width, internode_height, snag_rotation, stem_bending, "RachisSegment", position_section)
             # Note: we use the position and angles of the last petiole section to initialize the rachis
         elseif symbol(node) == "Leaflet"
-            # Get the rachis segment position and orientation (to which the leaflet is attached to)
-            rachis_pos = parent(node).position_section
-            rachis_angles = parent(node).normal_section #! I think we miss the rachis torsion in this normal
+            # Get the rachis segment node on which the leaflet is attached
+            rachis_node = parent(node)
 
             # Add leaflet geometry with proper position and orientation relative to rachis
-            # add_leaflet_geometry!(
-            #     node,
-            #     rachis_pos,                   # Position of attachment point on rachis
-            #     rachis_angles,                # Orientation of rachis at attachment point
-            #     snag_rotation,                # Global phyllotaxy rotation
-            #     stem_bending,                 # Global stem bending
-            #     ref_mesh_plane                 # Reference mesh for leaflet segments
-            # )
+            add_leaflet_geometry!(
+                node,
+                rachis_node.position_section,                   # Position of attachment point on rachis
+                (; rachis_node.zenithal_angle_global, rachis_node.azimuthal_angle_global, rachis_node.torsion_angle_global),                # Orientation of rachis at attachment point
+                snag_rotation,                # Global phyllotaxy rotation
+                stem_bending,                 # Global stem bending
+                ref_mesh_plane                 # Reference mesh for leaflet segments
+            )
         end
     end
 end
