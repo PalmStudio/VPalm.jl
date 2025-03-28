@@ -42,7 +42,6 @@ function add_section_geometry!(
         # The cylinder by default is oriented along Z, so we rotate it to align with X first
         base_orientation = Rotations.RotY(π / 2)
 
-
         mesh_transformation =
             Meshes.Scale(ustrip(node_section.height) / 2.0, ustrip(node_section.width) / 2.0, ustrip(node_section.length)) →
             Meshes.Rotate(base_orientation) →  # Orient cylinder along X first
@@ -61,6 +60,10 @@ function add_section_geometry!(
 
         # Apply rotation to this direction
         rotated_direction = rot * direction
+
+
+        node_section.position_section = position_section[]
+        node_section.normal_section = rotated_direction
 
         # Update position
         position_section[] += rotated_direction
