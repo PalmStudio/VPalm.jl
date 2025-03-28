@@ -60,7 +60,7 @@ function mtg_skeleton(parameters; rng=Random.MersenneTwister(parameters["seed"])
     compute_properties_leaf!(leaf, 1, nb_internodes, nb_leaves_alive, parameters, rng)
 
     # Loop on internodes
-    for i in 2:nb_internodes
+    for i in 2:nb_internodes #! start at 1, and move the code above below with an if statement for the link
         phytomer = Node(unique_mtg_id[], phytomer, NodeMTG("<", "Phytomer", i, 3))
         unique_mtg_id[] += 1
         internode = Node(unique_mtg_id[], phytomer, NodeMTG("/", "Internode", i, 4))
