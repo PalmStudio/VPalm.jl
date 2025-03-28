@@ -4,8 +4,7 @@ module VPalm
 import Random
 
 # For managing the MTG:
-import MultiScaleTreeGraph: Node, NodeMTG, traverse!, symbol, reparent!, addchild!
-import AbstractTrees.PreOrderDFS # For children traversal (not another dependency, MTG already has it)
+import MultiScaleTreeGraph: Node, NodeMTG, traverse!, symbol, reparent!, addchild!, descendants
 
 # IO:
 import YAML, OrderedCollections
