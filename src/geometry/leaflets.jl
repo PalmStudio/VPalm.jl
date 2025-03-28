@@ -23,6 +23,8 @@ Create the leaflet geometry based on its segments.
 """
 function add_leaflet_geometry!(
     leaflet_node,
+    internode_width,
+    internode_height,
     rachis_position,
     rachis_orientation,
     rachis_rotation,
@@ -87,6 +89,7 @@ function add_leaflet_geometry!(
             # Translate to rachis position
             Meshes.Translate(Meshes.to(leaflet_base_position)...) →
             # Positioning along the stem:
+            Meshes.Translate(internode_width, zero(internode_width), internode_height) →
             Meshes.Rotate(RotZ(deg2rad(rachis_rotation))) →
             Meshes.Rotate(RotY(deg2rad(stem_bending)))
 

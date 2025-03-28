@@ -49,6 +49,8 @@ function add_geometry!(mtg, refmesh_cylinder, refmesh_snag, ref_mesh_plane)
             # Add leaflet geometry with proper position and orientation relative to rachis
             add_leaflet_geometry!(
                 node,
+                internode_width,
+                internode_height,
                 rachis_node.position_section,                   # Position of attachment point on rachis
                 (; rachis_node.zenithal_angle_global, rachis_node.azimuthal_angle_global, rachis_node.torsion_angle_global),                # Orientation of rachis at attachment point
                 snag_rotation,                # Global phyllotaxy rotation
