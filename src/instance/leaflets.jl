@@ -58,7 +58,7 @@ function create_leaflets_for_side!(
 
     # Get all rachis section nodes in preorder traversal 
     # (from base to tip, including all hierarchical levels)
-    rachis_children = collect(PreOrderDFS(rachis_node))
+    rachis_children = descendants(rachis_node, symbol="RachisSegment") # Starting at 1 because we don't want the rachis node
 
     for i in 1:nb_leaflets
         # Determine which rachis segment this leaflet should be attached to
@@ -166,7 +166,7 @@ function create_single_leaflet(
 
     # Calculate insertion angles based on position and plane
     # Horizontal angle (axial/Z) is mainly determined by position along rachis
-    h_angle = angle_axial(
+    h_angle = leaflet_azimuthal_angle(
         leaflet_relative_pos,
         side,
         parameters["leaflet_axial_angle_c"],
@@ -174,10 +174,10 @@ function create_single_leaflet(
         parameters["leaflet_axial_angle_a"],
         parameters["leaflet_axial_angle_sdp"],
         rng
-    )
+    ) * u"°"
 
     # Vertical angle (radial/X) is determined by position and plane type
-    v_angle = angle_radial(
+    v_angle = leaflet_zenithal_angle(
         leaflet_relative_pos,
         plane,
         side,
@@ -190,7 +190,7 @@ function create_single_leaflet(
         parameters["leaflet_radial_low_a0_inf"],
         parameters["leaflet_radial_low_amax_inf"],
         rng
-    )
+    ) * u"°"
 
     # Add stiffness with random variation to simulate natural variability
     stiffness = parameters["leaflet_stiffness"] + rand(rng) * parameters["leaflet_stiffness_sd"]
@@ -202,11 +202,11 @@ function create_single_leaflet(
     # Handle leaflet unfolding for young fronds (special case for fronds that are still developing)
     if leaf_rank < 2
         if leaf_rank < 1
-            v_angle = 90.0  # Very young fronds have vertical leaflets
+            v_angle = 90.0u"°"  # Very young fronds have vertical leaflets
         end
         h_angle *= leaf_rank * 0.2  # Reduce horizontal angle for young fronds
         if leaf_rank < 1
-            h_angle = 0.0  # No horizontal angle for very young fronds
+            h_angle = 0.0u"°"  # No horizontal angle for very young fronds
         end
         stiffness = 10000 + (2.0 - leaf_rank) * 20000  # Young fronds have higher stiffness
     end
@@ -316,20 +316,14 @@ function create_leaflet_segments!(
 
     # Create a piecewise linear approximation of the beta distribution curve
     # This defines the width profile along the leaflet's length
-    control_points_x = Vector{Float64}(undef, length(segment_boundaries))
-    control_points_y = Vector{Float64}(undef, length(segment_boundaries))
+    control_points_x = ones(length(segment_boundaries)) # Using ones as placeholders because the last value will remain at 1.0
+    control_points_y = zeros(length(segment_boundaries)) # Using zeros as placeholders because the last value will remain at 0.0
 
-    for j in 1:(length(segment_boundaries)-1)
+    for j in eachindex(segment_boundaries[1:end-1])
         # Calculate width at each boundary point using beta distribution
         segment_widths[j] = beta_distribution_norm(segment_boundaries[j], position_max_width, width_at_max)
         control_points_x[j] = segment_boundaries[j]
         control_points_y[j] = segment_widths[j]
-
-        # Add the final point (tip) with zero width
-        if j == length(segment_boundaries) - 2
-            control_points_x[j+1] = 1.0
-            control_points_y[j+1] = 0.0
-        end
     end
 
     # Calculate scaling factor to ensure correct area proportion
@@ -377,6 +371,7 @@ function create_leaflet_segments!(
 
         # Set segment width and length
         segment_node["width"] = segment_widths[j] * width_max
+        segment_node["width"] < 0u"m" && error("Negative width: $segment_node")
         segment_node["length"] = (segment_boundaries[j+1] - segment_boundaries[j]) * leaflet_length
         segment_node["segment_boundaries"] = segment_boundaries
 
@@ -390,8 +385,8 @@ function create_leaflet_segments!(
 
         # For the last segment (tip), set top width and height to 0 for proper tapering to a point
         if j == length(segment_boundaries) - 2
-            segment_node["top_width"] = 0.0
-            segment_node["top_height"] = 0.0
+            segment_node["top_width"] = 0.0u"m"
+            segment_node["top_height"] = 0.0u"m"
         end
 
         # Next segment will be attached to this one
@@ -1085,27 +1080,30 @@ function relative_leaflet_width(x, width_first, width_last, pos_width_max)
 end
 
 """
-    angle_axial(relative_pos, side, angle_c, angle_slope, angle_a, angle_sdp, rng)
+    leaflet_azimuthal_angle(relative_pos, side, angle_c, angle_slope, angle_a, angle_sdp, rng)
 
 Calculate the leaflet insertion angle in the horizontal plane (in degrees).
 
 # Arguments
 - `relative_pos`: Relative position of the leaflet on the rachis [0 to 1].
 - `side`: Side of the leaf (1 for right, -1 for left).
-- `angle_c`: Constant parameter for the axial angle calculation.
-- `angle_slope`: Slope parameter for the axial angle calculation.
-- `angle_a`: Amplitude parameter for the axial angle calculation.
-- `angle_sdp`: Standard deviation percentage for random variation.
+- `angle_c`: Constant parameter for the axial angle calculation (°).
+- `angle_slope`: Slope parameter for the axial angle calculation (°).
+- `angle_a`: Amplitude parameter for the axial angle calculation (°).
+- `angle_sdp`: Standard deviation percentage for random variation (°).
 - `rng`: Random number generator.
 
 # Returns
 - Horizontal insertion angle in degrees.
 """
-function angle_axial(relative_pos, side, angle_c, angle_slope, angle_a, angle_sdp, rng)
+function leaflet_azimuthal_angle(relative_pos, side, angle_c, angle_slope, angle_a, angle_sdp, rng)
     a = angle_c^2
     b = angle_slope * 2.0 * sqrt(a)
     c = (angle_a^2) - a - b
-    angle = sqrt(a + (b * relative_pos) + (c * relative_pos * relative_pos * relative_pos))
+
+    eq = a + (b * relative_pos) + (c * relative_pos * relative_pos * relative_pos)
+    eq < 0.0 && (eq = 0.0)
+    angle = sqrt(eq)
 
     # Add random variation based on standard deviation percentage
     angle += normal_deviation_percent_draw(angle, angle_sdp, rng)
@@ -1114,7 +1112,7 @@ function angle_axial(relative_pos, side, angle_c, angle_slope, angle_a, angle_sd
 end
 
 """
-    angle_radial_boundaries(rel_pos, a0, a_max, xm=0.5)
+    leaflet_zenithal_angle_boundaries(rel_pos, a0, a_max, xm=0.5)
 
 Calculate the boundaries of the radial angle based on position along the rachis.
 
@@ -1127,7 +1125,7 @@ Calculate the boundaries of the radial angle based on position along the rachis.
 # Returns
 - Radial angle in degrees.
 """
-function angle_radial_boundaries(rel_pos, a0, a_max, xm=0.5)
+function leaflet_zenithal_angle_boundaries(rel_pos, a0, a_max, xm=0.5)
     c1 = (a0 - a_max) / (xm * xm)
     b1 = -2 * c1 * xm
 
@@ -1143,7 +1141,7 @@ function angle_radial_boundaries(rel_pos, a0, a_max, xm=0.5)
 end
 
 """
-    angle_radial(relative_pos, leaflet_type, side, high_a0_sup, high_amax_sup, high_a0_inf, high_amax_inf, 
+    leaflet_zenithal_angle(relative_pos, leaflet_type, side, high_a0_sup, high_amax_sup, high_a0_inf, high_amax_inf, 
                  low_a0_sup, low_amax_sup, low_a0_inf, low_amax_inf, rng)
 
 Calculate the leaflet insertion angle in the vertical plane (in degrees).
@@ -1165,7 +1163,7 @@ Calculate the leaflet insertion angle in the vertical plane (in degrees).
 # Returns
 - Vertical insertion angle in degrees.
 """
-function angle_radial(relative_pos, leaflet_type, side, high_a0_sup, high_amax_sup, high_a0_inf, high_amax_inf,
+function leaflet_zenithal_angle(relative_pos, leaflet_type, side, high_a0_sup, high_amax_sup, high_a0_inf, high_amax_inf,
     low_a0_sup, low_amax_sup, low_a0_inf, low_amax_inf, rng)
     xm = 0.5
     if leaflet_type == 1  # High position
@@ -1185,8 +1183,8 @@ function angle_radial(relative_pos, leaflet_type, side, high_a0_sup, high_amax_s
         a_max_inf = low_amax_sup
     end
 
-    angle_max = angle_radial_boundaries(relative_pos, a0_sup, a_max_sup, xm)
-    angle_min = angle_radial_boundaries(relative_pos, a0_inf, a_max_inf, xm)
+    angle_max = leaflet_zenithal_angle_boundaries(relative_pos, a0_sup, a_max_sup, xm)
+    angle_min = leaflet_zenithal_angle_boundaries(relative_pos, a0_inf, a_max_inf, xm)
 
     return (angle_min + (angle_max - angle_min) * rand(rng)) * side
 end
