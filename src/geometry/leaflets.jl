@@ -35,7 +35,7 @@ function add_leaflet_geometry!(
     side = leaflet_node["side"]
     h_angle = deg2rad(leaflet_node["azimuthal_angle"])   # Horizontal angle (insertion angle in Z)  
     v_angle = deg2rad(leaflet_node["zenithal_angle"])    # Vertical angle (insertion angle in X)
-    torsion = deg2rad(leaflet_node["torsion_angle"])     # Twist around leaflet's axis
+    torsion = deg2rad(leaflet_node["torsion_angle"]) + π / 2.0 # Twist around leaflet's axis
     lamina_angle = deg2rad(leaflet_node["lamina_angle"]) # V-shape of the leaflet
 
     # Create reference point for the leaflet base
