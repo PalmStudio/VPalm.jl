@@ -13,6 +13,7 @@ Calculate the maximal deformation angle of a beam.
 - The final angle from vertical at the cantilever extremity (in radians)
 """
 function final_angle(young_modulus, z_angle, beam_length, tapering)
+    beam_length = beam_length * 100.0  # Convert to centimeters (the original java function used cm)
     # Evaluation
     cos_theta = cos(z_angle)
     young = 1.0 / sqrt(young_modulus)
@@ -22,10 +23,9 @@ function final_angle(young_modulus, z_angle, beam_length, tapering)
 
     # Initial deflection estimate
     deflection = if 1.553 < z_angle < 1.588
-        ustrip(young * young * h * h / 2.0)
+        young^2 * h^2 / 2.0
     else
-        coeff_nounit = ustrip(coeff)
-        sin(z_angle) * (1.0 - cos(coeff_nounit)) / cos(coeff_nounit) / abs(cos_theta)
+        sin(z_angle) * (1.0 - cos(coeff)) / cos(coeff) / abs(cos_theta)
     end
 
     # Integration to find the actual deflection
@@ -37,7 +37,7 @@ function final_angle(young_modulus, z_angle, beam_length, tapering)
     while (a_max - a_min) > threshold
         deflection = (a_max + a_min) / 2.0
         omega = 0.0
-        sum = 0.0
+        sum_ = 0.0
         increment = 1.0
         nb_iter = 0
 
@@ -45,11 +45,11 @@ function final_angle(young_modulus, z_angle, beam_length, tapering)
             increment = precision * sqrt(2) * young *
                         sqrt(abs(cos(z_angle + omega) - cos(z_angle + deflection)))
             omega += increment
-            sum += precision
+            sum_ += precision
             nb_iter += 1
         end
 
-        if sum <= (h - precision)
+        if sum_ <= (h - precision)
             a_min = deflection
         else
             a_max = deflection
@@ -94,7 +94,7 @@ end
 """
     calculate_segment_angles(young_modulus, initial_angle, leaflet_length, tapering, segment_positions)
 
-Calculate the angles for each segment of a bent leaflet based on the Young's modulus model.
+Calculate the global angles for each segment of a bent leaflet based on the Young's modulus model.
 
 # Arguments
 - `young_modulus`: Value of Young's modulus
@@ -138,12 +138,6 @@ function calculate_segment_angles(young_modulus, initial_angle, leaflet_length, 
 
         boundary_angles[i] = boundary_angles[i-1] + flexion
     end
-
-    # Calculate segment angles (difference between boundaries)
-    segment_angles = zeros(length(segment_positions) - 1)
-    for i in 1:(length(segment_positions)-1)
-        segment_angles[i] = boundary_angles[i+1] - boundary_angles[i]
-    end
-
-    return segment_angles
+    # If we need the local angles: `diff(boundary_angles)`
+    return boundary_angles
 end
