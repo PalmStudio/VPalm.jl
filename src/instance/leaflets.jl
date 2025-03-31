@@ -380,18 +380,7 @@ function create_leaflet_segments!(
 
         # Apply the bending angle based on biomechanical model
         # Direction depends on which side of the rachis the leaflet is on
-        bend_angle = rad2deg(segment_angles[j])
-        if leaflet_node["side"] < 0  # Left side
-            bend_angle *= -1  # Mirror angle for left side leaflets
-        end
-        segment_node["zenithal_angle"] = bend_angle # Stiffness angle
-
-        # For the last segment (tip), set top width and height to 0 for proper tapering to a point
-        if j == length(segment_boundaries) - 2
-            segment_node["top_width"] = 0.0u"m"
-            segment_node["top_height"] = 0.0u"m"
-        end
-
+        segment_node["zenithal_angle"] = rad2deg(segment_angles[j]) # Stiffness angle
         # Next segment will be attached to this one
         last_parent = segment_node
     end

@@ -56,23 +56,18 @@ function add_leaflet_geometry!(
         )
     )
 
-    # Create a reference for the previous segment angle for segment-to-segment bending
-    previous_segment_angle = 0.0u"rad"
-
     # Process each leaflet segment
     traverse!(leaflet_node, symbol="LeafletSegment") do segment
         # Get segment properties
         leaflet_segment_width = segment["width"]
         leaflet_segment_length = segment["length"]
         # Apply stiffness angle if available (segment bending due to weight)
-        segment_stiffness_angle = deg2rad(segment["zenithal_angle"])
-
         # Calculate the absolute angle of this segment by adding the stiffness angle to previous segment angle
-        segment_angle = previous_segment_angle + segment_stiffness_angle
-        previous_segment_angle = segment_angle
-
+        # segment_angle += side * deg2rad(segment["zenithal_angle"])
+        segment_angle = deg2rad(segment["zenithal_angle"])
+        # segment_angle += deg2rad(15.0)
         # Rotation matrix for the section
-        rot = RotYZX(-segment_angle, h_angle, torsion * side)
+        rot = RotZYX(h_angle, segment_angle, torsion)
 
         # Calculate transformation for this segment
         # !Based on ElaeisArchiTree.java line 246-254, the leaflet shape is a V-shaped plane, but not working here!
@@ -96,25 +91,12 @@ function add_leaflet_geometry!(
         # Assign geometry to the segment
         segment.geometry = PlantGeom.Geometry(ref_mesh=refmesh_plane, transformation=mesh_transformation)
 
-        # Update position for next segment by moving along the segment's length
-        # Considering the segment's bending angle
-        # dx = leaflet_segment_length * cos(segment_angle)
-        # dy = 0.0u"m"  # No sideways movement along segment's own axis
-        # dz = leaflet_segment_length * sin(segment_angle)
-
-        # # Update position reference for the next segment
-        # position_section[] += Meshes.Vec(dx, dy, dz)
-
         # Update position using the rotation matrix directly
         # Create direction vector along X axis (rachis direction)
         direction = Meshes.Vec(ustrip(leaflet_segment_length), 0.0, 0.0)
 
         # Apply rotation to this direction
         rotated_direction = rot * direction
-
-        segment.position_section = position_section[]
-        segment.normal_section = rotated_direction
-
         # Update position
         position_section[] += rotated_direction
     end
