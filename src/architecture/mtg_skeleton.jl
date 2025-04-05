@@ -23,7 +23,7 @@ parameters = read_parameters(file)
 mtg_skeleton(parameters)
 ```
 """
-function mtg_skeleton(parameters; rng=Random.MersenneTwister(parameters["seed"]))
+function mtg_skeleton(parameters; merge_scale=:leaflet, rng=Random.MersenneTwister(parameters["seed"]))
     nb_internodes = parameters["nb_leaves_emitted"] + parameters["nb_internodes_before_planting"] # The number of internodes emitted since the seed
     nb_leaves_alive = floor(Int, mean_and_sd(parameters["nb_leaves_mean"], parameters["nb_leaves_sd"]; rng=rng))
     nb_leaves_alive = min(nb_leaves_alive, nb_internodes)
@@ -95,6 +95,17 @@ function mtg_skeleton(parameters; rng=Random.MersenneTwister(parameters["seed"])
     ref_mesh_plane = PlantGeom.RefMesh("Plane", VPalm.plane())
 
     add_geometry!(plant, refmesh_cylinder, refmesh_snag, ref_mesh_plane)
+
+    if merge_scale == :leaflet
+        # Merge leaflets segments geometry into the leaflets:
+        PlantGeom.merge_children_geometry!(plant; from="LeafletSegment", into="Leaflet", child_link_fun=x -> nothing)
+    elseif merge_scale == :leaf
+        PlantGeom.merge_children_geometry!(plant; from=["PetioleSegment", "RachisSegment", "LeafletSegment"], into="Leaf", verbose=false)
+        delete_nodes!(plant, symbol=["Rachis", "Petiole"])
+    elseif merge_scale == :plant
+        PlantGeom.merge_children_geometry!(plant; from=["Stem", "Leaf", "PetioleSegment", "RachisSegment", "LeafletSegment"], into="Plant", verbose=false)
+        delete_nodes!(plant, symbol=["Rachis", "Petiole"])
+    end
 
     return plant
 end
