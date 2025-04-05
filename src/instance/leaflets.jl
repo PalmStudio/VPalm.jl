@@ -154,7 +154,7 @@ function create_single_leaflet(
     # Create a new leaflet node with unique ID
     leaflet_node = Node(
         unique_mtg_id[],
-        NodeMTG("+", "Leaflet", index, scale),
+        MutableNodeMTG("+", "Leaflet", index, scale),
         Dict{Symbol,Any}()
     )
     unique_mtg_id[] += 1
@@ -360,7 +360,7 @@ function create_leaflet_segments!(
         segment_node = Node(
             unique_mtg_id[],
             last_parent,
-            NodeMTG(
+            MutableNodeMTG(
                 j == 1 ? "/" : "<",  # First segment uses "/" edge type, others use "<" (successor)
                 "LeafletSegment",
                 j,

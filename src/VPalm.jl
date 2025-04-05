@@ -4,7 +4,7 @@ module VPalm
 import Random
 
 # For managing the MTG:
-import MultiScaleTreeGraph: Node, NodeMTG, traverse!, symbol, reparent!, addchild!, descendants, delete_nodes!
+import MultiScaleTreeGraph: Node, MutableNodeMTG, traverse!, symbol, reparent!, addchild!, descendants, delete_nodes!, new_child_link
 
 # IO:
 import YAML, OrderedCollections
@@ -63,6 +63,8 @@ include("geometry/leaflets.jl")
 include("instance/petiole.jl")
 include("instance/rachis.jl")
 include("instance/leaflets.jl")
+
+include("build_mockup.jl")
 
 export read_parameters, write_parameters
 end

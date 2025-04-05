@@ -23,7 +23,7 @@ parameters = read_parameters(file)
 mtg_skeleton(parameters)
 ```
 """
-function mtg_skeleton(parameters; merge_scale=:leaflet, rng=Random.MersenneTwister(parameters["seed"]))
+function mtg_skeleton(parameters; rng=Random.MersenneTwister(parameters["seed"]))
     nb_internodes = parameters["nb_leaves_emitted"] + parameters["nb_internodes_before_planting"] # The number of internodes emitted since the seed
     nb_leaves_alive = floor(Int, mean_and_sd(parameters["nb_leaves_mean"], parameters["nb_leaves_sd"]; rng=rng))
     nb_leaves_alive = min(nb_leaves_alive, nb_internodes)
@@ -32,12 +32,12 @@ function mtg_skeleton(parameters; merge_scale=:leaflet, rng=Random.MersenneTwist
 
     unique_mtg_id = Ref(1)
     # Plant / Scale 1
-    plant = Node(NodeMTG("/", "Plant", 1, 1))
+    plant = Node(MutableNodeMTG("/", "Plant", 1, 1))
     unique_mtg_id[] += 1
 
     # Stem (& Roots) / Scale 2
-    #roots = Node(plant, NodeMTG("+", "RootSystem", 1, 2))
-    stem = Node(unique_mtg_id[], plant, NodeMTG("+", "Stem", 1, 2))
+    #roots = Node(plant, MutableNodeMTG("+", "RootSystem", 1, 2))
+    stem = Node(unique_mtg_id[], plant, MutableNodeMTG("+", "Stem", 1, 2))
     unique_mtg_id[] += 1
 
     compute_properties_stem!(stem, parameters, rng)
@@ -46,15 +46,15 @@ function mtg_skeleton(parameters; merge_scale=:leaflet, rng=Random.MersenneTwist
     stem_diameter = stem[:stem_diameter]
 
     # Phytomer / Scale 3
-    phytomer = Node(unique_mtg_id[], stem, NodeMTG("/", "Phytomer", 1, 3))
+    phytomer = Node(unique_mtg_id[], stem, MutableNodeMTG("/", "Phytomer", 1, 3))
     unique_mtg_id[] += 1
 
     # Internode & Leaf / Scale 4
-    internode = Node(unique_mtg_id[], phytomer, NodeMTG("/", "Internode", 1, 4))
+    internode = Node(unique_mtg_id[], phytomer, MutableNodeMTG("/", "Internode", 1, 4))
     unique_mtg_id[] += 1
     compute_properties_internode!(internode, 1, nb_internodes, nb_leaves_alive, stem_height, stem_diameter, parameters, rng)
 
-    leaf = Node(unique_mtg_id[], internode, NodeMTG("+", "Leaf", 1, 4))
+    leaf = Node(unique_mtg_id[], internode, MutableNodeMTG("+", "Leaf", 1, 4))
     unique_mtg_id[] += 1
     leaf.rank = compute_leaf_rank(nb_internodes, 1)
     # Is the leaf alive of dead (snag)?
@@ -63,12 +63,12 @@ function mtg_skeleton(parameters; merge_scale=:leaflet, rng=Random.MersenneTwist
 
     # Loop on internodes
     for i in 2:nb_internodes #! start at 1, and move the code above below with an if statement for the link
-        phytomer = Node(unique_mtg_id[], phytomer, NodeMTG("<", "Phytomer", i, 3))
+        phytomer = Node(unique_mtg_id[], phytomer, MutableNodeMTG("<", "Phytomer", i, 3))
         unique_mtg_id[] += 1
-        internode = Node(unique_mtg_id[], phytomer, NodeMTG("/", "Internode", i, 4))
+        internode = Node(unique_mtg_id[], phytomer, MutableNodeMTG("/", "Internode", i, 4))
         unique_mtg_id[] += 1
         compute_properties_internode!(internode, i, nb_internodes, nb_leaves_alive, stem_height, stem_diameter, parameters, rng)
-        leaf = Node(unique_mtg_id[], internode, NodeMTG("+", "Leaf", i, 4))
+        leaf = Node(unique_mtg_id[], internode, MutableNodeMTG("+", "Leaf", i, 4))
         unique_mtg_id[] += 1
         leaf.rank = compute_leaf_rank(nb_internodes, i)
         leaf.is_alive = leaf.rank <= nb_leaves_alive
@@ -86,25 +86,6 @@ function mtg_skeleton(parameters; merge_scale=:leaflet, rng=Random.MersenneTwist
             # Add the leaflets to the rachis:
             leaflets(unique_mtg_id, rachis_node, i, 5, leaf.rank, leaf.rachis_length, petiole_node.height_cpoint, petiole_node.width_cpoint, leaf.zenithal_cpoint_angle, parameters; rng=rng)
         end
-    end
-
-    # Compute the geometry of the plant
-    # Note: we could do this at the same time than the architecture, but it is separated here for clarity. The downside is that we traverse the mtg twice, but it is pretty cheap.
-    refmesh_cylinder = PlantGeom.RefMesh("cylinder", VPalm.cylinder())
-    refmesh_snag = PlantGeom.RefMesh("Snag", VPalm.snag(0.05, 1.0, 1.0))
-    ref_mesh_plane = PlantGeom.RefMesh("Plane", VPalm.plane())
-
-    add_geometry!(plant, refmesh_cylinder, refmesh_snag, ref_mesh_plane)
-
-    if merge_scale == :leaflet
-        # Merge leaflets segments geometry into the leaflets:
-        PlantGeom.merge_children_geometry!(plant; from="LeafletSegment", into="Leaflet", child_link_fun=x -> nothing)
-    elseif merge_scale == :leaf
-        PlantGeom.merge_children_geometry!(plant; from=["PetioleSegment", "RachisSegment", "LeafletSegment"], into="Leaf", verbose=false)
-        delete_nodes!(plant, symbol=["Rachis", "Petiole"])
-    elseif merge_scale == :plant
-        PlantGeom.merge_children_geometry!(plant; from=["Stem", "Leaf", "PetioleSegment", "RachisSegment", "LeafletSegment"], into="Plant", verbose=false)
-        delete_nodes!(plant, symbol=["Rachis", "Petiole"])
     end
 
     return plant

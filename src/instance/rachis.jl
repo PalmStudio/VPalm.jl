@@ -1,5 +1,5 @@
 function rachis(unique_mtg_id, index, scale, leaf_rank, rachis_length, height_cpoint, width_cpoint, zenithal_cpoint_angle, parameters; rng)
-    rachis_node = Node(unique_mtg_id[], NodeMTG("<", "Rachis", index, scale), Dict{Symbol,Any}())
+    rachis_node = Node(unique_mtg_id[], MutableNodeMTG("<", "Rachis", index, scale), Dict{Symbol,Any}())
     unique_mtg_id[] += 1
 
     nb_segments = parameters["rachis_nb_segments"]
@@ -26,7 +26,7 @@ function rachis(unique_mtg_id, index, scale, leaf_rank, rachis_length, height_cp
     # rachis_segment_torsions = [0.0u"°"; diff(points_torsion)]
 
     for p in eachindex(points_positions)
-        rachis_segment_node = Node(unique_mtg_id[], last_parent, NodeMTG(p == 1 ? "/" : "<", "RachisSegment", p, 6))
+        rachis_segment_node = Node(unique_mtg_id[], last_parent, MutableNodeMTG(p == 1 ? "/" : "<", "RachisSegment", p, 6))
         unique_mtg_id[] += 1
         rachis_segment_node.width = rachis_width(p / nb_segments, width_cpoint, parameters["rachis_width_tip"])
         rachis_segment_node.height = rachis_height(p / nb_segments, height_cpoint, parameters["height_rachis_tappering"])
