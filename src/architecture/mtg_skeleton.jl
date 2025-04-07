@@ -49,22 +49,12 @@ function mtg_skeleton(parameters; rng=Random.MersenneTwister(parameters["seed"])
     phytomer = Node(unique_mtg_id[], stem, MutableNodeMTG("/", "Phytomer", 1, 3))
     unique_mtg_id[] += 1
 
-    # Internode & Leaf / Scale 4
-    internode = Node(unique_mtg_id[], phytomer, MutableNodeMTG("/", "Internode", 1, 4))
-    unique_mtg_id[] += 1
-    compute_properties_internode!(internode, 1, nb_internodes, nb_leaves_alive, stem_height, stem_diameter, parameters, rng)
-
-    leaf = Node(unique_mtg_id[], internode, MutableNodeMTG("+", "Leaf", 1, 4))
-    unique_mtg_id[] += 1
-    leaf.rank = compute_leaf_rank(nb_internodes, 1)
-    # Is the leaf alive of dead (snag)?
-    leaf.is_alive = leaf.rank <= nb_leaves_alive
-    compute_properties_leaf!(leaf, leaf.rank, leaf.is_alive, parameters, rng)
-
     # Loop on internodes
-    for i in 2:nb_internodes #! start at 1, and move the code above below with an if statement for the link
-        phytomer = Node(unique_mtg_id[], phytomer, MutableNodeMTG("<", "Phytomer", i, 3))
-        unique_mtg_id[] += 1
+    for i in 1:nb_internodes
+        if i > 1
+            Node(unique_mtg_id[], phytomer, MutableNodeMTG("<", "Phytomer", i, 3))
+            unique_mtg_id[] += 1
+        end
         internode = Node(unique_mtg_id[], phytomer, MutableNodeMTG("/", "Internode", i, 4))
         unique_mtg_id[] += 1
         compute_properties_internode!(internode, i, nb_internodes, nb_leaves_alive, stem_height, stem_diameter, parameters, rng)
