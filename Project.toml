@@ -18,7 +18,6 @@ Unitful = "1986cc42-f94f-5a68-af5c-568840ba703d"
 YAML = "ddb6d928-2868-570f-bddf-ab3f9cf99eb6"
 
 [compat]
-AbstractTrees = "0.4.5"
 Interpolations = "0.15.1"
 Meshes = "0.52, 0.53"
 MultiScaleTreeGraph = "0.14.2"
