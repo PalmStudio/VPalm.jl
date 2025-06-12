@@ -35,15 +35,36 @@ function petiole(unique_mtg_id, index, scale, rachis_length, zenithal_insertion_
         rng=rng
     )
 
+    petiole_sections!(petiole_node, parameters["petiole_nb_segments"], unique_mtg_id)
+
+    return petiole_node
+end
+
+"""
+    petiole_sections!(petiole_node, petiole_nb_segments, unique_mtg_id)
+
+Create the sections of a petiole.
+
+# Arguments
+
+- `petiole_node`: the MTG Node of the petiole
+- `petiole_nb_segments`: the number of segments used to discretize the petiole
+- `unique_mtg_id`: a next free unique id for the MTG nodes, given as a `Ref{Int}`
+
+# Returns
+
+Nothing, the petiole node is updated in-place with its sections.
+"""
+function petiole_sections!(petiole_node, petiole_nb_segments, unique_mtg_id)
     last_parent = petiole_node
     # segment_insertion_angle = Ref(copy(petiole_node.zenithal_insertion_angle))
-    for p in 1:parameters["petiole_nb_segments"]
+    for p in 1:petiole_nb_segments
         petiole_segment_node = Node(unique_mtg_id[], last_parent, MutableNodeMTG(p == 1 ? "/" : "<", "PetioleSegment", p, 6))
         unique_mtg_id[] += 1
         petiole_section_insertion_angle = petiole_node[:zenithal_insertion_angle] + p * petiole_node[:section_insertion_angle]
-        compute_properties_petiole_section!(petiole_node, petiole_segment_node, p, parameters["petiole_nb_segments"], petiole_section_insertion_angle)
+        compute_properties_petiole_section!(petiole_node, petiole_segment_node, p, petiole_nb_segments, petiole_section_insertion_angle)
         last_parent = petiole_segment_node
     end
 
-    return petiole_node
+    return nothing
 end
