@@ -12,7 +12,8 @@
         leaflet_max_width,
         side,
         parameters;
-        rng
+        last_rank_unfolding=2,
+        rng=Random.MersenneTwister(1234)
     )
 
 Create leaflets for one side of the palm frond rachis.
@@ -31,7 +32,8 @@ Create leaflets for one side of the palm frond rachis.
 - `leaflet_max_width`: Maximum width of leaflets (width of the widest leaflet)
 - `side`: Side of rachis (1=right, -1=left)
 - `parameters`: Model parameters
-- `rng`: Random number generator
+- `last_rank_unfolding=2`: Rank at which leaflets are fully unfolded (default is 2)
+- `rng=Random.MersenneTwister(1234)`: Random number generator
 
 # Returns
 
@@ -50,7 +52,8 @@ function create_leaflets_for_side!(
     leaflet_max_width,
     side,
     parameters;
-    rng
+    last_rank_unfolding=2,
+    rng=Random.MersenneTwister(1234)
 )
     # Calculate the length of each rachis section
     rachis_segment_length = rachis_length / nb_rachis_sections
@@ -90,6 +93,7 @@ function create_leaflets_for_side!(
             leaflet_max_width,
             parameters,
             offset=offset,         # Offset from start of rachis segment
+            last_rank_unfolding=last_rank_unfolding, # Rank at which leaflets are fully unfolded
             rng=rng
         )
 
@@ -111,6 +115,7 @@ end
         leaflet_max_width,
         parameters;
         offset=0.0,
+        last_rank_unfolding=2,
         rng=Random.MersenneTwister(1234)
     )
 
@@ -130,6 +135,7 @@ Create a single leaflet with properly computed angles, dimensions and segments.
 - `leaflet_max_width`: Maximum leaflet width in meters (width of the widest leaflet)
 - `parameters`: Model parameters dictionary
 - `offset`: Offset from the start of parent node (when applicable)
+- `last_rank_unfolding`: Rank at which leaflets are fully unfolded (default is 2)
 - `rng`: Random number generator
 
 # Returns
@@ -149,6 +155,7 @@ function create_single_leaflet(
     leaflet_max_width,
     parameters;
     offset=0.0,
+    last_rank_unfolding=2,
     rng=Random.MersenneTwister(1234)
 )
     # Create a new leaflet node with unique ID
@@ -201,7 +208,7 @@ function create_single_leaflet(
     leaflet_node["leaflet_rank"] = norm_leaflet_rank
 
     # Handle leaflet unfolding for young fronds (special case for fronds that are still developing)
-    if leaf_rank < 2
+    if leaf_rank < last_rank_unfolding
         if leaf_rank < 1
             v_angle = 90.0u"°"  # Very young fronds have vertical leaflets
         end
