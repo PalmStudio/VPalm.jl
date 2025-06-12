@@ -53,18 +53,20 @@ function compute_properties_petiole!(
     petiole_rachis_ratio_sd, nb_sections;
     rng=Random.MersenneTwister(1)
 )
+    #! Petiole base dimensions should be allometries relative to leaf length, because tiny leaves don't have big bases:
+    petiole_node.width_base = width_base
+    petiole_node.height_base = height_base
 
-    petiole = petiole_allometries(petiole_rachis_ratio_mean, petiole_rachis_ratio_sd, rachis_length, width_base, height_base, cpoint_width_intercept, cpoint_width_slope, cpoint_height_width_ratio, rng)
+    petiole_node.length = petiole_length(rachis_length, petiole_rachis_ratio_mean, petiole_rachis_ratio_sd; rng=rng)
+    petiole_node.azimuthal_angle = petiole_azimuthal_angle(; rng=rng)
 
-    petiole_node.length = petiole.length
-    petiole_node.azimuthal_angle = petiole.azimuthal_angle
-    petiole_node.width_base = petiole.width_base
-    petiole_node.height_base = petiole.height_base
-    petiole_node.width_cpoint = petiole.width_cpoint
-    petiole_node.height_cpoint = petiole.height_cpoint
+    (width_cpoint, height_cpoint) = petiole_dimensions_at_cpoint(rachis_length, cpoint_width_intercept, cpoint_width_slope, cpoint_height_width_ratio)
+    petiole_node.width_cpoint = width_cpoint
+    petiole_node.height_cpoint = height_cpoint
+
     petiole_node.zenithal_insertion_angle = 90.0u"°" - insertion_angle
     petiole_node.zenithal_cpoint_angle = 90.0u"°" - zenithal_cpoint_angle
-    petiole_node.section_length = petiole.length / nb_sections
+    petiole_node.section_length = petiole_node.length / nb_sections
     petiole_node.section_insertion_angle = (petiole_node.zenithal_cpoint_angle - petiole_node.zenithal_insertion_angle) / nb_sections
 
     return nothing
