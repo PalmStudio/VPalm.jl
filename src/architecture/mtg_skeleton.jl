@@ -28,39 +28,55 @@ function mtg_skeleton(parameters; rng=Random.MersenneTwister(parameters["seed"])
     nb_leaves_alive = floor(Int, mean_and_sd(parameters["nb_leaves_mean"], parameters["nb_leaves_sd"]; rng=rng))
     nb_leaves_alive = min(nb_leaves_alive, nb_internodes)
 
-    @assert length(parameters["rachis_biomass"]) >= nb_leaves_alive "The number of rachis biomass values should be greater than or equal to the number of leaves alive ($nb_leaves_alive)."
+    @assert length(parameters["rachis_fresh_weight"]) >= nb_leaves_alive "The number of rachis biomass values should be greater than or equal to the number of leaves alive ($nb_leaves_alive)."
 
-    plant = Node(NodeMTG("/", "Plant", 1, 1))
-    #roots = Node(plant, NodeMTG("+", "RootSystem", 1, 2))
-    stem = Node(plant, NodeMTG("+", "Stem", 1, 2))
+    unique_mtg_id = Ref(1)
+    # Plant / Scale 1
+    plant = Node(MutableNodeMTG("/", "Plant", 1, 1))
+    unique_mtg_id[] += 1
+
+    # Stem (& Roots) / Scale 2
+    #roots = Node(plant, MutableNodeMTG("+", "RootSystem", 1, 2))
+    stem = Node(unique_mtg_id[], plant, MutableNodeMTG("+", "Stem", 1, 2))
+    unique_mtg_id[] += 1
+
     compute_properties_stem!(stem, parameters, rng)
 
     stem_height = stem[:stem_height]
     stem_diameter = stem[:stem_diameter]
 
-    phytomer = Node(stem, NodeMTG("/", "Phytomer", 1, 3))
-    internode = Node(phytomer, NodeMTG("/", "Internode", 1, 4))
-    compute_properties_internode!(internode, 1, nb_internodes, nb_leaves_alive, stem_height, stem_diameter, parameters, rng)
-    leaf = Node(internode, NodeMTG("+", "Leaf", 1, 4))
-    compute_properties_leaf!(leaf, 1, nb_internodes, nb_leaves_alive, parameters, rng)
+    # Phytomer / Scale 3
+    phytomer = Node(unique_mtg_id[], stem, MutableNodeMTG("/", "Phytomer", 1, 3))
+    unique_mtg_id[] += 1
 
-    for i in 2:nb_internodes
-        phytomer = Node(phytomer, NodeMTG("<", "Phytomer", i, 3))
-        internode = Node(phytomer, NodeMTG("/", "Internode", i, 4))
+    # Loop on internodes
+    for i in 1:nb_internodes
+        if i > 1
+            Node(unique_mtg_id[], phytomer, MutableNodeMTG("<", "Phytomer", i, 3))
+            unique_mtg_id[] += 1
+        end
+        internode = Node(unique_mtg_id[], phytomer, MutableNodeMTG("/", "Internode", i, 4))
+        unique_mtg_id[] += 1
         compute_properties_internode!(internode, i, nb_internodes, nb_leaves_alive, stem_height, stem_diameter, parameters, rng)
-        leaf = Node(internode, NodeMTG("+", "Leaf", i, 4))
-        compute_properties_leaf!(leaf, i, nb_internodes, nb_leaves_alive, parameters, rng)
+        leaf = Node(unique_mtg_id[], internode, MutableNodeMTG("+", "Leaf", i, 4))
+        unique_mtg_id[] += 1
+        leaf.rank = compute_leaf_rank(nb_internodes, i)
+        leaf.is_alive = leaf.rank <= nb_leaves_alive
+        compute_properties_leaf!(leaf, leaf.rank, leaf.is_alive, parameters, rng)
+        # Loop on present leaves
+        if leaf.is_alive
+            # Build the petiole
+            petiole_node = petiole(unique_mtg_id, i, 5, leaf.rachis_length, leaf.zenithal_insertion_angle, leaf.zenithal_cpoint_angle, parameters; rng=rng)
+            addchild!(leaf, petiole_node)
 
-        # add petiole, rachis, leaflets, ls
+            # Build the rachis
+            rachis_node = rachis(unique_mtg_id, i, 5, leaf.rank, leaf.rachis_length, petiole_node.height_cpoint, petiole_node.width_cpoint, leaf.zenithal_cpoint_angle, parameters; rng=rng)
+            addchild!(petiole_node, rachis_node)
+
+            # Add the leaflets to the rachis:
+            leaflets(unique_mtg_id, rachis_node, i, 5, leaf.rank, leaf.rachis_length, petiole_node.height_cpoint, petiole_node.width_cpoint, leaf.zenithal_cpoint_angle, parameters; rng=rng)
+        end
     end
-
-    # Compute the geometry of the plant
-    # Note: we could do this at the same time than the architecture, but it is separated here for clarity. The downside is that we traverse the mtg twice, but it is pretty cheap.
-    #! update this to latest PlantGeom version (I think?)
-    refmesh_internode = PlantGeom.RefMesh("Internode", VPalm.cylinder())
-    refmesh_snag = PlantGeom.RefMesh("Snag", VPalm.snag(0.05, 1.0, 1.0))
-
-    add_geometry!(plant, refmesh_internode, refmesh_snag)
 
     return plant
 end

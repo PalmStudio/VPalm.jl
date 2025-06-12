@@ -3,6 +3,9 @@ using Test
 using Aqua
 using JET
 using MultiScaleTreeGraph
+using CSV, DataFrames
+using Random
+using Unitful, Meshes
 
 @testset "VPalm.jl" begin
     @testset "Code quality (Aqua.jl)" begin
@@ -20,8 +23,23 @@ using MultiScaleTreeGraph
         include("test-parameters_IO.jl")
     end
 
+    @testset "Units" begin
+        include("test-check_units.jl")
+    end
+
     @testset "Stem allometries" begin
         include("test-stem.jl")
+    end
+
+    @testset "Petiole" begin
+        include("test-petiole.jl")
+    end
+
+    @testset "Biomechanical model" begin
+        include("test-interpolate_points.jl")
+        include("test-bend.jl")
+        include("test-inertia_flex_rota.jl")
+        include("test-xyz_dist_angles.jl")
     end
 
     @testset "Static mockup" begin
