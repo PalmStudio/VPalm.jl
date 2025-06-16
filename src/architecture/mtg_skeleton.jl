@@ -70,11 +70,12 @@ function mtg_skeleton(parameters; rng=Random.MersenneTwister(parameters["seed"])
             addchild!(leaf, petiole_node)
 
             # Build the rachis
-            rachis_node = rachis(unique_mtg_id, i, 5, leaf.rank, leaf.rachis_length, petiole_node.height_cpoint, petiole_node.width_cpoint, leaf.zenithal_cpoint_angle, parameters; rng=rng)
+            rachis_fresh_biomass = parameters["rachis_fresh_weight"][leaf.rank]
+            rachis_node = rachis(unique_mtg_id, i, 5, leaf.rank, leaf.rachis_length, petiole_node.height_cpoint, petiole_node.width_cpoint, leaf.zenithal_cpoint_angle, rachis_fresh_biomass, parameters; rng=rng)
             addchild!(petiole_node, rachis_node)
 
             # Add the leaflets to the rachis:
-            leaflets(unique_mtg_id, rachis_node, i, 5, leaf.rank, leaf.rachis_length, petiole_node.height_cpoint, petiole_node.width_cpoint, leaf.zenithal_cpoint_angle, parameters; rng=rng)
+            leaflets!(unique_mtg_id, rachis_node, 5, leaf.rank, leaf.rachis_length, parameters; rng=rng)
         end
     end
 
