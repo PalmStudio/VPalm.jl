@@ -393,7 +393,54 @@ function create_leaflet_segments!(
     end
 end
 
-function leaflets(unique_mtg_id, rachis_node, index, scale, leaf_rank, rachis_length, height_cpoint, width_cpoint, zenithal_cpoint_angle, parameters; rng)
+
+"""
+    leaflets!(unique_mtg_id, rachis_node, scale, leaf_rank, rachis_length, parameters; rng=Random.MersenneTwister())
+
+Create leaflets for a given rachis node, computing their positions, types, and dimensions.
+
+# Arguments
+
+- `unique_mtg_id`: Reference to a unique identifier for the MTG nodes.
+- `rachis_node`: The parent node of the rachis where leaflets will be attached.
+- `scale`: The scale of the leaflets in the MTG.
+- `leaf_rank`: The rank of the leaf associated with the rachis.
+- `rachis_length`: The total length of the rachis in meters.
+- `height_cpoint`: The height of the central point of the rachis in meters.
+- `width_cpoint`: The width of the central point of the rachis in meters.
+- `zenithal_cpoint_angle`: The zenithal angle of the central point of the rachis in degrees.
+- `parameters`: A dictionary containing biomechanical parameters for the leaflets.
+- `rng`: A random number generator for stochastic processes (default is a new MersenneTwister).
+
+# Note
+
+The `parameters` is a `Dict{String}` containing the following keys:
+
+- `"leaflets_nb_max"`: Maximum number of leaflets per rachis.
+- `"leaflets_nb_min"`: Minimum number of leaflets per rachis.
+- `"leaflets_nb_slope"`: Slope for the number of leaflets distribution.
+- `"leaflets_nb_inflexion"`: Inflexion point for the number of leaflets distribution.
+- `"nbLeaflets_SDP"`: Standard deviation for the number of leaflets.
+- `"leaflet_position_shape_coefficient"`: Shape coefficient for the relative positions of leaflets.
+- `"leaflet_frequency_high"`: Frequency of high-position leaflets.
+- `"leaflet_frequency_low"`: Frequency of low-position leaflets.
+- `"leaflet_frequency_shape_coefficient"`: Shape coefficient for the frequency distribution of leaflets.
+- `"leaflet_between_to_within_group_ratio"`: Ratio of spacing between groups to within groups.
+- `"leaflet_length_at_b_intercept"`: Intercept for the length of leaflets at point B.
+- `"leaflet_length_at_b_slope"`: Slope for the length of leaflets at point B.
+- `"relative_position_bpoint"`: Relative position of point B along the rachis.
+- `"relative_position_bpoint_sd"`: Standard deviation of the relative position of point B.
+- `"relative_length_first_leaflet"`: Relative length of the first leaflet.
+- `"relative_length_last_leaflet"`: Relative length of the last leaflet.
+- `"relative_position_leaflet_max_length"`: Relative position of the leaflet with maximum length.
+- `"leaflet_width_at_b_intercept"`: Intercept for the width of leaflets at point B.
+- `"leaflet_width_at_b_slope"`: Slope for the width of leaflets at point B.
+- `"relative_width_first_leaflet"`: Relative width of the first leaflet.
+- `"relative_width_last_leaflet"`: Relative width of the last leaflet.
+- `"relative_position_leaflet_max_width"`: Relative position of the leaflet with maximum width.
+- `"rachis_nb_segments"`: Number of segments in the rachis.
+"""
+function leaflets!(unique_mtg_id, rachis_node, scale, leaf_rank, rachis_length, parameters; rng=Random.MersenneTwister())
     nb_leaflets = compute_number_of_leaflets(rachis_length, parameters["leaflets_nb_max"], parameters["leaflets_nb_min"], parameters["leaflets_nb_slope"], parameters["leaflets_nb_inflexion"], parameters["nbLeaflets_SDP"]; rng=rng)
 
     leaflets_relative_positions = relative_leaflet_position.(collect(1:nb_leaflets) ./ nb_leaflets, parameters["leaflet_position_shape_coefficient"])
