@@ -67,4 +67,5 @@ include("instance/leaflets.jl")
 include("build_mockup.jl")
 
 export read_parameters, write_parameters
+export build_mockup
 end
