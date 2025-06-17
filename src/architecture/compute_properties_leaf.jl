@@ -1,5 +1,5 @@
 """
-    compute_properties_leaf!(node, index, nb_internodes, nb_leaves_alive, parameters, rng)
+    compute_properties_leaf!(node, leaf_rank, is_alive, final_length, parameters, rng)
 
 Compute the properties of a leaf node:
 
@@ -12,6 +12,7 @@ Compute the properties of a leaf node:
 - `node`: the leaf node
 - `leaf_rank`: the rank of the leaf
 - `is_alive`: is the leaf alive or dead (snag)?
+- `final_length`: the final length of the leaf (m)
 - `parameters`: the parameters of the model
 - `rng`: the random number generator
 
@@ -48,7 +49,7 @@ leaf = Node(internode, MutableNodeMTG("+", "Leaf", 1, 4))
 compute_properties_leaf!(leaf, 1, nb_internodes, nb_leaves_alive, parameters, rng)
 ```
 """
-function compute_properties_leaf!(node, leaf_rank, is_alive, parameters, rng)
+function compute_properties_leaf!(node, leaf_rank, is_alive, final_length, parameters, rng)
     if is_alive
         node[:zenithal_insertion_angle] = VPalm.leaf_insertion_angle(
             leaf_rank,
@@ -56,8 +57,7 @@ function compute_properties_leaf!(node, leaf_rank, is_alive, parameters, rng)
             parameters["leaf_slope_angle"],
             parameters["leaf_inflection_angle"]
         )
-        #! important: we use leaf rank to index into the vector of leaf lengths but we should use another index here
-        node[:rachis_length] = rachis_expansion(leaf_rank, parameters["rachis_final_lengths"][leaf_rank])
+        node[:rachis_length] = rachis_expansion(leaf_rank, final_length)
 
         node[:zenithal_cpoint_angle] =
             max(
@@ -71,6 +71,24 @@ function compute_properties_leaf!(node, leaf_rank, is_alive, parameters, rng)
     return nothing
 end
 
+"""
+    rachis_length_from_biomass(rachis_biomass, leaf_length_intercept, leaf_length_slope)
+
+Compute the length of the rachis based on its biomass using a linear relationship.
+
+# Arguments
+
+- `rachis_biomass`: The biomass of the rachis (g).
+- `leaf_length_intercept`: The intercept of the linear relationship for leaf length.
+- `leaf_length_slope`: The slope of the linear relationship for leaf length.
+
+# Returns
+
+The length of the rachis (m).
+"""
+function rachis_length_from_biomass(rachis_biomass, leaf_length_intercept, leaf_length_slope)
+    return linear(rachis_biomass, leaf_length_intercept, leaf_length_slope)
+end
 
 """
     rachis_expansion(leaf_rank, rachis_final_length)
