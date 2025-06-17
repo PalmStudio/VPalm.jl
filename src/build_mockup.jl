@@ -33,7 +33,7 @@ mtg = build_mockup(parameters; merge_scale=:plant)
 ```
 """
 function build_mockup(parameters; merge_scale=:leaflet)
-    @assert merge_scale in (:node, :leaflet, :leaf, :plant)
+    @assert merge_scale in (:none, :leaflet, :leaf, :plant)
 
     mtg = mtg_skeleton(parameters; rng=Random.MersenneTwister(parameters["seed"]))
 
