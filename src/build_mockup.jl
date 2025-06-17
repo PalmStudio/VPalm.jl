@@ -1,5 +1,39 @@
+"""
+    build_mockup(parameters; merge_scale=:leaflet)
+
+Construct a mockup of an oil palm plant architecture using the specified parameters.
+
+# Arguments
+
+- `parameters::Dict`: Dictionary containing model parameters for the oil palm plant architecture. 
+- `merge_scale::Symbol`: (optional) The scale at which to merge geometry.
+    - `:node`: Geometry is not merged, each node has its own mesh (finer scale is leaflet segments).
+    - `:leaflet` (default): Geometry is merged at the leaflet level.
+    - `:leaf`: All geometry for a leaf is merged into a single mesh.
+    - `:plant`: All plant geometry is merged into a single mesh.
+
+# Description
+
+The `merge_scale` argument controls how the geometry is structured within the Multiscale Tree Graph (MTG). The resulting mesh is identical in all cases, but its organization differs.
+
+- Using `:leaflet` retains the finest detail, with each leaflet having its own mesh. This is best for analyses like light interception at the organ level.
+- Using `:leaf` or `:plant` merges geometry into larger components. A single mesh for the whole plant (`:plant`) is the most performant for rendering, but it prevents querying information for individual organs from the mesh (e.g., which part of the mesh is a given leaflet).
+
+# Returns
+
+- `mtg`: An MTG (Multiscale Tree Graph) representing the oil palm plant architecture, including geometry at the specified merge scale.
+
+# Example
+
+```julia
+using VPalm
+file = joinpath(dirname(dirname(pathof(VPalm))), "test", "files", "parameter_file.yml")
+parameters = read_parameters(file)
+mtg = build_mockup(parameters; merge_scale=:plant)
+```
+"""
 function build_mockup(parameters; merge_scale=:leaflet)
-    @assert merge_scale in (:leaflet, :leaf, :plant)
+    @assert merge_scale in (:node, :leaflet, :leaf, :plant)
 
     mtg = mtg_skeleton(parameters; rng=Random.MersenneTwister(parameters["seed"]))
 
