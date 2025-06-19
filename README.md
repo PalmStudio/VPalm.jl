@@ -7,6 +7,9 @@
 [![ColPrac: Contributor's Guide on Collaborative Practices for Community Packages](https://img.shields.io/badge/ColPrac-Contributor's%20Guide-blueviolet)](https://github.com/SciML/ColPrac)
 [![Aqua](https://raw.githubusercontent.com/JuliaTesting/Aqua.jl/master/badge.svg)](https://github.com/JuliaTesting/Aqua.jl)
 
+> [!CAUTION]
+> **VPalm is now a submodule of [XPalm](https://github.com/PalmStudio/XPalm.jl), please refer to the XPalm documentation for more information. This repository is no longer maintainted and considered as archived**
+
 VPalm is an automaton that builds 3d mockups of palm plants from architectural parameters and allometric equations.
 
 The model also integrates a biomechanical model to compute the leaf bending and torsion using the biomass of each leaf.
